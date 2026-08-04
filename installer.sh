@@ -1,26 +1,14 @@
 #!/bin/bash
 ############################################################################
-# Copyright (C) 2026 voidflamer
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License only.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
+# Kinetictyl Management Panel Installer
 # GNU General Public License v2 — All Rights Reserved
 ############################################################################
 
-# don't use set -e — arithmetic like (( x++ )) returns 1 on zero and kills the script
 set -uo pipefail
 
 readonly VERSION="1.0.0-Kinetictyl"
 readonly LOG="/tmp/kinetictyl-installer.log"
 readonly PANEL_REPO="https://github.com/xAyan55/kinetictyl.git"
-readonly DAEMON_RELEASE_API="https://api.github.com/repos/xAyan55/cynex/releases/latest"
 
 PNPM_REGISTRY="https://registry.npmjs.org"
 PNPM="pnpm"
@@ -32,7 +20,7 @@ declare -a ADDONS=(
 )
 
 # =============================================================================
-# ANSI
+# ANSI & Helpers
 # =============================================================================
 ESC=$'\033'
 RESET="${ESC}[0m"
@@ -51,9 +39,6 @@ CLEAR_SCREEN="${ESC}[2J${ESC}[H"
 move_to() { printf "${ESC}[%d;%dH" "$1" "$2"; }
 clr_line() { printf "${ESC}[2K"; }
 
-# =============================================================================
-# Logging
-# =============================================================================
 log()  { echo "[$(date '+%H:%M:%S')] $*" >> "$LOG"; }
 info() { log "INFO: $*"; }
 ok()   { log "OK: $*"; }
@@ -69,7 +54,54 @@ die() {
 }
 
 # =============================================================================
-# Args
+# OS Detection
+# =============================================================================
+OS_NAME=""
+OS_VER=""
+FAM=""
+PKG=""
+
+detect_os() {
+    if [[ -f /etc/os-release ]]; then
+        . /etc/os-release
+        OS_NAME="${NAME:-linux}"
+        OS_VER="${VERSION_ID:-0}"
+    fi
+
+    if [[ -f /etc/debian_version ]]; then
+        FAM="debian"
+        PKG="apt-get"
+    elif [[ -f /etc/redhat-release || -f /etc/fedora-release ]]; then
+        FAM="redhat"
+        PKG="dnf"
+        command -v dnf &>/dev/null || PKG="yum"
+    elif [[ -f /etc/arch-release ]]; then
+        FAM="arch"
+        PKG="pacman"
+    elif [[ -f /etc/alpine-release ]]; then
+        FAM="alpine"
+        PKG="apk"
+    else
+        die "Unsupported distribution: ${OS_NAME}"
+    fi
+
+    log "OS: ${OS_NAME} ${OS_VER} (family: ${FAM}, pkg: ${PKG})"
+}
+
+pkg_install() {
+    case "$FAM" in
+        debian)
+            DEBIAN_FRONTEND=noninteractive apt-get update -qq -y &>/dev/null || true
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$@" &>/dev/null
+            ;;
+        redhat) $PKG install -y -q "$@" &>/dev/null ;;
+        arch)   pacman -Sy --noconfirm --needed "$@" &>/dev/null ;;
+        alpine) apk add --no-cache "$@" &>/dev/null ;;
+    esac
+}
+
+# =============================================================================
+# CLI Args
 # =============================================================================
 ARG_MODE=""
 ARG_NAME=""
@@ -100,7 +132,7 @@ noninteractive() {
 }
 
 # =============================================================================
-# Non-interactive spinner
+# Non-interactive UI
 # =============================================================================
 NI_STEP=0
 NI_TOTAL=0
@@ -108,22 +140,40 @@ _NI_SPIN_CHARS=('-' '\' '|' '/')
 
 ni_header() {
     printf "\n"
-    printf "  ____ _   _ _   _ _______  __\n"
-    printf " / ___| \ | | \ | | ____\ \/ /\n"
-    printf "| |   |  \| |  \| |  _|  \  / \n"
-    printf "| |___| |\  | |\  | |___ /  \ \n"
-    printf " \____|_| \_|_| \_|_____/_/\_\\\n"
+    printf "  _  ___ netictyl\n"
+    printf " | |/ (_)_ __   ___| |_(_) ___| |_ _   _ |\n"
+    printf " | ' /| | '_ \ / _ \ __| |/ __| __| | | | |\n"
+    printf " | . \| | | | |  __/ |_| | (__| |_| |_| | |\n"
+    printf " |_|\_\_|_| |_|\___|\__|_|\___|\__|\__,_|_|\n"
     printf "\n"
-    printf "  ${BOLD}CynexGP Installer${RESET} ${C_GRAY}v${VERSION}${RESET}  ${C_GRAY}%s${RESET}\n\n" "$(date '+%Y-%m-%d %H:%M:%S')"
+    printf "  ${BOLD}Kinetictyl Installer${RESET} ${C_GRAY}v${VERSION}${RESET}  ${C_GRAY}%s${RESET}\n\n" "$(date '+%Y-%m-%d %H:%M:%S')"
 }
 
 ni_start() { NI_TOTAL="$1"; NI_STEP=0; }
+
+parse_status_line() {
+    local line="$1"
+    if [[ "$line" =~ "Packages:".*"installed" ]]; then
+        echo "pnpm: $(echo "$line" | grep -o '[0-9]* installed' | head -1) packages"
+        return
+    fi
+    if [[ "$line" =~ "Cloning into" ]]; then
+        echo "git: cloning repository"
+        return
+    fi
+    if [[ "$line" =~ ^"Get:" ]]; then
+        echo "apt: fetching packages"
+        return
+    fi
+    local stripped; stripped=$(echo "$line" | sed 's/^[[:space:]]*//' | tr -cd '[:print:]')
+    [[ -n "$stripped" ]] && echo "${stripped}" || echo ""
+}
 
 ni_run() {
     local label="$1"; shift
     NI_STEP=$(( NI_STEP + 1 ))
     local fi=0
-    local outfile; outfile=$(mktemp /tmp/al-step-XXXXXX)
+    local outfile; outfile=$(mktemp /tmp/kt-step-XXXXXX)
     local out_lines=6
 
     "$@" >"$outfile" 2>&1 &
@@ -179,7 +229,7 @@ ni_run() {
 }
 
 # =============================================================================
-# TUI engine
+# TUI Engine
 # =============================================================================
 TERM_ROWS=24
 TERM_COLS=80
@@ -281,11 +331,11 @@ read_key() {
 _INSTALLING=0
 
 _BANNER=(
-    "  ____ _   _ _   _ _______  __"
-    " / ___| \ | | \ | | ____\ \/ /"
-    "| |   |  \| |  \| |  _|  \  / "
-    "| |___| |\  | |\  | |___ /  \ "
-    " \____|_| \_|_| \_|_____/_/\_\\"
+    "  _  ___ netictyl"
+    " | |/ (_)_ __   ___| |_(_) ___| |_ _   _ |"
+    " | ' /| | '_ \ / _ \ __| |/ __| __| | | | |"
+    " | . \| | | | |  __/ |_| | (__| |_| |_| | |"
+    " |_|\_\_|_| |_|\___|\__|_|\___|\__|\__,_|_|"
     ""
     "  GNU General Public License v2 -- All Rights Reserved"
 )
@@ -306,9 +356,6 @@ draw_banner() {
     done
 }
 
-# =============================================================================
-# Main menu
-# =============================================================================
 TUI_RESULT=0
 
 tui_menu() {
@@ -392,166 +439,55 @@ tui_menu() {
     done
 }
 
-# =============================================================================
-# Multi-select checklist
-# =============================================================================
-TUI_MULTI=""
-
-tui_checklist() {
-    local title="$1"; shift
-    local -a items=("$@")
-    local count=${#items[@]}
-    local cursor=0
-    declare -a checked
-    for (( i = 0; i < count; i++ )); do checked[$i]=0; done
-
-    tui_measure
-
-    local max_item_len=0
-    local i
-    for (( i = 0; i < count; i++ )); do
-        local iw=${#items[$i]}
-        [[ $iw -gt $max_item_len ]] && max_item_len=$iw
-    done
-    local box_w=$(( max_item_len + 14 ))
-    [[ $box_w -lt 50 ]] && box_w=50
-    [[ $box_w -gt $(( TERM_COLS - 4 )) ]] && box_w=$(( TERM_COLS - 4 ))
-
-    local box_h=$(( count + 6 ))
-    local box_r=$(( (TERM_ROWS - box_h) / 2 ))
-    local box_c=$(( (TERM_COLS - box_w) / 2 ))
-    [[ $box_r -lt 1 ]] && box_r=1
-    [[ $box_c -lt 1 ]] && box_c=1
-    local inner=$(( box_w - 2 ))
-
-    while true; do
-        printf "%b" "${CLEAR_SCREEN}"
-        tui_box "$box_r" "$box_c" "$box_w" "$box_h" "$title"
-
-        move_to $(( box_r + 1 )) $(( box_c + 2 ))
-        printf "${DIM}%-${inner}s${RESET}" "space/num toggle  enter confirm  q skip"
-
-        tui_hline $(( box_r + 2 )) "$box_c" "$box_w"
-
-        for (( i = 0; i < count; i++ )); do
-            move_to $(( box_r + 3 + i )) $(( box_c + 1 ))
-            local num=$(( i + 1 ))
-            local mark="[ ]"
-            [[ ${checked[$i]} -eq 1 ]] && mark="[x]"
-            local label=" [${num}] ${mark} ${items[$i]}"
-            if [[ $i -eq $cursor ]]; then
-                printf "${REV}%-${inner}s${RESET}" "$label"
-            else
-                printf "%-${inner}s" "$label"
-            fi
-        done
-
-        read_key
-        case "$_KEY" in
-            UP|k)   [[ $cursor -gt 0 ]]              && cursor=$(( cursor - 1 )) ;;
-            DOWN|j) [[ $cursor -lt $(( count-1 )) ]] && cursor=$(( cursor + 1 )) ;;
-            SPACE)
-                if [[ ${checked[$cursor]} -eq 1 ]]; then checked[$cursor]=0; else checked[$cursor]=1; fi
-                ;;
-            [0-9])
-                local np="${_KEY}"
-                if [[ $np -lt $count ]]; then
-                    if [[ ${checked[$np]} -eq 1 ]]; then checked[$np]=0; else checked[$np]=1; fi
-                    cursor=$np
-                fi
-                ;;
-            ENTER)
-                TUI_MULTI=""
-                for (( i = 0; i < count; i++ )); do
-                    [[ ${checked[$i]} -eq 1 ]] && TUI_MULTI="${TUI_MULTI} $i"
-                done
-                TUI_MULTI="${TUI_MULTI# }"
-                return 0
-                ;;
-            ESC|q|Q)
-                if [[ $_INSTALLING -eq 0 ]]; then
-                    TUI_MULTI=""
-                    return 1
-                fi
-                ;;
-        esac
-    done
-}
-
-# =============================================================================
-# Text input
-# =============================================================================
 TUI_INPUT=""
 
 tui_input() {
-    local prompt="$1"
-    local default="${2:-}"
-    local value="$default"
-    local error_msg="${3:-}"
-
+    local prompt="$1" default_val="${2:-}" err_msg="${3:-}"
     tui_measure
-
-    local box_w=$(( TERM_COLS / 2 + 10 ))
-    [[ $box_w -lt 50 ]] && box_w=50
-    [[ $box_w -gt $(( TERM_COLS - 4 )) ]] && box_w=$(( TERM_COLS - 4 ))
-
-    local box_h=9
-    [[ -n "$error_msg" ]] && box_h=10
+    local box_w=60 box_h=9
     local box_r=$(( (TERM_ROWS - box_h) / 2 ))
     local box_c=$(( (TERM_COLS - box_w) / 2 ))
-    [[ $box_r -lt 1 ]] && box_r=1
-    [[ $box_c -lt 1 ]] && box_c=1
     local inner=$(( box_w - 2 ))
-    local field_w=$(( box_w - 8 ))
 
-    stty echo 2>/dev/null || true
+    local val="$default_val"
 
     while true; do
         printf "%b" "${CLEAR_SCREEN}"
         tui_box "$box_r" "$box_c" "$box_w" "$box_h" "Input"
 
-        move_to $(( box_r + 1 )) $(( box_c + 3 ))
-        printf "%-${inner}s" "$prompt"
+        move_to $(( box_r + 1 )) $(( box_c + 2 ))
+        printf "${BOLD}%-${inner}s${RESET}" "$prompt"
 
-        if [[ -n "$error_msg" ]]; then
-            move_to $(( box_r + 2 )) $(( box_c + 3 ))
-            printf "${C_RED}%-${inner}s${RESET}" "$error_msg"
+        if [[ -n "$err_msg" ]]; then
+            move_to $(( box_r + 2 )) $(( box_c + 2 ))
+            printf "${C_RED}%-${inner}s${RESET}" "$err_msg"
         fi
 
-        local field_row=$(( box_r + 4 ))
-        move_to "$field_row" $(( box_c + 3 ))
-        printf "+%s+" "$(printf '%*s' "$field_w" '' | tr ' ' '-')"
+        move_to $(( box_r + 4 )) $(( box_c + 2 ))
+        printf "> ${REV}%-${inner}s${RESET}" "$val"
 
-        move_to $(( field_row + 1 )) $(( box_c + 3 ))
-        local display="${value}"
-        if [[ ${#display} -gt $(( field_w - 2 )) ]]; then
-            display="${display: -$(( field_w - 2 ))}"
-        fi
-        printf "| %-$(( field_w - 2 ))s |" "$display"
-
-        move_to $(( field_row + 2 )) $(( box_c + 3 ))
-        printf "+%s+" "$(printf '%*s' "$field_w" '' | tr ' ' '-')"
-
-        move_to $(( box_r + box_h - 2 )) $(( box_c + 3 ))
-        printf "${DIM}%-${inner}s${RESET}" "esc = restore default   enter = confirm"
-
-        local cursor_x=$(( box_c + 5 + ${#value} ))
-        if [[ $cursor_x -gt $(( box_c + 3 + field_w - 1 )) ]]; then
-            cursor_x=$(( box_c + 3 + field_w - 1 ))
-        fi
-        move_to $(( field_row + 1 )) "$cursor_x"
-        printf "%b" "${SHOW_CURSOR}"
+        move_to $(( box_r + 6 )) $(( box_c + 2 ))
+        printf "${DIM}%-${inner}s${RESET}" "enter submit  backspace edit"
 
         read_key
-        printf "%b" "${HIDE_CURSOR}"
         case "$_KEY" in
-            ENTER)     TUI_INPUT="$value"; stty -echo 2>/dev/null || true; return 0 ;;
-            BACKSPACE) [[ ${#value} -gt 0 ]] && value="${value%?}" ;;
-            ESC)       value="$default" ;;
-            UP|DOWN|LEFT|RIGHT) : ;;
+            ENTER)
+                TUI_INPUT="$val"
+                return 0
+                ;;
+            BACKSPACE)
+                [[ ${#val} -gt 0 ]] && val="${val:0:-1}"
+                ;;
+            ESC)
+                TUI_INPUT="$default_val"
+                return 0
+                ;;
+            SPACE)
+                val="${val} "
+                ;;
             *)
-                if [[ ${#_KEY} -eq 1 && "$_KEY" =~ [[:print:]] ]]; then
-                    value="${value}${_KEY}"
+                if [[ ${#_KEY} -eq 1 ]]; then
+                    val="${val}${_KEY}"
                 fi
                 ;;
         esac
@@ -559,450 +495,52 @@ tui_input() {
 }
 
 # =============================================================================
-# Password input
-# =============================================================================
-tui_password() {
-    local prompt="$1"
-    local error_msg="${2:-}"
-    local value=""
-
-    tui_measure
-
-    local box_w=$(( TERM_COLS / 2 + 10 ))
-    [[ $box_w -lt 50 ]] && box_w=50
-    [[ $box_w -gt $(( TERM_COLS - 4 )) ]] && box_w=$(( TERM_COLS - 4 ))
-
-    local box_h=9
-    [[ -n "$error_msg" ]] && box_h=10
-    local box_r=$(( (TERM_ROWS - box_h) / 2 ))
-    local box_c=$(( (TERM_COLS - box_w) / 2 ))
-    [[ $box_r -lt 1 ]] && box_r=1
-    [[ $box_c -lt 1 ]] && box_c=1
-    local inner=$(( box_w - 2 ))
-    local field_w=$(( box_w - 8 ))
-
-    while true; do
-        printf "%b" "${CLEAR_SCREEN}"
-        tui_box "$box_r" "$box_c" "$box_w" "$box_h" "Password"
-
-        move_to $(( box_r + 1 )) $(( box_c + 3 ))
-        printf "%-${inner}s" "$prompt"
-
-        if [[ -n "$error_msg" ]]; then
-            move_to $(( box_r + 2 )) $(( box_c + 3 ))
-            printf "${C_RED}%-${inner}s${RESET}" "$error_msg"
-        fi
-
-        local masked; masked=$(printf '%*s' "${#value}" '' | tr ' ' '*')
-        local field_row=$(( box_r + 4 ))
-        move_to "$field_row" $(( box_c + 3 ))
-        printf "+%s+" "$(printf '%*s' "$field_w" '' | tr ' ' '-')"
-        move_to $(( field_row + 1 )) $(( box_c + 3 ))
-        printf "| %-$(( field_w - 2 ))s |" "$masked"
-        move_to $(( field_row + 2 )) $(( box_c + 3 ))
-        printf "+%s+" "$(printf '%*s' "$field_w" '' | tr ' ' '-')"
-
-        move_to $(( box_r + box_h - 2 )) $(( box_c + 3 ))
-        printf "${DIM}%-${inner}s${RESET}" "esc = clear   enter = confirm"
-
-        read_key
-        case "$_KEY" in
-            ENTER)     TUI_INPUT="$value"; return 0 ;;
-            BACKSPACE) [[ ${#value} -gt 0 ]] && value="${value%?}" ;;
-            ESC)       value="" ;;
-            UP|DOWN|LEFT|RIGHT) : ;;
-            *)
-                if [[ ${#_KEY} -eq 1 && "$_KEY" =~ [[:print:]] ]]; then
-                    value="${value}${_KEY}"
-                fi
-                ;;
-        esac
-    done
-}
-
-# =============================================================================
-# Confirm dialog
-# =============================================================================
-tui_confirm() {
-    local prompt="$1"
-    local selected=0
-
-    tui_measure
-
-    local box_w=52
-    [[ $box_w -gt $(( TERM_COLS - 4 )) ]] && box_w=$(( TERM_COLS - 4 ))
-    local box_h=7
-    local box_r=$(( (TERM_ROWS - box_h) / 2 ))
-    local box_c=$(( (TERM_COLS - box_w) / 2 ))
-    [[ $box_r -lt 1 ]] && box_r=1
-    [[ $box_c -lt 1 ]] && box_c=1
-    local inner=$(( box_w - 2 ))
-
-    while true; do
-        printf "%b" "${CLEAR_SCREEN}"
-        tui_box "$box_r" "$box_c" "$box_w" "$box_h" "Confirm"
-
-        move_to $(( box_r + 2 )) $(( box_c + 3 ))
-        printf "%-${inner}s" "$prompt"
-
-        move_to $(( box_r + 4 )) $(( box_c + 10 ))
-        if [[ $selected -eq 0 ]]; then
-            printf "${REV}  yes  ${RESET}       no  "
-        else
-            printf "  yes        ${REV}  no  ${RESET}"
-        fi
-
-        move_to $(( box_r + 6 )) $(( box_c + 3 ))
-        printf "${DIM}%-${inner}s${RESET}" "left/right or h/l  y/n  enter confirm"
-
-        read_key
-        case "$_KEY" in
-            LEFT|h|H)  selected=0 ;;
-            RIGHT|l|L) selected=1 ;;
-            y|Y)       return 0 ;;
-            n|N)       return 1 ;;
-            ENTER)     return $selected ;;
-            q|Q|ESC)   return 1 ;;
-        esac
-    done
-}
-
-# =============================================================================
-# Spinner for quick tasks in TUI
-# =============================================================================
-tui_run() {
-    local label="$1"; shift
-
-    tui_measure
-    local box_w=62
-    [[ $box_w -gt $(( TERM_COLS - 4 )) ]] && box_w=$(( TERM_COLS - 4 ))
-    local row=$(( TERM_ROWS - 4 ))
-    local col=$(( (TERM_COLS - box_w) / 2 ))
-    [[ $col -lt 1 ]] && col=1
-
-    move_to "$row"          "$col"; printf "+%s+" "$(printf '%*s' $(( box_w - 2 )) '' | tr ' ' '-')"
-    move_to $(( row + 1 )) "$col"; printf "| %-$(( box_w - 4 ))s  |" "$label"
-    move_to $(( row + 2 )) "$col"; printf "+%s+" "$(printf '%*s' $(( box_w - 2 )) '' | tr ' ' '-')"
-
-    "$@" &>/dev/null &
-    local pid=$!
-    local fi=0
-    local spin_col=$(( col + box_w - 3 ))
-    while kill -0 "$pid" 2>/dev/null; do
-        move_to $(( row + 1 )) "$spin_col"
-        printf "${_NI_SPIN_CHARS[$fi]}"
-        fi=$(( (fi + 1) % 4 ))
-        sleep 0.1
-    done
-    wait "$pid"
-    local status=$?
-
-    move_to $(( row + 1 )) "$spin_col"
-    if [[ $status -eq 0 ]]; then
-        printf "${C_GREEN}*${RESET}"; log "OK: $label"
-    else
-        printf "${C_RED}!${RESET}"; log "ERROR: $label failed"
-        sleep 0.8
-        tui_cleanup
-        die "$label failed"
-    fi
-    sleep 0.4
-    move_to "$row"          "$col"; printf "%${box_w}s" ""
-    move_to $(( row + 1 )) "$col"; printf "%${box_w}s" ""
-    move_to $(( row + 2 )) "$col"; printf "%${box_w}s" ""
-}
-
-# =============================================================================
-# Full-screen progress view
-# =============================================================================
-PROGRESS_TASKS=()
-PROGRESS_CURRENT=0
-
-tui_progress_init() { PROGRESS_TASKS=("$@"); PROGRESS_CURRENT=0; }
-
-tui_progress_draw() {
-    local total=${#PROGRESS_TASKS[@]}
-    printf "%b" "${CLEAR_SCREEN}"
-    tui_measure
-
-    local box_w=$(( TERM_COLS - 8 ))
-    [[ $box_w -lt 54 ]] && box_w=54
-    [[ $box_w -gt 90 ]] && box_w=90
-
-    local box_h=$(( total + 9 ))
-    local box_r=$(( (TERM_ROWS - box_h) / 2 ))
-    [[ $box_r -lt 1 ]] && box_r=1
-    local box_c=$(( (TERM_COLS - box_w) / 2 ))
-    [[ $box_c -lt 1 ]] && box_c=1
-    local inner=$(( box_w - 2 ))
-    local bar_w=$(( box_w - 10 ))
-
-    tui_box "$box_r" "$box_c" "$box_w" "$box_h" "Installing"
-
-    move_to $(( box_r + 1 )) $(( box_c + 3 ))
-    printf "${DIM}CynexGP v${VERSION}${RESET}"
-    tui_hline $(( box_r + 2 )) "$box_c" "$box_w"
-
-    local i
-    for (( i = 0; i < total; i++ )); do
-        move_to $(( box_r + 3 + i )) $(( box_c + 3 ))
-        if [[ $i -lt $PROGRESS_CURRENT ]]; then
-            printf "${C_GREEN}[+]${RESET} ${DIM}%-$(( inner - 6 ))s${RESET}" "${PROGRESS_TASKS[$i]}"
-        elif [[ $i -eq $PROGRESS_CURRENT ]]; then
-            printf "${C_CYAN}[>]${RESET} ${BOLD}%-$(( inner - 6 ))s${RESET}" "${PROGRESS_TASKS[$i]}"
-        else
-            printf "${DIM}[ ] %-$(( inner - 6 ))s${RESET}" "${PROGRESS_TASKS[$i]}"
-        fi
-    done
-
-    tui_hline $(( box_r + box_h - 4 )) "$box_c" "$box_w"
-
-    local pct=0
-    [[ $total -gt 0 ]] && pct=$(( PROGRESS_CURRENT * 100 / total ))
-    local filled=$(( pct * bar_w / 100 ))
-    local empty=$(( bar_w - filled ))
-
-    move_to $(( box_r + box_h - 3 )) $(( box_c + 3 ))
-    printf "[%s%s] %3d%%" \
-        "$(printf '%*s' "$filled" '' | tr ' ' '#')" \
-        "$(printf '%*s' "$empty"  '' | tr ' ' ' ')" \
-        "$pct"
-
-    _PBOX_R=$box_r; _PBOX_C=$box_c; _PBOX_W=$box_w; _PBOX_H=$box_h
-}
-
-_PBOX_R=0; _PBOX_C=0; _PBOX_W=0; _PBOX_H=0
-
-tui_progress_step() {
-    tui_progress_draw
-
-    local spinner_row=$(( _PBOX_R + 3 + PROGRESS_CURRENT ))
-    local spinner_col=$(( _PBOX_C + _PBOX_W - 4 ))
-    local out_row=$(( _PBOX_R + _PBOX_H + 1 ))
-    local out_lines=6
-    local out_w=$(( _PBOX_W - 4 ))
-    [[ $out_w -lt 20 ]] && out_w=20
-
-    local outfile; outfile=$(mktemp /tmp/al-step-XXXXXX)
-
-    "$@" >"$outfile" 2>&1 &
-    local pid=$!
-    local fi=0
-
-    while kill -0 "$pid" 2>/dev/null; do
-        move_to "$spinner_row" "$spinner_col"
-        printf "${C_CYAN}%s${RESET}" "${_NI_SPIN_CHARS[$fi]}"
-        fi=$(( (fi + 1) % 4 ))
-
-        local last_line raw_status
-        last_line=$(grep -v '^[[:space:]]*$' "$outfile" 2>/dev/null | tail -1)
-        raw_status=$(parse_status_line "$last_line")
-        if [[ $(( out_row - 1 )) -lt $TERM_ROWS && -n "$raw_status" ]]; then
-            move_to $(( out_row - 1 )) $(( _PBOX_C + 2 ))
-            printf "${C_YELLOW}status:${RESET} ${DIM}%-$(( out_w - 8 )).$(( out_w - 8 ))s${RESET}" "$raw_status"
-        fi
-
-        local li=0
-        while IFS= read -r line; do
-            if [[ $(( out_row + li )) -lt $TERM_ROWS ]]; then
-                move_to $(( out_row + li )) $(( _PBOX_C + 2 ))
-                printf "${DIM}%-${out_w}.${out_w}s${RESET}" "$line"
-            fi
-            li=$(( li + 1 ))
-        done < <(tail -n${out_lines} "$outfile" 2>/dev/null)
-        while [[ $li -lt $out_lines ]]; do
-            if [[ $(( out_row + li )) -lt $TERM_ROWS ]]; then
-                move_to $(( out_row + li )) $(( _PBOX_C + 2 ))
-                printf "%-${out_w}s" ""
-            fi
-            li=$(( li + 1 ))
-        done
-
-        sleep 0.1
-    done
-
-    wait "$pid"
-    local status=$?
-
-    if [[ $(( out_row - 1 )) -lt $TERM_ROWS ]]; then
-        move_to $(( out_row - 1 )) $(( _PBOX_C + 2 ))
-        printf "%-${out_w}s" ""
-    fi
-    local li
-    for (( li = 0; li < out_lines; li++ )); do
-        if [[ $(( out_row + li )) -lt $TERM_ROWS ]]; then
-            move_to $(( out_row + li )) $(( _PBOX_C + 2 ))
-            printf "%-${out_w}s" ""
-        fi
-    done
-
-    move_to "$spinner_row" "$spinner_col"
-    if [[ $status -eq 0 ]]; then
-        printf "   "
-        log "OK: ${PROGRESS_TASKS[$PROGRESS_CURRENT]}"
-        PROGRESS_CURRENT=$(( PROGRESS_CURRENT + 1 ))
-    else
-        local err_out; err_out=$(tail -n20 "$outfile" 2>/dev/null || true)
-        rm -f "$outfile"
-        log "ERROR: ${PROGRESS_TASKS[$PROGRESS_CURRENT]}"
-        tui_cleanup
-        printf "\n${BOLD}  Step failed:${RESET} %s\n\n%s\n\n" "${PROGRESS_TASKS[$PROGRESS_CURRENT]}" "$err_out"
-        exit 1
-    fi
-
-    rm -f "$outfile"
-    sleep 0.05
-}
-
-tui_progress_finish() {
-    PROGRESS_CURRENT=${#PROGRESS_TASKS[@]}
-    tui_progress_draw
-    sleep 1
-}
-
-# =============================================================================
-# OS detection
-# =============================================================================
-OS="" VER="" FAM="" PKG=""
-
-detect_os() {
-    [[ -f /etc/os-release ]] || die "Cannot detect OS — /etc/os-release missing"
-    OS=$(grep '^ID='          /etc/os-release | cut -d= -f2 | tr -d '"')
-    VER=$(grep '^VERSION_ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
-
-    case "$OS" in
-        ubuntu|debian|linuxmint|pop|raspbian) FAM="debian"; PKG="apt" ;;
-        fedora|centos|rhel|rocky|almalinux|ol)
-            FAM="redhat"
-            if command -v dnf &>/dev/null; then PKG="dnf"; else PKG="yum"; fi
-            ;;
-        arch|manjaro|endeavouros) FAM="arch"; PKG="pacman" ;;
-        alpine) FAM="alpine"; PKG="apk" ;;
-        *) die "Unsupported OS: $OS. Supported: Ubuntu/Debian/Fedora/RHEL/Arch/Alpine" ;;
-    esac
-    log "Detected OS: $OS $VER ($FAM)"
-}
-
-pkg_install() {
-    case "$PKG" in
-        apt)
-            DEBIAN_FRONTEND=noninteractive apt-get update --allow-releaseinfo-change -qq || true
-            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$@"
-            ;;
-        dnf|yum) $PKG install -y -q "$@" ;;
-        pacman)  pacman -Sy --noconfirm --needed "$@" ;;
-        apk)     apk add --no-cache -q "$@" ;;
-    esac
-}
-
-# =============================================================================
-# Dep check
+# Dependencies Setup
 # =============================================================================
 ensure_deps() {
-    local deps=(curl wget git openssl unzip)
+    local deps=(curl wget git openssl unzip tar)
     local missing=()
     for d in "${deps[@]}"; do
         command -v "$d" &>/dev/null || missing+=("$d")
     done
     if [[ ${#missing[@]} -gt 0 ]]; then
-        log "Installing missing: ${missing[*]}"
+        log "Installing missing base packages: ${missing[*]}"
         pkg_install "${missing[@]}"
-    fi
-    for d in "${deps[@]}"; do
-        command -v "$d" &>/dev/null || die "Failed to install: $d"
-    done
-}
-
-# =============================================================================
-# Node.js
-# =============================================================================
-get_latest_node_lts() {
-    local idx
-    idx=$(curl -fsSL --max-time 15 "https://nodejs.org/dist/index.json" 2>/dev/null) || {
-        log "WARN: can't fetch node index, defaulting to 22"
-        echo "22"; return
-    }
-    local lts_ver
-    lts_ver=$(echo "$idx" | python3 -c "
-import json,sys
-data=json.load(sys.stdin)
-for r in data:
-    if r.get('lts') and r['lts'] is not False:
-        print(r['version'].lstrip('v').split('.')[0])
-        break
-" 2>/dev/null) || true
-    if [[ -z "$lts_ver" || ! "$lts_ver" =~ ^[0-9]+$ ]]; then
-        log "WARN: can't parse LTS version, defaulting to 22"
-        echo "22"
-    else
-        echo "$lts_ver"
-    fi
-}
-
-select_npm_registry() {
-    local geo
-    geo=$(curl -fsSL --max-time 8 "http://ip-api.com/json/?fields=continentCode,countryCode" 2>/dev/null || echo "")
-
-    local continent
-    continent=$(echo "$geo" | grep -o '"continentCode":"[^"]*"' | cut -d'"' -f4)
-
-    case "$continent" in
-        AS) PNPM_REGISTRY="https://registry.npmmirror.com"; log "Registry: npmmirror.com (Asia)" ;;
-        *)  PNPM_REGISTRY="https://registry.npmjs.org";     log "Registry: npmjs.org (default)"  ;;
-    esac
-
-    if ! curl -fsSL --max-time 6 "${PNPM_REGISTRY}/npm" -o /dev/null 2>/dev/null; then
-        log "WARN: $PNPM_REGISTRY unreachable, falling back"
-        PNPM_REGISTRY="https://registry.npmjs.org"
     fi
 }
 
 setup_node() {
-    local desired_major
-    desired_major=$(get_latest_node_lts)
-    log "Latest Node LTS: $desired_major"
-
+    log "Checking Node.js 20 LTS..."
     if command -v node &>/dev/null; then
         local current_major
         current_major=$(node -e "console.log(process.versions.node.split('.')[0])" 2>/dev/null || echo "0")
-        if [[ "$current_major" == "$desired_major" ]]; then
-            log "Node.js $desired_major already installed ($(node -v))"
+        if [[ "$current_major" == "20" || "$current_major" == "22" ]]; then
+            log "Node.js $(node -v) is ready"
         else
-            log "Node mismatch: have $current_major, want $desired_major — upgrading"
-            _install_node "$desired_major"
+            log "Upgrading Node.js to 20 LTS"
+            _install_node_20
         fi
     else
-        _install_node "$desired_major"
+        _install_node_20
     fi
 
     command -v node &>/dev/null || die "Node.js install failed"
     log "Node.js $(node -v) ready"
 
-    select_npm_registry
-
     if ! command -v pnpm &>/dev/null; then
-        echo "Installing pnpm..."
-        npm install -g pnpm --registry "${PNPM_REGISTRY}" &>/dev/null \
-            || npm install -g pnpm &>/dev/null \
-            || die "pnpm install failed"
+        npm install -g pnpm pm2 &>/dev/null || die "pnpm/pm2 install failed"
     fi
     PNPM=$(command -v pnpm)
-
-    "$PNPM" config set registry "${PNPM_REGISTRY}" &>/dev/null || true
-    npm    config set registry "${PNPM_REGISTRY}" &>/dev/null || true
-
-    log "pnpm $("$PNPM" -v 2>/dev/null) ready, registry: ${PNPM_REGISTRY}"
 }
 
-_install_node() {
-    local desired_major="$1"
+_install_node_20() {
     case "$FAM" in
         debian)
-            curl -fsSL "https://deb.nodesource.com/setup_${desired_major}.x" | bash -
+            curl -fsSL "https://deb.nodesource.com/setup_20.x" | bash -
             DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nodejs
             ;;
         redhat)
-            curl -fsSL "https://rpm.nodesource.com/setup_${desired_major}.x" | bash -
+            curl -fsSL "https://rpm.nodesource.com/setup_20.x" | bash -
             $PKG install -y -q nodejs
             ;;
         arch)   pacman -Sy --noconfirm --needed nodejs npm ;;
@@ -1010,200 +548,93 @@ _install_node() {
     esac
 }
 
-# =============================================================================
-# Docker
-# =============================================================================
-setup_docker() {
-    if command -v docker &>/dev/null; then
-        log "Docker already installed: $(docker --version 2>/dev/null | head -1)"
-        systemctl is-active --quiet docker || systemctl enable --now docker &>/dev/null || true
+setup_java() {
+    log "Checking OpenJDK Java installation..."
+    if command -v java &>/dev/null; then
+        log "Java already installed: $(java -version 2>&1 | head -1)"
         return 0
     fi
 
-    log "Installing Docker..."
-    if [[ "$FAM" == "debian" ]]; then
-        DEBIAN_FRONTEND=noninteractive apt-get update --allow-releaseinfo-change -y || true
-    fi
+    log "Installing OpenJDK 17/21..."
     case "$FAM" in
-        debian|redhat) curl -fsSL https://get.docker.com | sh ;;
-        arch)   pacman -Sy --noconfirm --needed docker docker-compose ;;
-        alpine) apk add --no-cache docker docker-compose; rc-update add docker boot &>/dev/null || true ;;
+        debian)
+            DEBIAN_FRONTEND=noninteractive apt-get update -qq -y || true
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openjdk-17-jre-headless || \
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq default-jre
+            ;;
+        redhat) $PKG install -y -q java-17-openjdk-headless || $PKG install -y -q java-latest-openjdk-headless ;;
+        arch)   pacman -Sy --noconfirm --needed jre17-openjdk-headless ;;
+        alpine) apk add --no-cache openjdk17-jre-headless ;;
     esac
 
-    if command -v systemctl &>/dev/null; then
-        systemctl enable --now docker &>/dev/null || true
-    fi
-
-    command -v docker &>/dev/null || die "Docker install failed"
-    log "Docker: $(docker --version 2>/dev/null | head -1)"
+    command -v java &>/dev/null || die "Java OpenJDK installation failed"
+    log "Java: $(java -version 2>&1 | head -1)"
 }
 
-# =============================================================================
-# Validation helpers
-# =============================================================================
 valid_port() { [[ "$1" =~ ^[0-9]+$ ]] && [[ "$1" -ge 1 ]] && [[ "$1" -le 65535 ]]; }
-get_addon_field() { echo "$1" | cut -d'|' -f"$2"; }
 
 # =============================================================================
-# Status line parser
+# Panel & Agent Installation Phases
 # =============================================================================
-parse_status_line() {
-    local line="$1"
+PANEL_NAME="Kinetictyl"
+PANEL_PORT="3000"
+PANEL_ADDRESS="127.0.0.1"
+DAEMON_PORT="3001"
+DAEMON_KEY=""
 
-    if [[ "$line" =~ "Packages:".*"installed" ]]; then
-        echo "pnpm: $(echo "$line" | grep -o '[0-9]* installed' | head -1) packages"
-        return
-    fi
-    if [[ "$line" =~ "Progress: resolved" ]]; then
-        local resolved; resolved=$(echo "$line" | grep -o 'resolved [0-9]*' | grep -o '[0-9]*')
-        local downloaded; downloaded=$(echo "$line" | grep -o 'downloaded [0-9]*' | grep -o '[0-9]*')
-        echo "resolving — ${resolved:-?} resolved, ${downloaded:-0} downloaded"
-        return
-    fi
-    if [[ "$line" =~ " +[0-9]+ packages" && "$line" =~ "node_modules" ]]; then
-        echo "linking: $line" | sed 's/^ *//'
-        return
-    fi
-    if [[ "$line" =~ ^"added "[0-9]+" packages" ]]; then
-        echo "${line}"; return
-    fi
-    if [[ "$line" =~ ^"npm warn" || "$line" =~ ^"npm WARN" ]]; then
-        echo "npm: $(echo "$line" | sed 's/^npm warn //I')"
-        return
-    fi
-    if [[ "$line" =~ "Cloning into" ]]; then
-        local repo; repo=$(echo "$line" | grep -o "'.*/.*'" | tr -d "'")
-        echo "git: cloning ${repo:-repository}"
-        return
-    fi
-    if [[ "$line" =~ "Receiving objects:" ]]; then
-        local pct; pct=$(echo "$line" | grep -o '[0-9]*%' | head -1)
-        echo "git: receiving objects ${pct:-...}"
-        return
-    fi
-    if [[ "$line" =~ "Resolving deltas:" ]]; then
-        local pct; pct=$(echo "$line" | grep -o '[0-9]*%' | head -1)
-        echo "git: resolving deltas ${pct:-...}"
-        return
-    fi
-    if [[ "$line" =~ ^"Get:" ]]; then
-        local pkg; pkg=$(echo "$line" | awk '{print $4}')
-        echo "apt: fetching ${pkg:-package}"
-        return
-    fi
-    if [[ "$line" =~ ^"Unpacking" ]]; then
-        local pkg; pkg=$(echo "$line" | awk '{print $2}')
-        echo "apt: unpacking ${pkg:-package}"
-        return
-    fi
-    if [[ "$line" =~ ^"Setting up" ]]; then
-        local pkg; pkg=$(echo "$line" | awk '{print $3}')
-        echo "apt: setting up ${pkg:-package}"
-        return
-    fi
-    if [[ "$line" =~ "Downloading" ]]; then
-        local pct; pct=$(echo "$line" | grep -o '[0-9]*%' | head -1)
-        [[ -n "$pct" ]] && echo "downloading: ${pct}" || echo "downloading..."
-        return
-    fi
-    if [[ "$line" =~ "Created symlink" ]]; then
-        echo "systemd: service enabled"; return
-    fi
-    if [[ "$line" =~ "Installing Node.js" ]]; then
-        echo "${line}" | sed 's/^ *//'
-        return
+phase_panel_clone() {
+    mkdir -p /var/www
+    local tmpdir; tmpdir=$(mktemp -d /tmp/kt-panel-XXXXXX)
+    git clone --depth 1 "${PANEL_REPO}" "$tmpdir" || die "Failed to clone repository"
+
+    if [[ -d /var/www/kinetictyl ]]; then
+        echo "Overwriting existing Kinetictyl installation..."
+        cp -rf "$tmpdir"/* /var/www/kinetictyl/
+    else
+        mkdir -p /var/www/kinetictyl
+        cp -rf "$tmpdir"/* /var/www/kinetictyl/
     fi
 
-    local stripped; stripped=$(echo "$line" | sed 's/^[[:space:]]*//' | tr -cd '[:print:]')
-    [[ -n "$stripped" ]] && echo "${stripped}" || echo ""
-}
-
-# =============================================================================
-# Platform detection (for daemon binary download)
-# =============================================================================
-detect_platform() {
-    local kernel arch
-    kernel=$(uname -s | tr '[:upper:]' '[:lower:]')
-    arch=$(uname -m)
-
-    case "$kernel" in
-        linux)  DAEMON_PLATFORM="linux" ;;
-        darwin) DAEMON_PLATFORM="macos" ;;
-        *)      die "Unsupported platform: $kernel" ;;
-    esac
-
-    case "$arch" in
-        x86_64|amd64) DAEMON_ARCH="x64" ;;
-        aarch64|arm64) DAEMON_ARCH="arm64" ;;
-        *) die "Unsupported architecture: $arch" ;;
-    esac
-
-    log "Platform: ${DAEMON_PLATFORM}-${DAEMON_ARCH}"
-}
-
-DAEMON_PLATFORM=""
-DAEMON_ARCH=""
-
-# =============================================================================
-# Daemon install — binary release
-# =============================================================================
-phase_daemon_download() {
-    detect_platform
-
-    # Install Bun if not already present
-    if ! command -v bun &>/dev/null; then
-        echo "Installing Bun..."
-        log "Installing Bun for building daemon..."
-        curl -fsSL https://bun.sh/install | bash || die "Failed to install Bun"
-        export BUN_INSTALL="$HOME/.bun"
-        export PATH="$BUN_INSTALL/bin:$PATH"
-    fi
-
-    # Ensure path is updated for root/sudo environment
-    if [[ -d "/root/.bun/bin" ]]; then
-        export PATH="/root/.bun/bin:$PATH"
-    fi
-
-    if ! command -v bun &>/dev/null; then
-        die "Bun is required to build the daemon but could not be found in PATH."
-    fi
-
-    echo "Cloning repository to build daemon..."
-    log "Cloning CynexGP repository..."
-    local tmpdir; tmpdir=$(mktemp -d /tmp/al-daemon-XXXXXX)
-    git clone --depth 1 "${PANEL_REPO}" "${tmpdir}/cynex" || die "Failed to clone repository"
-
-    echo "Installing dependencies and compiling daemon..."
-    log "Building daemon from source..."
-    cd "${tmpdir}/cynex/airlink-daemon" || die "Daemon directory missing in cloned repo"
-    
-    bun install || die "Failed to install daemon dependencies"
-    
-    local bun_target=""
-    case "${DAEMON_PLATFORM}-${DAEMON_ARCH}" in
-        linux-x64)   bun_target="bun-linux-x64" ;;
-        linux-arm64) bun_target="bun-linux-arm64" ;;
-        macos-x64)   bun_target="bun-darwin-x64" ;;
-        macos-arm64) bun_target="bun-darwin-arm64" ;;
-        *)           bun_target="bun-linux-x64" ;;
-    esac
-
-    bun build --compile --target "$bun_target" src/app.ts --outfile dist/cynexgpd || die "Failed to compile daemon binary"
-
-    mkdir -p /etc/daemon
-    cp dist/cynexgpd /etc/daemon/cynexgpd
-    chmod +x /etc/daemon/cynexgpd
-    
-    cd /
     rm -rf "$tmpdir"
+    chmod -R 755 /var/www/kinetictyl
+}
 
-    log "OK: cynexgpd binary compiled and installed to /etc/daemon/cynexgpd"
+phase_panel_deps() {
+    cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
+    NODE_ENV=development "$PNPM" install --no-frozen-lockfile || die "Panel dependency install failed"
+}
 
-    # write .env if not already present
-    if [[ ! -f /etc/daemon/.env ]]; then
-        cat > /etc/daemon/.env <<ENVEOF
-remote=${PANEL_ADDRESS}
-key=${DAEMON_KEY}
+phase_panel_build() {
+    cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
+    "$PNPM" run migrate:deploy || die "Database migration failed"
+    "$PNPM" run build || die "Panel build failed"
+
+    if [[ ! -f /var/www/kinetictyl/airlink-panel/.env ]]; then
+        local secret; secret=$(openssl rand -hex 32)
+        cat > /var/www/kinetictyl/airlink-panel/.env <<ENVEOF
+NAME=${PANEL_NAME}
+NODE_ENV=production
+URL=http://${PANEL_ADDRESS}:${PANEL_PORT}
+PORT=${PANEL_PORT}
+DATABASE_URL=file:/var/www/kinetictyl/airlink-panel/storage/dev.db
+SESSION_SECRET=${secret}
+ENVEOF
+    fi
+}
+
+phase_daemon_deps() {
+    cd /var/www/kinetictyl/airlink-daemon || die "Daemon directory missing"
+    NODE_ENV=development "$PNPM" install --no-frozen-lockfile || die "Daemon dependency install failed"
+}
+
+phase_daemon_build() {
+    cd /var/www/kinetictyl/airlink-daemon || die "Daemon directory missing"
+    "$PNPM" run build || die "Daemon build failed"
+
+    if [[ ! -f /var/www/kinetictyl/airlink-daemon/.env ]]; then
+        cat > /var/www/kinetictyl/airlink-daemon/.env <<ENVEOF
+remote=http://${PANEL_ADDRESS}:${PANEL_PORT}
+key=${DAEMON_KEY:-default_key_change_me_12345}
 port=${DAEMON_PORT}
 DEBUG=false
 version=1.0.0
@@ -1213,497 +644,88 @@ ENVEOF
     fi
 }
 
-phase_daemon_service() {
-    cat > /etc/systemd/system/cynexgpd.service <<SVCEOF
+phase_services_start() {
+    cd /var/www/kinetictyl || die "Kinetictyl root missing"
+
+    if command -v pm2 &>/dev/null; then
+        pm2 start ecosystem.config.js || true
+        pm2 save || true
+        pm2 startup || true
+    fi
+
+    cat > /etc/systemd/system/kinetictyl-panel.service <<SVCEOF
 [Unit]
-Description=CynexGP Daemon
-After=network.target docker.service
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/etc/daemon
-EnvironmentFile=/etc/daemon/.env
-ExecStart=/etc/daemon/cynexgpd
-Restart=on-failure
-RestartSec=5
-Environment=NODE_ENV=production
-
-[Install]
-WantedBy=multi-user.target
-SVCEOF
-    systemctl daemon-reload
-    systemctl enable --now cynexgpd
-}
-
-# =============================================================================
-# Panel install phases (unchanged)
-# =============================================================================
-phase_panel_clone() {
-    mkdir -p /var/www
-
-    local tmpdir; tmpdir=$(mktemp -d /tmp/al-panel-XXXXXX)
-    git clone --depth 1 "${PANEL_REPO}" "$tmpdir" || die "Failed to clone panel"
-
-    if [[ -d /var/www/panel ]]; then
-        echo "Panel already exists — overwriting files, keeping .env and db"
-        if command -v rsync &>/dev/null; then
-            rsync -a --exclude='.env' --exclude='node_modules' \
-                  --exclude='storage' "$tmpdir/airlink-panel/" /var/www/panel/
-        else
-            find "$tmpdir/airlink-panel" -mindepth 1 -maxdepth 1 \
-                ! -name '.env' ! -name 'node_modules' ! -name 'storage' \
-                -exec cp -r {} /var/www/panel/ \;
-        fi
-    else
-        mkdir -p /var/www/panel
-        cp -r "$tmpdir/airlink-panel"/. /var/www/panel/
-    fi
-
-    rm -rf "$tmpdir"
-
-    id www-data &>/dev/null && chown -R www-data:www-data /var/www/panel
-    chmod -R 755 /var/www/panel
-
-    if command -v python3 &>/dev/null; then
-        python3 - /var/www/panel/package.json <<'PYEOF'
-import json, sys
-f = sys.argv[1]
-with open(f) as fh:
-    d = json.load(fh)
-d.setdefault("pnpm", {})["onlyBuiltDependencies"] = [
-    "@parcel/watcher", "@prisma/client", "@prisma/engines", "prisma"
-]
-with open(f, "w") as fh:
-    json.dump(d, fh, indent=2)
-    fh.write("\n")
-PYEOF
-    fi
-
-    if [[ ! -f /var/www/panel/.env ]]; then
-        local secret; secret=$(openssl rand -hex 32)
-        local server_ip
-        server_ip=$(hostname -I 2>/dev/null | awk '{print $1}') || server_ip="localhost"
-        [[ -z "$server_ip" ]] && server_ip="localhost"
-        cat > /var/www/panel/.env <<ENVEOF
-NAME=${PANEL_NAME}
-NODE_ENV=production
-URL=http://${server_ip}:${PANEL_PORT}
-PORT=${PANEL_PORT}
-DATABASE_URL=file:/var/www/panel/storage/dev.db
-SESSION_SECRET=${secret}
-ENVEOF
-    fi
-}
-
-phase_panel_deps() {
-    cd /var/www/panel || die "Panel directory missing"
-
-    NODE_ENV=development "$PNPM" install --no-frozen-lockfile \
-        --network-concurrency 16 \
-        || die "Panel dependency install failed"
-
-    "$PNPM" approve-builds --all || true
-
-    "$PNPM" add chalk form-data \
-        || die "chalk/form-data install failed"
-}
-
-phase_panel_build() {
-    cd /var/www/panel || die "Panel directory missing"
-    "$PNPM" run migrate:deploy || die "Database migration failed"
-    "$PNPM" run build || die "Panel build failed"
-}
-
-phase_panel_service() {
-    local pnpm_bin; pnpm_bin=$(command -v pnpm)
-    local node_bin_dir; node_bin_dir=$(dirname "$(command -v node)")
-
-    cat > /etc/systemd/system/cynexgp-panel.service <<SVCEOF
-[Unit]
-Description=CynexGP Panel
+Description=Kinetictyl Management Panel
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/var/www/panel
-EnvironmentFile=/var/www/panel/.env
-ExecStart=${pnpm_bin} run start
+WorkingDirectory=/var/www/kinetictyl/airlink-panel
+EnvironmentFile=/var/www/kinetictyl/airlink-panel/.env
+ExecStart=$(command -v node) dist/index.js
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
-Environment=PATH=${node_bin_dir}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 [Install]
 WantedBy=multi-user.target
 SVCEOF
-    systemctl daemon-reload
-    systemctl enable --now cynexgp-panel
-    _process_addons
+
+    cat > /etc/systemd/system/kinetictyl-agent.service <<SVCEOF
+[Unit]
+Description=Kinetictyl Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/kinetictyl/airlink-daemon
+EnvironmentFile=/var/www/kinetictyl/airlink-daemon/.env
+ExecStart=$(command -v node) dist/server.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+
+    systemctl daemon-reload || true
+    systemctl enable --now kinetictyl-panel || true
+    systemctl enable --now kinetictyl-agent || true
 }
 
 # =============================================================================
-# Addons
+# Run Installation
 # =============================================================================
-_process_addons() {
-    [[ -z "${ADDON_CHOICES:-}" || "${ADDON_CHOICES}" == "none" ]] && return 0
-
-    local to_install=()
-    if [[ "$ADDON_CHOICES" == "all" ]]; then
-        to_install=("${ADDONS[@]}")
-    else
-        IFS=',' read -ra selected <<< "$ADDON_CHOICES"
-        for sel in "${selected[@]}"; do
-            for addon in "${ADDONS[@]}"; do
-                if [[ "$(get_addon_field "$addon" 4)" == "$sel" ]]; then
-                    to_install+=("$addon"); break
-                fi
-            done
-        done
-    fi
-
-    local addons_dir="/var/www/panel/storage/addons"
-    mkdir -p "$addons_dir"
-
-    for addon_config in "${to_install[@]}"; do
-        local display_name repo_url branch dir_name
-        display_name=$(get_addon_field "$addon_config" 1)
-        repo_url=$(get_addon_field "$addon_config" 2)
-        branch=$(get_addon_field "$addon_config" 3)
-        dir_name=$(get_addon_field "$addon_config" 4)
-
-        local target="${addons_dir}/${dir_name}"
-        if [[ -d "$target" ]]; then
-            cd "$target"
-            git pull origin "$branch" &>/dev/null || true
-        else
-            git clone --depth 1 --branch "$branch" "$repo_url" "$target" \
-                || die "Failed to clone $display_name"
-            cd "$target"
-        fi
-
-        "$PNPM" install --no-frozen-lockfile \
-            || die "$display_name install failed"
-        "$PNPM" run build || die "$display_name build failed"
-        log "OK: $display_name addon done"
-    done
-
-    cd /var/www/panel
-    npx tailwindcss -i ./public/tw.css -o ./public/styles.css &>/dev/null || true
-}
-
-# =============================================================================
-# Remove helpers
-# =============================================================================
-tui_remove_panel() {
-    systemctl stop    cynexgp-panel &>/dev/null || true
-    systemctl disable cynexgp-panel &>/dev/null || true
-    rm -f /etc/systemd/system/cynexgp-panel.service
-    rm -rf /var/www/panel
-    systemctl daemon-reload
-}
-
-tui_remove_daemon() {
-systemctl stop    cynexgpd &>/dev/null || true
-systemctl disable cynexgpd &>/dev/null || true
-rm -f /etc/systemd/system/cynexgpd.service
-    rm -rf /etc/daemon
-    systemctl daemon-reload
-}
-
-tui_remove_deps() {
-    case "$FAM" in
-        debian) apt-get remove -y nodejs npm docker.io docker-ce docker-ce-cli &>/dev/null || true ;;
-        redhat) $PKG remove -y nodejs npm docker-ce docker-ce-cli &>/dev/null || true ;;
-        arch)   pacman -R --noconfirm nodejs npm docker &>/dev/null || true ;;
-        alpine) apk del nodejs npm docker &>/dev/null || true ;;
-    esac
-}
-
-ping_install_counter() {
-    curl -sf "https://api.counterapi.dev/v2/cynexgp/installed/up" \
-         -o /dev/null 2>/dev/null || true
-}
-
-# =============================================================================
-# TUI config collection
-# =============================================================================
-PANEL_NAME="CynexGP"
-PANEL_PORT="3000"
-PANEL_ADDRESS="127.0.0.1"
-DAEMON_PORT="3002"
-DAEMON_KEY=""
-ADDON_CHOICES="none"
-
-tui_collect_panel_config() {
-    tui_input "Panel name" "CynexGP"
-    PANEL_NAME="$TUI_INPUT"
-
-    local err=""
-    while true; do
-        tui_input "Panel port (1-65535)" "3000" "$err"
-        if valid_port "$TUI_INPUT"; then PANEL_PORT="$TUI_INPUT"; break; fi
-        err="Invalid port — must be 1-65535"
-    done
-}
-
-tui_collect_daemon_config() {
-    tui_input "Panel address (IP or hostname)" "127.0.0.1"
-    PANEL_ADDRESS="$TUI_INPUT"
-
-    local err=""
-    while true; do
-        tui_input "Daemon port (1-65535)" "3002" "$err"
-        if valid_port "$TUI_INPUT"; then DAEMON_PORT="$TUI_INPUT"; break; fi
-        err="Invalid port — must be 1-65535"
-    done
-
-    tui_input "Daemon auth key (from panel > Nodes)" ""
-    DAEMON_KEY="$TUI_INPUT"
-}
-
-tui_collect_addons() {
-    local names=()
-    for addon in "${ADDONS[@]}"; do
-        names+=("$(get_addon_field "$addon" 1)")
-    done
-    tui_checklist "Optional Addons" "${names[@]}"
-    if [[ -z "$TUI_MULTI" ]]; then
-        ADDON_CHOICES="none"; return
-    fi
-    local chosen=()
-    for idx in $TUI_MULTI; do
-        chosen+=("$(get_addon_field "${ADDONS[$idx]}" 4)")
-    done
-    IFS=',' ADDON_CHOICES="${chosen[*]}"
-}
-
-# =============================================================================
-# TUI install runner
-# =============================================================================
-tui_do_install() {
-    local mode="$1"
-    local tasks=()
-
-    case "$mode" in
-        both)
-            tasks=(
-                "Check dependencies" "Install Node.js" "Install Docker"
-                "Clone panel" "Panel dependencies" "Build panel" "Start panel service"
-                "Download daemon binary" "Start daemon service"
-            )
-            ;;
-        panel)
-            tasks=(
-                "Check dependencies" "Install Node.js" "Install Docker"
-                "Clone panel" "Panel dependencies" "Build panel" "Start panel service"
-            )
-            ;;
-        daemon)
-            tasks=(
-                "Check dependencies" "Install Docker"
-                "Download daemon binary" "Start daemon service"
-            )
-            ;;
-    esac
-
-    tui_progress_init "${tasks[@]}"
-    stty echo 2>/dev/null || true
-    _INSTALLING=1
-
-    tui_progress_step ensure_deps
-
-    if [[ "$mode" == "both" || "$mode" == "panel" ]]; then
-        tui_progress_step setup_node
-    fi
-
-    tui_progress_step setup_docker
-
-    if [[ "$mode" == "both" || "$mode" == "panel" ]]; then
-        tui_progress_step phase_panel_clone
-        tui_progress_step phase_panel_deps
-        tui_progress_step phase_panel_build
-        tui_progress_step phase_panel_service
-    fi
-
-    if [[ "$mode" == "both" || "$mode" == "daemon" ]]; then
-        tui_progress_step phase_daemon_download
-        tui_progress_step phase_daemon_service
-    fi
-
-    tui_progress_finish
-    _INSTALLING=0
-    ping_install_counter
-}
-
-tui_view_logs() {
-    tui_cleanup
-    if [[ -f "$LOG" ]]; then
-        less "$LOG" || cat "$LOG"
-    else
-        echo "No log at $LOG"
-        sleep 2
-    fi
-    tui_init
-}
-
-# =============================================================================
-# Interactive main menu
-# =============================================================================
-run_interactive() {
-    tui_init
-
-    local menu_items=(
-        "Install Panel + Daemon"
-        "Install Panel only"
-        "Install Daemon only"
-        "Install Addons only"
-        "Setup dependencies only"
-        "Remove Panel"
-        "Remove Daemon"
-        "Remove everything"
-        "View logs"
-        "Exit"
-    )
-
-    while true; do
-        if ! tui_menu "Main Menu" "${menu_items[@]}"; then break; fi
-
-        case $TUI_RESULT in
-            0)
-                tui_collect_panel_config
-                tui_collect_daemon_config
-                tui_collect_addons
-                tui_do_install "both"
-                ;;
-            1)
-                tui_collect_panel_config
-                tui_collect_addons
-                tui_do_install "panel"
-                ;;
-            2)
-                tui_collect_daemon_config
-                tui_do_install "daemon"
-                ;;
-            3)
-                tui_collect_addons
-                stty echo 2>/dev/null || true
-                _process_addons
-                stty -echo 2>/dev/null || true
-                ;;
-            4)
-                stty echo 2>/dev/null || true
-                ensure_deps; setup_node; setup_docker
-                stty -echo 2>/dev/null || true
-                ;;
-            5)
-                tui_confirm "Remove panel? This deletes /var/www/panel" && \
-                    tui_run "Removing panel" tui_remove_panel
-                ;;
-            6)
-                tui_confirm "Remove daemon? This deletes /etc/daemon" && \
-                    tui_run "Removing daemon" tui_remove_daemon
-                ;;
-            7)
-                if tui_confirm "Remove panel, daemon, and dependencies?"; then
-                    tui_run "Removing panel"        tui_remove_panel
-                    tui_run "Removing daemon"       tui_remove_daemon
-                    tui_run "Removing dependencies" tui_remove_deps
-                fi
-                ;;
-            8)  tui_view_logs ;;
-            9|-1) break ;;
-        esac
-    done
-
-    tui_cleanup
-    printf "\n  CynexGP Installer v${VERSION} done\n\n"
-}
-
-# =============================================================================
-# Non-interactive entry point
-# =============================================================================
-run_noninteractive() {
+run_install() {
     ni_header
-
-    local mode="${ARG_MODE:-both}"
-
-    PANEL_NAME="${ARG_NAME:-CynexGP}"
-    PANEL_PORT="${ARG_PORT:-3000}"
-    PANEL_ADDRESS="${ARG_PANEL_ADDR:-127.0.0.1}"
-    DAEMON_PORT="${ARG_DAEMON_PORT:-3002}"
-    DAEMON_KEY="${ARG_DAEMON_KEY:-}"
-    ADDON_CHOICES="${ARG_ADDONS:-none}"
-
-    if [[ "$mode" != "daemon" ]]; then
-        valid_port "$PANEL_PORT" || die "Invalid panel port: $PANEL_PORT"
-    fi
-    if [[ "$mode" != "panel" ]]; then
-        valid_port "$DAEMON_PORT" || die "Invalid daemon port: $DAEMON_PORT"
-    fi
-    command -v systemctl &>/dev/null || die "systemd required"
-
-    case "$mode" in
-        both)
-            ni_start 9
-            ni_run "Checking dependencies"   ensure_deps
-            ni_run "Setting up Node.js"      setup_node
-            ni_run "Setting up Docker"       setup_docker
-            ni_run "Cloning panel"           phase_panel_clone
-            ni_run "Installing panel deps"   phase_panel_deps
-            ni_run "Building panel"          phase_panel_build
-            ni_run "Starting panel service"  phase_panel_service
-            ni_run "Downloading daemon"      phase_daemon_download
-            ni_run "Starting daemon service" phase_daemon_service
-            ;;
-        panel)
-            ni_start 7
-            ni_run "Checking dependencies"   ensure_deps
-            ni_run "Setting up Node.js"      setup_node
-            ni_run "Setting up Docker"       setup_docker
-            ni_run "Cloning panel"           phase_panel_clone
-            ni_run "Installing panel deps"   phase_panel_deps
-            ni_run "Building panel"          phase_panel_build
-            ni_run "Starting panel service"  phase_panel_service
-            ;;
-        daemon)
-            ni_start 4
-            ni_run "Checking dependencies"   ensure_deps
-            ni_run "Setting up Docker"       setup_docker
-            ni_run "Downloading daemon"      phase_daemon_download
-            ni_run "Starting daemon service" phase_daemon_service
-            ;;
-        *)
-            die "Unknown mode: $mode (valid: both, panel, daemon)"
-            ;;
-    esac
-
-    ping_install_counter
+    ni_start 8
+    ni_run "Checking base dependencies"  ensure_deps
+    ni_run "Setting up Node.js 20 LTS"  setup_node
+    ni_run "Setting up OpenJDK Java"    setup_java
+    ni_run "Cloning Kinetictyl"         phase_panel_clone
+    ni_run "Installing panel deps"      phase_panel_deps
+    ni_run "Building panel"             phase_panel_build
+    ni_run "Installing agent deps"      phase_daemon_deps
+    ni_run "Building agent & services"  phase_daemon_build
+    phase_services_start
 
     local server_ip
     server_ip=$(hostname -I 2>/dev/null | awk '{print $1}') || server_ip="<server-ip>"
 
-    printf "\n  ${C_GREEN}${BOLD}Installation complete.${RESET}\n\n"
-    [[ "$mode" != "daemon" ]] && printf "  ${C_GRAY}Panel :${RESET}  http://%s:%s\n" "$server_ip" "$PANEL_PORT"
-    [[ "$mode" != "panel"  ]] && printf "  ${C_GRAY}Daemon:${RESET}  port %s\n" "$DAEMON_PORT"
-    printf "  ${C_GRAY}Logs  :${RESET}  %s\n" "$LOG"
-    printf "  ${C_GRAY}System:${RESET}  journalctl -u cynexgp-panel -f\n\n"
+    printf "\n  ${C_GREEN}${BOLD}Kinetictyl Installation Complete!${RESET}\n\n"
+    printf "  ${C_GRAY}Panel :${RESET}  http://%s:%s\n" "$server_ip" "$PANEL_PORT"
+    printf "  ${C_GRAY}Agent :${RESET}  http://%s:%s\n" "$server_ip" "$DAEMON_PORT"
+    printf "  ${C_GRAY}Logs  :${RESET}  %s\n\n" "$LOG"
 }
 
-# =============================================================================
-# Entry point
-# =============================================================================
 [[ $EUID -eq 0 ]] || { echo "Run as root or with sudo."; exit 1; }
 
 touch "$LOG" || true
-log "=== CynexGP Installer v${VERSION} started (pid $$) ==="
+log "=== Kinetictyl Installer v${VERSION} started ==="
 
 parse_args "$@"
 detect_os
-
-if noninteractive; then
-    run_noninteractive
-else
-    run_interactive
-fi
+run_install
