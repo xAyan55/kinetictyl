@@ -599,9 +599,24 @@ phase_panel_clone() {
     chmod -R 755 /var/www/kinetictyl
 }
 
+ensure_swap() {
+    local mem_total
+    mem_total=$(free -m 2>/dev/null | awk '/Mem:/ {print $2}') || mem_total=2048
+    if [[ "$mem_total" -lt 2048 ]]; then
+        if ! swapon -s 2>/dev/null | grep -q /swapfile; then
+            log "Low RAM ($mem_total MB) detected. Setting up 1GB swapfile..."
+            fallocate -l 1G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=1024 2>/dev/null || true
+            chmod 600 /swapfile 2>/dev/null || true
+            mkswap /swapfile 2>/dev/null || true
+            swapon /swapfile 2>/dev/null || true
+        fi
+    fi
+}
+
 phase_panel_deps() {
+    ensure_swap
     cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
-    NODE_ENV=development "$PNPM" install --no-frozen-lockfile || die "Panel dependency install failed"
+    NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --child-concurrency 1 || die "Panel dependency install failed"
 }
 
 phase_panel_build() {
@@ -623,8 +638,9 @@ ENVEOF
 }
 
 phase_daemon_deps() {
+    ensure_swap
     cd /var/www/kinetictyl/airlink-daemon || die "Daemon directory missing"
-    NODE_ENV=development "$PNPM" install --no-frozen-lockfile || die "Daemon dependency install failed"
+    NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --child-concurrency 1 || die "Daemon dependency install failed"
 }
 
 phase_daemon_build() {
