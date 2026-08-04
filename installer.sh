@@ -616,13 +616,16 @@ ensure_swap() {
 phase_panel_deps() {
     ensure_swap
     cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
-    NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --child-concurrency 1 || die "Panel dependency install failed"
+    "$PNPM" config set concurrency 1 &>/dev/null || true
+    "$PNPM" config set fetch-concurrency 1 &>/dev/null || true
+    NODE_OPTIONS="--max-old-space-size=512" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
+    npm install --legacy-peer-deps --no-audit --no-fund || die "Panel dependency install failed"
 }
 
 phase_panel_build() {
     cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
-    "$PNPM" run migrate:deploy || die "Database migration failed"
-    "$PNPM" run build || die "Panel build failed"
+    "$PNPM" run migrate:deploy || npx prisma migrate deploy || die "Database migration failed"
+    "$PNPM" run build || npm run build || die "Panel build failed"
 
     if [[ ! -f /var/www/kinetictyl/airlink-panel/.env ]]; then
         local secret; secret=$(openssl rand -hex 32)
@@ -640,7 +643,10 @@ ENVEOF
 phase_daemon_deps() {
     ensure_swap
     cd /var/www/kinetictyl/airlink-daemon || die "Daemon directory missing"
-    NODE_OPTIONS="--max-old-space-size=1024" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --child-concurrency 1 || die "Daemon dependency install failed"
+    "$PNPM" config set concurrency 1 &>/dev/null || true
+    "$PNPM" config set fetch-concurrency 1 &>/dev/null || true
+    NODE_OPTIONS="--max-old-space-size=512" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
+    npm install --legacy-peer-deps --no-audit --no-fund || die "Daemon dependency install failed"
 }
 
 phase_daemon_build() {
