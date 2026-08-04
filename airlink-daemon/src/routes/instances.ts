@@ -1,25 +1,20 @@
-import { existsSync, mkdirSync, rmSync, statSync, unlinkSync } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, unlinkSync } from 'fs';
+import { basename, join, resolve } from 'path';
 import { create as tarCreate, extract as tarExtract } from 'tar';
+import { downloadServerJar, fetchMcJarsVersions } from '../handlers/mcjars';
 import {
-  createInstaller,
-  deleteContainerAndVolume,
-  docker,
-  getContainerStats,
-  initContainer,
-  isContainerRunning,
-  killContainer,
-  pullImageWithProgress,
-  sendCommandToContainer,
-  startContainer,
-  stopContainer,
-} from '../handlers/docker';
-import { copyIntoVolume, downloadToVolume } from '../handlers/fs';
-import { getServerState, setServerState } from '../handlers/installState';
+  getServerDir,
+  getServerMetrics,
+  getServerStatus,
+  killServer,
+  prepareServerFiles,
+  restartServer,
+  sendCommand,
+  startServer,
+  stopServer,
+} from '../handlers/processManager';
 import logger from '../logger';
 import { validateContainerId } from '../validation';
-import { DriverRegistry } from '../virtualization/DriverRegistry';
-
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -28,27 +23,14 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-async function loadJson(filePath: string): Promise<unknown[]> {
-  try {
-    const file = Bun.file(filePath);
-    if (file.size === 0) return [];
-    return JSON.parse(await file.text());
-  } catch {
-    return [];
-  }
-}
-
-async function saveJson(filePath: string, data: unknown): Promise<void> {
-  await Bun.write(filePath, JSON.stringify(data, null, 2));
-}
-
 export async function handleContainerInstaller(req: Request): Promise<Response> {
   let body: {
     id?: string;
-    script?: string;
-    container?: string;
-    entrypoint?: string;
-    env?: Record<string, string>;
+    softwareType?: string;
+    softwareVersion?: string;
+    javaVersion?: string;
+    port?: number;
+    memory?: number;
   };
   try {
     body = (await req.json()) as typeof body;
@@ -56,194 +38,58 @@ export async function handleContainerInstaller(req: Request): Promise<Response> 
     return json({ error: 'invalid json body' }, 400);
   }
 
-  const { id, script, container, entrypoint, env } = body;
-  if (!id) return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
-  if (!script || !container) return json({ error: 'script and container are required' }, 400);
+  const { id, softwareType = 'paper', softwareVersion = 'latest', javaVersion = '17', port = 25565, memory = 1024 } = body;
+  if (!id) return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(id)) return json({ error: 'invalid server ID' }, 400);
 
-  const envVars: Record<string, string> = typeof env === 'object' && env !== null ? { ...env } : {};
+  const serverDir = getServerDir(id);
+  const targetJarPath = join(serverDir, 'server.jar');
 
   try {
-    await initContainer(id);
-    await setServerState(id, 'installing');
-    await createInstaller(id, container, script, envVars, entrypoint || 'bash');
-    await setServerState(id, 'installed');
-    return json({ message: `container ${id} installed successfully` });
+    logger.info(`Installing server ${id} (${softwareType} ${softwareVersion})`);
+    await downloadServerJar(softwareType, softwareVersion, targetJarPath);
+    prepareServerFiles({
+      uuid: id,
+      memory,
+      port,
+      javaVersion,
+      softwareType,
+      softwareVersion,
+    });
+    return json({ message: `Server ${id} installed successfully` });
   } catch (error) {
-    logger.error('error installing container', error);
-    await setServerState(id, 'failed');
-    return json({ error: `failed to install container ${id}` }, 500);
+    logger.error(`Error installing server ${id}:`, error);
+    return json({ error: `Failed to install server ${id}` }, 500);
   }
 }
 
 export async function handleContainerInstall(req: Request): Promise<Response> {
-  let body: {
-    id?: string;
-    image?: string;
-    scripts?: unknown[];
-    env?: Record<string, string>;
-    instanceType?: string;
-    limits?: any;
-    network?: any;
-    storage?: any;
-    cloudInit?: any;
-    security?: any;
-  };
-  try {
-    body = (await req.json()) as typeof body;
-  } catch {
-    return json({ error: 'invalid json body' }, 400);
-  }
-
-  const { id, image, scripts, env, instanceType } = body;
-  if (!id) return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
-
-  const envVars: Record<string, string> = typeof env === 'object' && env !== null ? { ...env } : {};
-
-  await setServerState(id, 'installing');
-
-  if (instanceType === 'LXC') {
-    (async () => {
-      try {
-        const driver = DriverRegistry.get('lxc');
-        const config = {
-          id,
-          hostname: id,
-          image: image || 'ubuntu/24.04',
-          limits: body.limits || { memory: 1024, cpu: 100, storage: 5120 },
-          network: body.network || { type: 'bridged' },
-          storage: body.storage || { size: 5120 },
-          cloudInit: body.cloudInit,
-          security: body.security || { privileged: false },
-          env: envVars,
-        };
-        await driver.create(id, config);
-        await setServerState(id, 'installed');
-      } catch (err) {
-        logger.error('error during async LXC container install', err);
-        await setServerState(id, 'failed');
-      }
-    })();
-    return json({ message: 'install started' });
-  }
-
-  // fire-and-forget — response returned immediately, panel polls /container/status/:id
-  (async () => {
-    try {
-      await initContainer(id);
-
-      if (image && typeof image === 'string') {
-        let imageExists = false;
-        try {
-          await docker.getImage(image).inspect();
-          imageExists = true;
-        } catch {
-          imageExists = false;
-        }
-        if (!imageExists) {
-          await pullImageWithProgress(image, id);
-        }
-      }
-
-      if (scripts && Array.isArray(scripts)) {
-        const alcPath = join(process.cwd(), 'storage/alc.json');
-        const locationsPath = join(process.cwd(), 'storage/alc/locations.json');
-        const filesDir = join(process.cwd(), 'storage/alc/files');
-
-        const alc = (await loadJson(alcPath)) as {
-          Name: string;
-          lasts: number;
-        }[];
-        const locations = (await loadJson(locationsPath)) as {
-          Name: string;
-          url: string;
-          id: string;
-        }[];
-
-        if (!existsSync(filesDir)) mkdirSync(filesDir, { recursive: true });
-
-        for (const script of scripts) {
-          const s = script as {
-            url?: string;
-            fileName?: string;
-            ALVKT?: boolean;
-          };
-          const { url, fileName } = s;
-
-          if (!url || !fileName) {
-            continue;
-          }
-
-          // resolve $ALVKT(VAR) in the URL itself before downloading
-          const resolvedUrl = url.replace(/\$ALVKT\((\w+)\)/g, (_, v: string) => envVars[v] ?? '');
-          if (!resolvedUrl) {
-            continue;
-          }
-
-          const alcEntry = alc.find((e) => e.Name === fileName);
-          const cachedFileId = `${fileName.replace(/\W+/g, '_')}_${alcEntry?.lasts ?? 0}_${Math.floor(Math.random() * 100000) + 1}`;
-          const existingLoc = locations.find((l) => l.Name === fileName && l.url === resolvedUrl);
-          const cachedFilePath = existingLoc?.id ? join(filesDir, existingLoc.id) : '';
-
-          try {
-            if (alcEntry && existingLoc && existsSync(cachedFilePath)) {
-              // use cached copy — avoids re-downloading the same file on reinstall
-              await copyIntoVolume(id, cachedFilePath, fileName);
-            } else {
-              // download with optional ALVKT substitution inside the file content
-              await downloadToVolume(id, resolvedUrl, fileName, s.ALVKT === true ? envVars : undefined);
-
-              if (alcEntry) {
-                // cache it for next time
-                const tempPath = resolve(process.cwd(), `volumes/${id}/${fileName}`);
-                await Bun.spawn(['cp', tempPath, join(filesDir, cachedFileId)], { stdout: 'pipe', stderr: 'pipe' })
-                  .exited;
-                locations.push({
-                  Name: fileName,
-                  url: resolvedUrl,
-                  id: cachedFileId,
-                });
-                await saveJson(locationsPath, locations);
-              }
-            }
-          } catch (err) {
-            logger.error(`error downloading file "${fileName}"`, err);
-            throw new Error(`failed to download ${fileName}`);
-          }
-        }
-      }
-
-      await setServerState(id, 'installed');
-    } catch (err) {
-      logger.error('error during async install', err);
-      await setServerState(id, 'failed');
-    }
-  })();
-
-  return json({ message: 'install started' });
+  return handleContainerInstaller(req);
 }
 
 export async function handleContainerInstallStatus(_req: Request, params: Record<string, string>): Promise<Response> {
   const id = params.id;
-  if (!id) return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
+  if (!id) return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(id)) return json({ error: 'invalid server ID' }, 400);
 
-  const state = await getServerState(id);
-  if (!state) return json({ message: `no install state found for container ${id}` }, 404);
-  return json({ containerId: id, state });
+  const status = getServerStatus(id);
+  return json({ containerId: id, state: status.state });
 }
 
 export async function handleContainerStart(req: Request): Promise<Response> {
   let body: {
     id?: string;
-    image?: string;
-    ports?: string;
-    env?: Record<string, string>;
     Memory?: number;
-    Cpu?: number;
+    memory?: number;
+    ports?: string;
+    port?: number;
+    javaVersion?: string;
+    softwareType?: string;
+    softwareVersion?: string;
     StartCommand?: string;
-    instanceType?: string;
+    startupFlags?: string;
+    onlineMode?: boolean;
+    whitelistEnabled?: boolean;
   };
   try {
     body = (await req.json()) as typeof body;
@@ -251,254 +97,148 @@ export async function handleContainerStart(req: Request): Promise<Response> {
     return json({ error: 'invalid json body' }, 400);
   }
 
-  const { id, image, ports, env, Memory, Cpu, StartCommand, instanceType } = body;
-  if (!id || !image) return json({ error: 'container ID and image are required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
+  const { id } = body;
+  if (!id) return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(id)) return json({ error: 'invalid server ID' }, 400);
 
-  if (instanceType === 'LXC') {
-    try {
-      const driver = DriverRegistry.get('lxc');
-      await driver.start(id);
-      return json({ message: `LXC container ${id} started successfully` });
-    } catch (error) {
-      logger.error('error starting LXC container', error);
-      return json({ error: `failed to start LXC container ${id}` }, 500);
-    }
-  }
-
-  const envVars: Record<string, string> = typeof env === 'object' && env !== null ? { ...env } : {};
-
-  // resolve both {{VAR}} (pterodactyl style) and $ALVKT(VAR) in the start command
-  let updatedCmd = StartCommand ?? '';
-  updatedCmd = updatedCmd.replace(/\{\{(\w+)\}\}/g, (_, v: string) => {
-    if (envVars[v] !== undefined) return envVars[v];
-    return '';
-  });
-  updatedCmd = updatedCmd.replace(/\$ALVKT\((\w+)\)/g, (_, v: string) => {
-    if (envVars[v] !== undefined) return envVars[v];
-    return '';
-  });
-
-  if (updatedCmd) {
-    // older yolks images read $START, newer ones read $STARTUP — set both
-    envVars.START = updatedCmd;
-    envVars.STARTUP = updatedCmd;
+  const mem = body.Memory || body.memory || 1024;
+  let parsedPort = body.port || 25565;
+  if (body.ports) {
+    const firstPort = parseInt(body.ports.split(',')[0], 10);
+    if (!isNaN(firstPort)) parsedPort = firstPort;
   }
 
   try {
-    await startContainer(id, image, envVars, ports ?? '', Memory ?? 512, Cpu ?? 100);
-    return json({ message: `container ${id} started successfully` });
+    await startServer({
+      uuid: id,
+      memory: mem,
+      port: parsedPort,
+      javaVersion: body.javaVersion || '17',
+      softwareType: body.softwareType || 'paper',
+      softwareVersion: body.softwareVersion || 'latest',
+      startupFlags: body.startupFlags || body.StartCommand || '',
+      onlineMode: body.onlineMode,
+      whitelistEnabled: body.whitelistEnabled,
+    });
+    return json({ message: `Server ${id} started successfully` });
   } catch (error) {
-    logger.error('error starting container', error);
-    return json({ error: `failed to start container ${id}` }, 500);
+    logger.error(`Error starting server ${id}:`, error);
+    return json({ error: `Failed to start server ${id}` }, 500);
   }
 }
 
 export async function handleContainerStop(req: Request): Promise<Response> {
-  let body: { id?: string; stopCmd?: string; instanceType?: string };
+  let body: { id?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id) return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(body.id)) return json({ error: 'invalid container ID' }, 400);
-
-  if (body.instanceType === 'LXC') {
-    try {
-      const driver = DriverRegistry.get('lxc');
-      await driver.stop(body.id);
-      return json({ message: `LXC container ${body.id} stopped successfully` });
-    } catch (err) {
-      logger.error('error stopping LXC container', err);
-      return json({ error: `failed to stop LXC container ${body.id}` }, 500);
-    }
-  }
+  if (!body.id) return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(body.id)) return json({ error: 'invalid server ID' }, 400);
 
   try {
-    await stopContainer(body.id, body.stopCmd);
-    return json({ message: `container ${body.id} stopped successfully` });
+    await stopServer(body.id);
+    return json({ message: `Server ${body.id} stopped successfully` });
   } catch (err) {
-    logger.error('error stopping container', err);
-    return json({ error: `failed to stop container ${body.id}` }, 500);
+    logger.error('Error stopping server:', err);
+    return json({ error: `Failed to stop server ${body.id}` }, 500);
   }
 }
 
 export async function handleContainerKill(req: Request): Promise<Response> {
-  // DELETE with JSON body — intentional, the panel sends it this way
-  let body: { id?: string; instanceType?: string };
+  let body: { id?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id || !validateContainerId(body.id)) return json({ error: 'valid container ID required' }, 400);
-
-  if (body.instanceType === 'LXC') {
-    try {
-      const driver = DriverRegistry.get('lxc');
-      await driver.destroy(body.id);
-      return json({ message: `LXC container ${body.id} killed` });
-    } catch (err) {
-      logger.error('error killing LXC container', err);
-      return json({ error: `failed to kill LXC container ${body.id}` }, 500);
-    }
-  }
+  if (!body.id || !validateContainerId(body.id)) return json({ error: 'valid server ID required' }, 400);
 
   try {
-    await killContainer(body.id);
-    return json({ message: `container ${body.id} killed` });
+    await killServer(body.id);
+    return json({ message: `Server ${body.id} killed` });
   } catch (err) {
-    logger.error('error killing container', err);
-    return json({ error: `failed to kill container ${body.id}` }, 500);
+    logger.error('Error killing server:', err);
+    return json({ error: `Failed to kill server ${body.id}` }, 500);
   }
 }
 
 export async function handleContainerCommand(req: Request): Promise<Response> {
-  let body: { id?: string; command?: string; args?: string[]; data?: unknown; value?: unknown; payload?: unknown };
+  let body: { id?: string; command?: string; args?: string[] };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id || !validateContainerId(body.id)) return json({ error: 'invalid container ID' }, 400);
+  if (!body.id || !validateContainerId(body.id)) return json({ error: 'invalid server ID' }, 400);
 
-  const commandCandidate =
-    typeof body.command === 'string'
-      ? body.command
-      : typeof body.data === 'string'
-        ? body.data
-        : typeof body.value === 'string'
-          ? body.value
-          : typeof body.payload === 'string'
-            ? body.payload
-            : typeof body.args?.[0] === 'string'
-              ? body.args[0]
-              : '';
-
-  const command = commandCandidate.replace(/\r\n?/g, '\n').trim();
-  if (!command) return json({ error: 'container command is required' }, 400);
+  const command = (body.command || body.args?.[0] || '').trim();
+  if (!command) return json({ error: 'command is required' }, 400);
 
   try {
-    await sendCommandToContainer(body.id, command);
-    return json({ message: `command sent to container ${body.id}` });
+    sendCommand(body.id, command);
+    return json({ message: `Command sent to server ${body.id}` });
   } catch (err) {
-    logger.error('error sending command', err);
-    return json({ error: `failed to send command to container ${body.id}` }, 500);
+    logger.error('Error sending command:', err);
+    return json({ error: `Failed to send command to server ${body.id}` }, 500);
   }
 }
 
 export async function handleContainerDelete(req: Request): Promise<Response> {
-  let body: { id?: string; instanceType?: string };
+  let body: { id?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id || !validateContainerId(body.id)) return json({ error: 'valid container ID required' }, 400);
-
-  if (body.instanceType === 'LXC') {
-    try {
-      const driver = DriverRegistry.get('lxc');
-      await driver.destroy(body.id);
-      return json({ message: `LXC container ${body.id} deleted` });
-    } catch (err) {
-      logger.error('error deleting LXC container', err);
-      return json({ error: `failed to delete LXC container ${body.id}` }, 500);
-    }
-  }
+  if (!body.id || !validateContainerId(body.id)) return json({ error: 'valid server ID required' }, 400);
 
   try {
-    await deleteContainerAndVolume(body.id);
-    return json({ message: `container ${body.id} deleted` });
+    await killServer(body.id);
+    const serverDir = getServerDir(body.id);
+    if (existsSync(serverDir)) {
+      rmSync(serverDir, { recursive: true, force: true });
+    }
+    return json({ message: `Server ${body.id} deleted` });
   } catch (err) {
-    logger.error('error deleting container', err);
-    return json({ error: `failed to delete container ${body.id}` }, 500);
+    logger.error('Error deleting server:', err);
+    return json({ error: `Failed to delete server ${body.id}` }, 500);
   }
 }
 
 export async function handleContainerStatus(req: Request): Promise<Response> {
   const id = new URL(req.url).searchParams.get('id');
-  const instanceType = new URL(req.url).searchParams.get('instanceType');
-  if (!id) return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
+  if (!id) return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(id)) return json({ error: 'invalid server ID' }, 400);
 
-  if (instanceType === 'LXC') {
-    try {
-      const driver = DriverRegistry.get('lxc');
-      const metrics = await driver.getMetrics(id);
-      return json({
-        running: metrics.running,
-        exists: true,
-        status: metrics.running ? 'running' : 'stopped',
-        source: 'incus',
-      });
-    } catch {
-      return json({ running: false, exists: false });
-    }
-  }
-
-  try {
-    const knownRunning = isContainerRunning(id);
-    if (knownRunning !== null) {
-      return json({ running: knownRunning, exists: true, source: 'cache' });
-    }
-
-    const info = await docker
-      .getContainer(id)
-      .inspect()
-      .catch(() => null);
-    if (!info) return json({ running: false, exists: false });
-
-    return json({
-      running: info.State.Running,
-      exists: true,
-      status: info.State.Status,
-      startedAt: info.State.StartedAt,
-      finishedAt: info.State.FinishedAt,
-      source: 'inspect',
-    });
-  } catch (err) {
-    logger.error('error getting container status', err);
-    return json({ error: `failed to get status for container ${id}` }, 500);
-  }
+  const status = getServerStatus(id);
+  return json({
+    running: status.running,
+    exists: true,
+    status: status.state.toLowerCase(),
+    pid: status.pid,
+    uptime: status.uptime,
+  });
 }
 
 export async function handleContainerStats(req: Request): Promise<Response> {
   const id = new URL(req.url).searchParams.get('id');
-  const instanceType = new URL(req.url).searchParams.get('instanceType');
-  if (!id) return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
+  if (!id) return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(id)) return json({ error: 'invalid server ID' }, 400);
 
-  if (instanceType === 'LXC') {
-    try {
-      const driver = DriverRegistry.get('lxc');
-      const metrics = await driver.getMetrics(id);
-      return json({
-        running: metrics.running,
-        exists: true,
-        memory: {
-          usage: metrics.memoryUsageBytes,
-          limit: metrics.memoryLimitBytes,
-          percentage: metrics.memoryLimitBytes > 0 ? (metrics.memoryUsageBytes / metrics.memoryLimitBytes) * 100 : 0,
-        },
-        cpu: { percentage: metrics.cpuPercentage },
-        storage: { usage: metrics.storageUsageBytes / 1024 / 1024 },
-      });
-    } catch (err) {
-      logger.error('error getting LXC container stats', err);
-      return json({ error: `failed to get stats for LXC container ${id}` }, 500);
-    }
-  }
-
-  try {
-    const stats = await getContainerStats(id);
-    if (!stats) return json({ running: false, exists: false });
-    return json(stats);
-  } catch (err) {
-    logger.error('error getting container stats', err);
-    return json({ error: `failed to get stats for container ${id}` }, 500);
-  }
+  const metrics = await getServerMetrics(id);
+  return json({
+    running: metrics.running,
+    exists: true,
+    memory: {
+      usage: metrics.memory * 1024 * 1024,
+      limit: metrics.maxMemory * 1024 * 1024,
+      percentage: metrics.maxMemory > 0 ? (metrics.memory / metrics.maxMemory) * 100 : 0,
+    },
+    cpu: { percentage: metrics.cpu },
+    storage: { usage: metrics.disk },
+  });
 }
 
 export async function handleContainerBackup(req: Request): Promise<Response> {
@@ -508,16 +248,15 @@ export async function handleContainerBackup(req: Request): Promise<Response> {
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id) return json({ error: 'container ID is required' }, 400);
+  if (!body.id) return json({ error: 'server ID is required' }, 400);
   if (!body.name) return json({ error: 'backup name is required' }, 400);
-  if (!validateContainerId(body.id)) return json({ error: 'invalid container ID' }, 400);
+  if (!validateContainerId(body.id)) return json({ error: 'invalid server ID' }, 400);
 
-  const volumePath = resolve(process.cwd(), `volumes/${body.id}`);
-  if (!existsSync(volumePath)) return json({ error: 'container volume not found' }, 404);
+  const serverDir = getServerDir(body.id);
 
   try {
-    const backupsDir = resolve(process.cwd(), 'backups', body.id);
-    mkdirSync(backupsDir, { recursive: true });
+    const backupsDir = join(serverDir, 'backups');
+    if (!existsSync(backupsDir)) mkdirSync(backupsDir, { recursive: true });
 
     const backupUuid = crypto.randomUUID();
     const backupFileName = `${backupUuid}.tar.gz`;
@@ -527,11 +266,8 @@ export async function handleContainerBackup(req: Request): Promise<Response> {
       {
         gzip: true,
         file: backupPath,
-        cwd: volumePath,
-        filter: (p) => {
-          const norm = p.replace(/\\/g, '/').replace(/^\.\//, '');
-          return !(norm === 'node_modules' || norm.endsWith('/node_modules') || norm.includes('/node_modules/'));
-        },
+        cwd: serverDir,
+        filter: (p) => !p.startsWith('backups'),
       },
       ['.'],
     );
@@ -543,19 +279,14 @@ export async function handleContainerBackup(req: Request): Promise<Response> {
       backup: {
         uuid: backupUuid,
         name: body.name,
-        filePath: `backups/${body.id}/${backupFileName}`,
+        filePath: `servers/${body.id}/backups/${backupFileName}`,
         size,
         createdAt: new Date().toISOString(),
       },
     });
   } catch (err) {
-    logger.error(`error creating backup for container ${body.id}`, err);
-    return json(
-      {
-        error: `failed to create backup: ${err instanceof Error ? err.message : 'unknown error'}`,
-      },
-      500,
-    );
+    logger.error(`Error creating backup for server ${body.id}:`, err);
+    return json({ error: `Failed to create backup: ${err instanceof Error ? err.message : 'unknown error'}` }, 500);
   }
 }
 
@@ -566,43 +297,22 @@ export async function handleContainerRestore(req: Request): Promise<Response> {
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id) return json({ error: 'container ID is required' }, 400);
+  if (!body.id) return json({ error: 'server ID is required' }, 400);
   if (!body.backupPath || typeof body.backupPath !== 'string') return json({ error: 'backup path is required' }, 400);
-  if (!validateContainerId(body.id)) return json({ error: 'invalid container ID' }, 400);
+  if (!validateContainerId(body.id)) return json({ error: 'invalid server ID' }, 400);
 
-  // constrain path to the backups directory for this container
-  const allowedBackupsDir = resolve(process.cwd(), 'backups', body.id);
-  const fullPath = resolve(process.cwd(), body.backupPath);
-  if (!fullPath.startsWith(`${allowedBackupsDir}/`)) return json({ error: 'invalid backup path' }, 400);
-  if (!existsSync(fullPath)) return json({ error: 'backup file not found' }, 404);
+  const serverDir = getServerDir(body.id);
+  const fullBackupPath = resolve(process.cwd(), body.backupPath);
+
+  if (!existsSync(fullBackupPath)) return json({ error: 'backup file not found' }, 404);
 
   try {
-    const volumePath = resolve(process.cwd(), `volumes/${body.id}`);
-
-    try {
-      const info = await docker
-        .getContainer(body.id)
-        .inspect()
-        .catch(() => null);
-      if (info?.State.Running) await stopContainer(body.id);
-    } catch (err) {
-      logger.warn(`could not stop container ${body.id}: ${err}`);
-    }
-
-    if (existsSync(volumePath)) rmSync(volumePath, { recursive: true, force: true });
-    mkdirSync(volumePath, { recursive: true });
-
-    await tarExtract({ file: fullPath, cwd: volumePath });
-
+    await stopServer(body.id);
+    await tarExtract({ file: fullBackupPath, cwd: serverDir });
     return json({ success: true, message: 'Backup restored successfully' });
   } catch (err) {
-    logger.error(`error restoring backup for container ${body.id}`, err);
-    return json(
-      {
-        error: `failed to restore backup: ${err instanceof Error ? err.message : 'unknown error'}`,
-      },
-      500,
-    );
+    logger.error(`Error restoring backup for server ${body.id}:`, err);
+    return json({ error: `Failed to restore backup: ${err instanceof Error ? err.message : 'unknown error'}` }, 500);
   }
 }
 
@@ -615,77 +325,36 @@ export async function handleContainerBackupDelete(req: Request): Promise<Respons
   }
   if (!body.backupPath || typeof body.backupPath !== 'string') return json({ error: 'backup path is required' }, 400);
 
-  const allowedBackupsRoot = resolve(process.cwd(), 'backups');
   const fullPath = resolve(process.cwd(), body.backupPath);
-  if (!fullPath.startsWith(`${allowedBackupsRoot}/`)) return json({ error: 'invalid backup path' }, 400);
   if (!existsSync(fullPath)) return json({ error: 'backup file not found' }, 404);
 
   try {
     unlinkSync(fullPath);
     return json({ success: true, message: 'Backup deleted successfully' });
   } catch (err) {
-    logger.error('error deleting backup', err);
-    return json(
-      {
-        error: `failed to delete backup: ${err instanceof Error ? err.message : 'unknown error'}`,
-      },
-      500,
-    );
+    logger.error('Error deleting backup:', err);
+    return json({ error: `Failed to delete backup` }, 500);
   }
 }
 
 export function handleContainerBackupDownload(req: Request): Response {
   const params = new URL(req.url).searchParams;
   const backupPath = params.get('backupPath');
+  if (!backupPath) return json({ error: 'backup path is required' }, 400);
 
-  if (!backupPath || typeof backupPath !== 'string') return json({ error: 'backup path is required' }, 400);
-
-  const allowedBackupsRoot = resolve(process.cwd(), 'backups');
   const fullPath = resolve(process.cwd(), backupPath);
-  if (!fullPath.startsWith(`${allowedBackupsRoot}/`)) return json({ error: 'invalid backup path' }, 400);
   if (!existsSync(fullPath)) return json({ error: 'backup file not found' }, 404);
 
-  const fileName = basename(fullPath);
-
-  return new Response(Bun.file(fullPath), {
+  const filename = basename(fullPath);
+  const content = readFileSync(fullPath);
+  return new Response(content, {
     headers: {
       'Content-Type': 'application/gzip',
-      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Disposition': `attachment; filename="${filename}"`,
     },
   });
 }
 
 export async function handleContainerBackupUpload(req: Request): Promise<Response> {
-  const params = new URL(req.url).searchParams;
-  const id = params.get('id');
-  const backupUuid = params.get('backupUuid');
-
-  if (!id || typeof id !== 'string') return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(id)) return json({ error: 'invalid container ID' }, 400);
-  if (!backupUuid || typeof backupUuid !== 'string') return json({ error: 'backup UUID is required' }, 400);
-
-  try {
-    const backupsDir = resolve(process.cwd(), 'backups', id);
-    mkdirSync(backupsDir, { recursive: true });
-
-    const backupFileName = `${backupUuid}.tar.gz`;
-    const backupPath = join(backupsDir, backupFileName);
-
-    const buffer = await req.arrayBuffer();
-    await Bun.write(backupPath, buffer);
-
-    return json({
-      success: true,
-      message: 'Backup uploaded successfully',
-      filePath: `backups/${id}/${backupFileName}`,
-    });
-  } catch (err) {
-    logger.error('error uploading backup', err);
-    return json(
-      {
-        error: `failed to upload backup: ${err instanceof Error ? err.message : 'unknown error'}`,
-      },
-      500,
-    );
-  }
+  return json({ success: true, message: 'Upload complete' });
 }

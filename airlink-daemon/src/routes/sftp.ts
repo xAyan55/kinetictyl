@@ -1,4 +1,4 @@
-import { generateCredential, getActiveSessionCount, revokeCredentialForContainer } from '../handlers/sftp';
+import { generateCredential, getActiveSessionCount, revokeCredentialForServer } from '../handlers/sftp';
 import logger from '../logger';
 import { validateContainerId } from '../validation';
 
@@ -16,8 +16,8 @@ export async function handleSftpCreate(req: Request): Promise<Response> {
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id || typeof body.id !== 'string') return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(body.id)) return json({ error: 'invalid container ID format' }, 400);
+  if (!body.id || typeof body.id !== 'string') return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(body.id)) return json({ error: 'invalid server ID format' }, 400);
 
   try {
     const cred = await generateCredential(body.id);
@@ -42,11 +42,11 @@ export async function handleSftpRevoke(req: Request): Promise<Response> {
   } catch {
     return json({ error: 'invalid json body' }, 400);
   }
-  if (!body.id || typeof body.id !== 'string') return json({ error: 'container ID is required' }, 400);
-  if (!validateContainerId(body.id)) return json({ error: 'invalid container ID format' }, 400);
+  if (!body.id || typeof body.id !== 'string') return json({ error: 'server ID is required' }, 400);
+  if (!validateContainerId(body.id)) return json({ error: 'invalid server ID format' }, 400);
 
   try {
-    await revokeCredentialForContainer(body.id);
+    revokeCredentialForServer(body.id);
     return json({ message: 'SFTP credentials revoked' });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'failed to revoke SFTP credentials';
@@ -56,7 +56,6 @@ export async function handleSftpRevoke(req: Request): Promise<Response> {
 }
 
 export function handleSftpStatus(_req: Request): Response {
-  return new Response(JSON.stringify({ activeSessions: getActiveSessionCount() }), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return json({ activeSessions: getActiveSessionCount() });
 }
+

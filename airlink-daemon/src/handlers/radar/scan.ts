@@ -1,5 +1,6 @@
-import { access, readFile, stat } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { access, readdir, readFile, stat } from 'fs/promises';
+import { join, resolve } from 'path';
+import { getServerDir } from '../processManager';
 
 export interface RadarPattern {
   type: 'filename' | 'extension' | 'content';
@@ -22,65 +23,64 @@ interface ScanResult {
   matches: { path: string; size?: number }[];
 }
 
+async function walkDir(dir: string, baseDir: string, fileList: string[] = []): Promise<string[]> {
+  const files = await readdir(dir, { withFileTypes: true });
+  for (const file of files) {
+    const fullPath = join(dir, file.name);
+    const relPath = fullPath.replace(baseDir + '/', '').replace(baseDir + '\\', '');
+    if (file.isDirectory()) {
+      await walkDir(fullPath, baseDir, fileList);
+    } else {
+      fileList.push(relPath);
+    }
+  }
+  return fileList;
+}
+
 export async function scanVolume(id: string, script: RadarScript): Promise<ScanResult[]> {
-  const baseDirectory = resolve(process.cwd(), `volumes/${id}`);
+  const baseDirectory = getServerDir(id);
 
   try {
     await access(baseDirectory);
   } catch {
-    throw new Error(`volume directory for ${id} does not exist`);
+    throw new Error(`Server directory for ${id} does not exist`);
   }
 
   const results: ScanResult[] = [];
+  const allFiles = await walkDir(baseDirectory, baseDirectory);
 
   for (const pattern of script.patterns) {
     const scanResult: ScanResult = { pattern, matches: [] };
 
-    try {
-      if (pattern.type === 'content') {
-        // content scanning is intentionally not implemented to avoid reading huge volumes
+    for (const file of allFiles) {
+      const filePath = join(baseDirectory, file);
+      const fileStats = await stat(filePath).catch(() => null);
+      if (!fileStats || fileStats.isDirectory()) continue;
+
+      if (pattern.type === 'filename' && !file.toLowerCase().includes(pattern.pattern.toLowerCase())) {
+        continue;
+      }
+      if (pattern.type === 'extension' && !file.toLowerCase().endsWith(pattern.pattern.toLowerCase())) {
         continue;
       }
 
-      // Bun.Glob is built in — no import needed
-      const globPattern = pattern.type === 'filename' ? `**/*${pattern.pattern}*` : `**/*${pattern.pattern}`;
+      if (pattern.size_less_than && fileStats.size >= pattern.size_less_than) continue;
+      if (pattern.size_greater_than && fileStats.size <= pattern.size_greater_than) continue;
 
-      const matcher = new Bun.Glob(globPattern);
-      const files = await Array.fromAsync(matcher.scan({ cwd: baseDirectory, dot: true }));
-
-      for (const file of files) {
-        const filePath = join(baseDirectory, file);
-        const fileStats = await stat(filePath).catch(() => null);
-        if (!fileStats) continue;
-
-        if (fileStats.isDirectory() && pattern.type === 'extension') continue;
-        if (pattern.size_less_than && fileStats.size >= pattern.size_less_than) continue;
-        if (pattern.size_greater_than && fileStats.size <= pattern.size_greater_than) continue;
-
-        if (pattern.content) {
-          try {
-            if (fileStats.size < 10 * 1024 * 1024) {
-              const content = await readFile(filePath, 'utf-8');
-              let re: RegExp;
-              try {
-                re = new RegExp(pattern.content, 'i');
-              } catch {
-                continue;
-              }
-              if (!re.test(content)) continue;
-            } else {
-              continue;
-            }
-          } catch {
-            continue;
-          }
+      if (pattern.content && fileStats.size < 10 * 1024 * 1024) {
+        try {
+          const content = await readFile(filePath, 'utf-8');
+          const re = new RegExp(pattern.content, 'i');
+          if (!re.test(content)) continue;
+        } catch {
+          continue;
         }
-
-        scanResult.matches.push({ path: file, size: fileStats.size });
       }
 
-      if (scanResult.matches.length > 0) results.push(scanResult);
-    } catch {}
+      scanResult.matches.push({ path: file, size: fileStats.size });
+    }
+
+    if (scanResult.matches.length > 0) results.push(scanResult);
   }
 
   return results;

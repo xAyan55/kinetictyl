@@ -21,11 +21,6 @@ enum AllocationType {
   SERVER_SLOTS
 }
 
-enum InstanceType {
-  MINECRAFT
-  LXC
-}
-
 enum AllocationSource {
   DEFAULT
   PURCHASE
@@ -127,7 +122,6 @@ model Server {
   Storage          Int
   Variables        String?
   StartCommand     String?
-  dockerImage      String?
   sftpCredential   SftpCredential?
   allowStartupEdit Boolean            @default(false)
   Installing       Boolean            @default(true)
@@ -137,13 +131,15 @@ model Server {
   ownerId          Int
   nodeId           Int
   imageId          Int
-  instanceType     InstanceType       @default(MINECRAFT)
-  swap             Int?
-  bandwidth        Int?
-  ipv4             String?
-  ipv6             String?
-  osTemplate       String?
-  rootPassword     String?
+  javaVersion      String             @default("17")
+  softwareType     String             @default("paper")
+  softwareVersion  String             @default("latest")
+  serverJarPath    String?
+  autoRestart      Boolean            @default(true)
+  eulaAccepted     Boolean            @default(true)
+  startupFlags     String?
+  onlineMode       Boolean            @default(true)
+  whitelistEnabled Boolean            @default(false)
 
   node             Node               @relation(fields: [nodeId], references: [id])
   owner            Users              @relation(fields: [ownerId], references: [id])
@@ -187,15 +183,12 @@ model Node {
   allocatedPorts String?  @default("[]")
   sftpPort       Int      @default(3003)
   servers        Server[]
-  storagePools   StoragePool[]
-  networkPools   NetworkPool[]
-  capability     NodeCapability?
 }
 
 model settings {
   id                        Int      @id @default(autoincrement())
-  title                     String   @default("Airlink")
-  description               String   @default("AirLink is a free and open source project by AirlinkLabs")
+  title                     String   @default("Kinetictyl")
+  description               String   @default("Kinetictyl is a dedicated Minecraft server management panel")
   logo                      String   @default("../assets/logo.png")
   favicon                   String   @default("../assets/favicon.ico")
   theme                     String   @default("default")
@@ -749,43 +742,6 @@ model ResourceProfile {
   bandwidth   Int      @default(0) // Bandwidth limit in MB/s or total monthly cap
 }
 
-model ImageRegistry {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  distribution String
-  release      String
-  architecture String   @default("amd64")
-  cloudImage   Boolean  @default(false)
-  url          String
-  checksum     String?
-  minDisk      Int      @default(0) // in MB
-  minRam       Int      @default(0) // in MB
-  enabled      Boolean  @default(true)
-  deprecated   Boolean  @default(false)
-}
-
-model StoragePool {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  driver      String   // e.g. "zfs", "btrfs", "dir", "lvm"
-  source      String   // Path or ZFS pool name
-  capacity    Int      // Total capacity in MB
-  nodeId      Int
-  node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-}
-
-model NetworkPool {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  subnet      String   // e.g. "10.0.0.0/24"
-  gateway     String?
-  bridge      String   @default("lxdbr0")
-  type        String   // "NAT", "bridged", "routed", "isolated"
-  ips         String   // JSON array of available / allocated IPs
-  nodeId      Int
-  node        Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-}
-
 model OperationQueue {
   id          Int      @id @default(autoincrement())
   uuid        String   @unique @default(uuid())
@@ -796,20 +752,6 @@ model OperationQueue {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   serverUUID  String
-}
-
-model NodeCapability {
-  id              Int      @id @default(autoincrement())
-  nodeId          Int      @unique
-  node            Node     @relation(fields: [nodeId], references: [id], onDelete: Cascade)
-  dockerInstalled Boolean  @default(false)
-  dockerVersion   String?
-  lxcInstalled    Boolean  @default(false)
-  lxcVersion      String?
-  lxdVersion      String?
-  cgroupVersion   String?
-  storageDriver   String?
-  features        String   @default("[]") // JSON string of feature flags
 }
 
 model LinkvertiseSession {

@@ -1,167 +1,168 @@
+import express, { Request as ExpressReq, Response as ExpressRes } from 'express';
+import http from 'http';
+import { WebSocket, WebSocketServer } from 'ws';
 import config from './config';
-import { checkDocker, checkDockerRunning, initContainerStateMap } from './handlers/docker';
-import { getCurrentStats, initStatsCollection, saveStats } from './handlers/stats';
+import { detectSystemJava } from './handlers/javaManager';
+import { sendCommand } from './handlers/processManager';
 import logger, { drawHeader } from './logger';
 import { handleHttpRequest } from './router';
-import { getAllowedIpCheck } from './security/hmac';
-import { checkRateLimit } from './security/rateLimit';
-import { validateContainerId } from './validation';
-import type { WsData } from './ws/server';
-import { buildWsData, openConnections, wsClose, wsMessage, wsOpen } from './ws/server';
-import { DriverRegistry } from './virtualization/DriverRegistry';
-import { DockerDriver } from './virtualization/drivers/DockerDriver';
-import { IncusDriver } from './virtualization/drivers/IncusDriver';
+import { attachToContainer } from './ws/attach';
+import { subscribe } from './ws/events';
+import { startStatusPolling, stopStatusPolling } from './ws/status';
 
+const app = express();
+app.use(express.json({ limit: '100mb' }));
+app.use(express.raw({ limit: '100mb', type: 'application/octet-stream' }));
 
-function isPrivateIp(ip: string): boolean {
-  return (
-    ip === '127.0.0.1' ||
-    ip === '::1' ||
-    ip === 'localhost' ||
-    ip.startsWith('10.') ||
-    ip.startsWith('192.168.') ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(ip)
-  );
-}
-
-function resolveEffectiveIp(req: Request, server: ReturnType<typeof Bun.serve>): string {
-  const rawIp = server.requestIP(req);
-  const socketIp = rawIp?.address.replace(/^::ffff:/, '') ?? 'unknown';
-
-  if (Bun.env.BEHIND_PROXY === 'true') {
-    if (isPrivateIp(socketIp)) {
-      return req.headers.get('x-forwarded-for')?.split(',')[0].trim() || socketIp;
+// Forward Express requests to our fetch-style router
+app.all('*', async (req: ExpressReq, res: ExpressRes) => {
+  const scheme = req.secure ? 'https' : 'http';
+  const url = `${scheme}://${req.headers.host || 'localhost'}${req.url}`;
+  
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (value) {
+      if (Array.isArray(value)) {
+        value.forEach((v) => headers.append(key, v));
+      } else {
+        headers.set(key, value);
+      }
     }
-    logger.warn(`BEHIND_PROXY=true but ${socketIp} is not a trusted proxy`);
   }
 
-  return socketIp;
-}
+  let body: any = undefined;
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    if (typeof req.body === 'string' || Buffer.isBuffer(req.body)) {
+      body = req.body;
+    } else if (req.body && Object.keys(req.body).length > 0) {
+      body = JSON.stringify(req.body);
+    }
+  }
 
-function attemptUpgrade(req: Request, server: ReturnType<typeof Bun.serve>): boolean | Response {
-  if (req.method !== 'GET') return false;
-
-  const url = new URL(req.url);
-  const parts = url.pathname.split('/').filter(Boolean);
-  const route = parts[0];
-  const containerId = parts[1];
-
-  const validRoutes = ['container', 'containerstatus', 'containerevents'];
-  if (!validRoutes.includes(route) || !containerId) return false;
-  if (parts.length !== 2) return false;
-  if (!validateContainerId(containerId)) return false;
-
-  const effectiveIp = resolveEffectiveIp(req, server);
-  const ipErr = getAllowedIpCheck(effectiveIp);
-  if (ipErr) return ipErr;
-
-  const rlErr = checkRateLimit(effectiveIp, 60);
-  if (rlErr) return rlErr;
-
-  return server.upgrade(req, {
-    data: buildWsData(route as 'container' | 'containerstatus' | 'containerevents', containerId),
+  const webReq = new Request(url, {
+    method: req.method,
+    headers,
+    body,
   });
-}
 
-process.on('uncaughtException', (err) => {
-  logger.error('uncaught exception', err);
+  const webRes = await handleHttpRequest(webReq, req.ip || '127.0.0.1');
+
+  res.status(webRes.status);
+  webRes.headers.forEach((val, key) => {
+    res.setHeader(key, val);
+  });
+
+  const buffer = await webRes.arrayBuffer();
+  res.send(Buffer.from(buffer));
 });
 
-process.on('unhandledRejection', (reason) => {
-  logger.error('unhandled rejection', reason as Error);
+const server = http.createServer(app);
+const wss = new WebSocketServer({ noServer: true });
+
+interface CustomWs extends WebSocket {
+  route?: 'container' | 'containerstatus' | 'containerevents';
+  containerId?: string;
+  authed?: boolean;
+  authTimer?: NodeJS.Timeout;
+  statusTimer?: NodeJS.Timeout;
+  unsubEvents?: () => void;
+  _logCleanup?: () => void;
+}
+
+server.on('upgrade', (request, socket, head) => {
+  const url = new URL(request.url || '', `http://${request.headers.host}`);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const route = parts[0] as 'container' | 'containerstatus' | 'containerevents';
+  const containerId = parts[1];
+
+  const validRoutes = ['container', 'containerstatus', 'containerevents', 'server', 'serverstatus', 'serverevents'];
+  if (!validRoutes.includes(route) || !containerId) {
+    socket.destroy();
+    return;
+  }
+
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    const customWs = ws as CustomWs;
+    customWs.route = route.replace('server', 'container') as any;
+    customWs.containerId = containerId;
+    customWs.authed = false;
+    wss.emit('connection', customWs, request);
+  });
+});
+
+wss.on('connection', (ws: CustomWs) => {
+  const AUTH_TIMEOUT_MS = 10000;
+
+  ws.authTimer = setTimeout(() => {
+    if (!ws.authed) {
+      ws.send(JSON.stringify({ error: 'authentication timeout' }));
+      ws.close(1008, 'auth timeout');
+    }
+  }, AUTH_TIMEOUT_MS);
+
+  ws.on('message', (raw) => {
+    let msg: any = null;
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch {
+      msg = { event: 'CMD', command: raw.toString().trim() };
+    }
+
+    const eventName = (msg.event || '').toLowerCase();
+
+    if (eventName === 'auth') {
+      const key = Array.isArray(msg.args) ? msg.args[0] : msg.key || msg.token;
+      if (key !== config.key) {
+        ws.send(JSON.stringify({ error: 'invalid key' }));
+        ws.close(1008, 'auth failed');
+        return;
+      }
+
+      ws.authed = true;
+      if (ws.authTimer) clearTimeout(ws.authTimer);
+
+      if (ws.route === 'container' && ws.containerId) {
+        attachToContainer(ws.containerId, ws);
+      } else if (ws.route === 'containerstatus' && ws.containerId) {
+        ws.statusTimer = startStatusPolling(ws.containerId, ws);
+      } else if (ws.route === 'containerevents' && ws.containerId) {
+        ws.unsubEvents = subscribe(ws.containerId, (ev) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ event: 'lifecycle', data: ev }));
+          }
+        });
+      }
+      return;
+    }
+
+    if (!ws.authed) {
+      ws.send(JSON.stringify({ error: 'not authenticated' }));
+      ws.close(1008, 'auth required');
+      return;
+    }
+
+    if (['cmd', 'command', 'input', 'stdin', 'sendcommand'].includes(eventName)) {
+      const cmd = msg.command || (Array.isArray(msg.args) ? msg.args.join(' ') : '');
+      if (cmd && ws.containerId) {
+        sendCommand(ws.containerId, cmd);
+      }
+    }
+  });
+
+  ws.on('close', () => {
+    if (ws.authTimer) clearTimeout(ws.authTimer);
+    if (ws.statusTimer) stopStatusPolling(ws.statusTimer);
+    if (ws.unsubEvents) ws.unsubEvents();
+    if (ws._logCleanup) ws._logCleanup();
+  });
 });
 
 drawHeader(config.version, config.port);
+detectSystemJava();
 
-try {
-  await checkDocker();
-  await checkDockerRunning();
-  await initContainerStateMap();
-} catch (err) {
-  logger.error('docker is not ready, so container actions are paused for now', err as Error);
-}
-
-// Register virtualization drivers
-DriverRegistry.register('minecraft', new DockerDriver());
-DriverRegistry.register('lxc', new IncusDriver());
-
-initStatsCollection();
-
-const tls =
-  config.tlsCertPath && config.tlsKeyPath
-    ? {
-        cert: Bun.file(config.tlsCertPath),
-        key: Bun.file(config.tlsKeyPath),
-      }
-    : undefined;
-
-if (config.tlsCertPath && !config.tlsKeyPath) {
-  logger.warn('TLS certificate configured without TLS key; TLS disabled');
-}
-
-export const server = Bun.serve<WsData>({
-  port: config.port,
-  hostname: '0.0.0.0',
-
-  fetch(req, server) {
-    const upgradeResult = attemptUpgrade(req, server);
-    if (upgradeResult === true) return;
-    if (upgradeResult instanceof Response) return upgradeResult;
-    return handleHttpRequest(req, server);
-  },
-
-  websocket: {
-    open(ws) {
-      wsOpen(ws);
-    },
-    message(ws, msg) {
-      wsMessage(ws, msg);
-    },
-    close(ws, code, why) {
-      wsClose(ws, code, why);
-    },
-    drain() {
-      /* bun requires this */
-    },
-  },
-
-  tls,
+server.listen(config.port, '0.0.0.0', () => {
+  logger.ok(`Kinetictyl Agent ready on port ${config.port}`);
 });
 
-logger.ok(`ready on port ${config.port}`);
-
-if (process.env.DAEMON_WORKER_MODE === '1')
-  (self as unknown as Worker).postMessage({ type: 'ready', port: config.port });
-
-setInterval(async () => {
-  try {
-    const stats = await getCurrentStats();
-    saveStats(stats);
-  } catch (err) {
-    logger.error('could not collect host stats', err);
-  }
-}, config.statsInterval);
-
-async function shutdown(signal: string): Promise<void> {
-  logger.info(`${signal} received, shutting down`);
-
-  server.stop(false);
-
-  for (const ws of openConnections) ws.close(1001, 'server shutting down');
-
-  try {
-    const stats = await getCurrentStats();
-    saveStats(stats);
-  } catch {
-    /* don't let a stats error block shutdown */
-  }
-
-  await new Promise<void>((resolve) => setTimeout(resolve, 10_000));
-
-  logger.info('shutdown finished');
-  process.exit(0);
-}
-
-process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGHUP', () => shutdown('SIGHUP'));
+process.on('SIGTERM', () => process.exit(0));
+process.on('SIGINT', () => process.exit(0));

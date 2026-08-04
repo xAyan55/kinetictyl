@@ -6,7 +6,6 @@ interface ServerInfo {
   nodePort: number;
   serverUUID: string;
   nodeKey: string;
-  instanceType?: string;
 }
 
 interface ServerStatus {
@@ -25,7 +24,7 @@ export async function getServerStatus(serverInfo: ServerInfo): Promise<ServerSta
       method: 'GET',
       url: `${daemonSchemeSync()}://${serverInfo.nodeAddress}:${serverInfo.nodePort}/container/status`,
       auth: { username: 'CynexGP', password: serverInfo.nodeKey },
-      params: { id: serverInfo.serverUUID, instanceType: serverInfo.instanceType },
+      params: { id: serverInfo.serverUUID },
       timeout: 3000,
     });
 

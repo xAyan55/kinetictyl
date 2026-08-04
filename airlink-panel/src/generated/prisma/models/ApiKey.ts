@@ -494,6 +494,14 @@ export type ApiKeyUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.ApiKeyScalarWhereInput | Prisma.ApiKeyScalarWhereInput[]
 }
 
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type ApiKeyCreateWithoutUserInput = {
   name: string
   key: string

@@ -1,19 +1,24 @@
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
 
 const logsPath = join(process.cwd(), 'storage/install_logs.json');
 
 async function readState(): Promise<Record<string, string>> {
   try {
-    const file = Bun.file(logsPath);
-    const text = await file.text();
-    return JSON.parse(text);
+    if (existsSync(logsPath)) {
+      const text = readFileSync(logsPath, 'utf8');
+      return JSON.parse(text);
+    }
+    return {};
   } catch {
     return {};
   }
 }
 
 async function writeState(data: Record<string, string>): Promise<void> {
-  await Bun.write(logsPath, JSON.stringify(data, null, 2));
+  const dir = dirname(logsPath);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  writeFileSync(logsPath, JSON.stringify(data, null, 2), 'utf8');
 }
 
 export async function setServerState(containerId: string, state: string): Promise<void> {

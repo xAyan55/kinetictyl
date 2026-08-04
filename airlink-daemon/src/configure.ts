@@ -122,7 +122,7 @@ export async function runConfigure(args: string[]): Promise<void> {
   }
 }
 
-if (import.meta.main) {
+if (process.argv[1]?.includes('configure')) {
   const filteredArgs = process.argv.slice(2).filter((a) => a !== '--');
   if (filteredArgs.includes('--help') || filteredArgs.includes('-h')) {
     printConfigureHelp();

@@ -155,13 +155,12 @@ function getServerDaemonAuth(server: Pick<ServerPageServer, 'node'>): { username
   };
 }
 
-function getServerStatusInput(server: Pick<ServerPageServer, 'UUID' | 'node' | 'instanceType'>) {
+function getServerStatusInput(server: Pick<ServerPageServer, 'UUID' | 'node'>) {
   return {
     nodeAddress: server.node.address,
     nodePort: server.node.port,
     serverUUID: server.UUID,
     nodeKey: server.node.key,
-    instanceType: server.instanceType,
   };
 }
 
@@ -217,10 +216,13 @@ type ServerRuntimeConfig = Pick<
   | 'StartCommand'
   | 'Storage'
   | 'Variables'
-  | 'dockerImage'
   | 'node'
-  | 'instanceType'
-  | 'osTemplate'
+  | 'javaVersion'
+  | 'softwareType'
+  | 'softwareVersion'
+  | 'startupFlags'
+  | 'onlineMode'
+  | 'whitelistEnabled'
 >;
 
 function buildServerRuntimeEnv(
@@ -235,18 +237,10 @@ function buildServerRuntimeEnv(
   return envVariables;
 }
 
-function getConfiguredDockerImage(server: Pick<ServerRuntimeConfig, 'dockerImage'>): string | null {
-  if (!server.dockerImage) {
-    return null;
-  }
-
-  return String(Object.values(JSON.parse(server.dockerImage))[0]);
-}
-
 async function stopServerContainer(
-  server: Pick<ServerPageServer, 'node' | 'image' | 'instanceType'>,
+  server: Pick<ServerPageServer, 'node' | 'image'>,
   serverId: string,
-  stopCommand = server.image?.stop || 'stop',
+  stopCommand = 'stop',
 ): Promise<void> {
   await axios({
     method: 'POST',
@@ -256,7 +250,6 @@ async function stopServerContainer(
     data: {
       id: serverId,
       stopCmd: stopCommand,
-      instanceType: server.instanceType,
     },
   });
 }
@@ -265,33 +258,10 @@ async function startServerContainer(
   server: ServerRuntimeConfig,
   serverId: string,
   options: {
-    dockerImage?: string;
     startCommand?: string;
     variables?: string | null | ServerVariable[];
   } = {},
 ): Promise<void> {
-  if (server.instanceType === 'LXC') {
-    await axios({
-      method: 'POST',
-      url: getServerDaemonAddress(server, '/container/start'),
-      auth: getServerDaemonAuth(server),
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        id: serverId,
-        image: server.osTemplate || 'ubuntu/24.04',
-        instanceType: 'LXC',
-        Memory: server.Memory,
-        Cpu: server.Cpu,
-      },
-    });
-    return;
-  }
-
-  const dockerImage = options.dockerImage ?? getConfiguredDockerImage(server);
-  if (!dockerImage) {
-    throw new Error('Docker image not found.');
-  }
-
   await axios({
     method: 'POST',
     url: getServerDaemonAddress(server, '/container/start'),
@@ -299,13 +269,13 @@ async function startServerContainer(
     headers: { 'Content-Type': 'application/json' },
     data: {
       id: serverId,
-      image: dockerImage,
       ports: portsToDaemonString(server.Ports),
       Memory: server.Memory,
       Cpu: server.Cpu,
-      env: buildServerRuntimeEnv(server, options.variables ?? server.Variables),
-      StartCommand: options.startCommand ?? server.StartCommand,
-      instanceType: 'MINECRAFT',
+      javaVersion: server.javaVersion || '17',
+      softwareType: server.softwareType || 'paper',
+      softwareVersion: server.softwareVersion || 'latest',
+      startupFlags: options.startCommand ?? server.StartCommand ?? '',
     },
   });
 }
@@ -314,7 +284,6 @@ async function restartServerContainer(
   server: ServerRuntimeConfig & Pick<ServerPageServer, 'image'>,
   serverId: string,
   options: {
-    dockerImage?: string;
     startCommand?: string;
     stopCommand?: string;
     variables?: string | null | ServerVariable[];
@@ -535,7 +504,6 @@ const dashboardModule: Module = {
                 data: {
                   id: String(serverId),
                   stopCmd: server.image?.stop || 'stop',
-                  instanceType: server.instanceType,
                 },
               };
 
@@ -662,7 +630,7 @@ const dashboardModule: Module = {
             return;
           }
 
-          const isLxc = server.instanceType === 'LXC';
+          const isLxc = false;
           const filesRequest = {
             method: 'GET',
             url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/list?id=${server.UUID}&path=${path}${isLxc ? '&instanceType=LXC' : ''}`,
@@ -789,7 +757,7 @@ const dashboardModule: Module = {
             return;
           }
 
-          const isLxc = server.instanceType === 'LXC';
+          const isLxc = false;
           const response = await axios({
             method: 'GET',
             url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/file/content`,
@@ -898,7 +866,7 @@ const dashboardModule: Module = {
               id: server.UUID,
               path: filePath,
               content: content,
-              ...(server.instanceType === 'LXC' ? { instanceType: 'LXC' } : {}),
+
             },
             auth: getServerDaemonAuth(server),
           });
@@ -951,7 +919,7 @@ const dashboardModule: Module = {
               data: {
                 id: server.UUID,
                 path: filePath,
-                ...(server.instanceType === 'LXC' ? { instanceType: 'LXC' } : {}),
+  
               },
               auth: getServerDaemonAuth(server),
               timeout: 10000, // 10 second timeout for large directories
@@ -1006,7 +974,7 @@ const dashboardModule: Module = {
           const response = await axios({
             method: 'GET',
             url: getServerDaemonAddress(server, '/fs/download'),
-            params: { id: server.UUID, path: filePath, ...(server.instanceType === 'LXC' ? { instanceType: 'LXC' } : {}) },
+            params: { id: server.UUID, path: filePath },
             auth: getServerDaemonAuth(server),
             responseType: 'stream',
           });
@@ -1057,7 +1025,7 @@ const dashboardModule: Module = {
               id: serverId,
               path: relativePath,
               zipname: zipName,
-              ...(server.instanceType === 'LXC' ? { instanceType: 'LXC' } : {}),
+
             },
           });
 
@@ -1112,7 +1080,7 @@ const dashboardModule: Module = {
               id: serverId,
               path: cleanPath,
               zipname: cleanZipName,
-              ...(server.instanceType === 'LXC' ? { instanceType: 'LXC' } : {}),
+
             },
           };
 
@@ -1171,7 +1139,7 @@ const dashboardModule: Module = {
               id: server.UUID,
               path: 'eula.txt',
               content: 'eula=true',
-              ...(server.instanceType === 'LXC' ? { instanceType: 'LXC' } : {}),
+
             },
             auth: getServerDaemonAuth(server),
           });
@@ -1367,7 +1335,7 @@ const dashboardModule: Module = {
           }
 
           try {
-            const isLxc = server.instanceType === 'LXC';
+            const isLxc = false;
             const worldsRequest = {
               method: 'GET',
               url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/list?id=${server.UUID}${isLxc ? '&instanceType=LXC' : ''}`,
@@ -1503,7 +1471,7 @@ const dashboardModule: Module = {
             // intermediate directory creation in afs.rename
             const newPath = newName;
 
-            const isLxc = server.instanceType === 'LXC';
+            const isLxc = false;
             const renameRequest = {
               method: 'POST',
               url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/rename`,
@@ -1600,7 +1568,7 @@ const dashboardModule: Module = {
               const fileContent = req.file.buffer.toString('base64');
               const fileContentWithMeta = `data:${req.file.mimetype};base64,${fileContent}`;
 
-              const isLxc = server.instanceType === 'LXC';
+              const isLxc = false;
               const uploadRequest = {
                 method: 'POST',
                 url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/upload`,
@@ -1633,7 +1601,7 @@ const dashboardModule: Module = {
                 path: response.data.path,
               });
             } else {
-              const isLxc = server.instanceType === 'LXC';
+              const isLxc = false;
               const createEmptyFileRequest = {
                 method: 'POST',
                 url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/create-empty-file`,
@@ -1663,7 +1631,7 @@ const dashboardModule: Module = {
                 const chunkContent = chunk.toString('base64');
                 const chunkContentWithMeta = `data:${req.file.mimetype};base64,${chunkContent}`;
 
-                const isLxc = server.instanceType === 'LXC';
+                const isLxc = false;
                 const uploadChunkRequest = {
                   method: 'POST',
                   url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/append-file`,
@@ -1891,7 +1859,7 @@ const dashboardModule: Module = {
                 username: 'CynexGP',
                 password: server.node.key,
               },
-              params: { id: serverId, instanceType: server.instanceType },
+            params: { id: serverId },
             };
 
             const statusResponse = await axios(statusRequest);
@@ -1901,11 +1869,6 @@ const dashboardModule: Module = {
             const isRunning = statusResponse.data?.running === true;
 
             if (isRunning) {
-              if (!server.dockerImage) {
-                res.status(400).json({ error: 'Docker image not found.' });
-                return;
-              }
-
               await restartServerContainer(server, String(serverId), {
                 startCommand,
               });
@@ -2035,14 +1998,7 @@ const dashboardModule: Module = {
             );
           }
 
-          await prisma.server.update({
-            where: { UUID: getParamAsString(serverId) },
-            data: { dockerImage: JSON.stringify(dockerImageObj) },
-          });
-
-          logger.info(
-            `Docker image updated in database for server ${serverId}`,
-          );
+          logger.info(`Updating server ${serverId}`);
 
           try {
             const statusRequest = {
@@ -2052,7 +2008,7 @@ const dashboardModule: Module = {
                 username: 'CynexGP',
                 password: server.node.key,
               },
-              params: { id: serverId, instanceType: server.instanceType },
+              params: { id: serverId },
             };
 
             const statusResponse = await axios(statusRequest);
@@ -2062,12 +2018,8 @@ const dashboardModule: Module = {
             const isRunning = statusResponse.data?.running === true;
 
             if (isRunning) {
-              await restartServerContainer(server, String(serverId), {
-                dockerImage,
-              });
-              logger.info(
-                'Container restarted with new Docker image: ' + serverId,
-              );
+              await restartServerContainer(server, String(serverId));
+              logger.info('Container restarted: ' + serverId);
             }
           } catch (statusError) {
             logger.warn(
@@ -2216,7 +2168,7 @@ const dashboardModule: Module = {
                 username: 'CynexGP',
                 password: server.node.key,
               },
-              params: { id: serverId, instanceType: server.instanceType },
+            params: { id: serverId },
             };
 
             const statusResponse = await axios(statusRequest);
@@ -2226,15 +2178,6 @@ const dashboardModule: Module = {
             const isRunning = statusResponse.data?.running === true;
 
             if (isRunning) {
-              if (!server.dockerImage) {
-                logger.error(
-                  `Docker image not found for server ${serverId}`,
-                  new Error('Docker image not found'),
-                );
-                res.status(400).json({ error: 'Docker image not found.' });
-                return;
-              }
-
               await restartServerContainer(server, String(serverId), {
                 variables,
               });
@@ -2396,10 +2339,6 @@ const dashboardModule: Module = {
             return;
           }
 
-          if (!server.dockerImage) {
-            res.status(400).json({ error: 'Docker image not found.' });
-            return;
-          }
 
           await restartServerContainer(server, String(serverId));
           logger.info('Container restarted successfully: ' + serverId);
@@ -2560,11 +2499,7 @@ const dashboardModule: Module = {
                     `Reinstalling server ${serverToReinstall.UUID} with environment variables: ${JSON.stringify(env)}`,
                   );
 
-                  let reinstallDockerImage: string | undefined;
-                  try {
-                    const parsed = JSON.parse(serverToReinstall.dockerImage || '{}');
-                    reinstallDockerImage = Object.values(parsed)[0] as string | undefined;
-                  } catch { /* leave undefined */ }
+                  let reinstallDockerImage: string | undefined = undefined;
 
                   const installRequestData = {
                     method: 'POST',

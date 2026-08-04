@@ -54,17 +54,13 @@ function write(level: Level, msg: string, extra?: unknown) {
 export function drawHeader(version: string, port: number) {
   const lines = [
     '',
-    '                                              ',
-    '  /$$$$$$ /$$         /$$/$$         /$$      ',
-    ' /$$__  $|__/        | $|__/        | $$      ',
-    '| $$  \\ $$/$$ /$$$$$$| $$/$$/$$$$$$$| $$   /$$',
-    '| $$$$$$$| $$/$$__  $| $| $| $$__  $| $$  /$$/',
-    '| $$__  $| $| $$  \\__| $| $| $$  \\ $| $$$$$$/ ',
-    '| $$  | $| $| $$     | $| $| $$  | $| $$_  $$ ',
-    '| $$  | $| $| $$     | $| $| $$  | $| $$ \\  $$',
-    '|__/  |__|__|__/     |__|__|__/  |__|__/  \\__/',
-    '                                              ',
-    '-----CynexGPD - MIT LICENSE-----',
+    '  _  ___ netictyl Agent',
+    ' | |/ (_)_ __   ___| |_(_) ___| |_ _   _| |',
+    " | ' /| | '_ \\ / _ \\ __| |/ __| __| | | | |",
+    ' | . \\| | | | |  __/ |_| | (__| |_| |_| | |',
+    ' |_|\\_\\_|_| |_|\\___|\\__|_|\\___|\\__|\\__,_|_|',
+    '',
+    '----- Kinetictyl Agent - MIT LICENSE -----',
     '',
   ];
   for (const l of lines) process.stdout.write(`${l}\n`);
@@ -76,7 +72,7 @@ const logger = {
   error: (msg: string, extra?: unknown) => write('error', msg, extra),
   ok: (msg: string, extra?: unknown) => write('ok', msg, extra),
   debug: (msg: string, extra?: unknown) => {
-    if (Bun.env.DEBUG === 'true') write('debug', msg, extra);
+    if (process.env.DEBUG === 'true') write('debug', msg, extra);
   },
 };
 

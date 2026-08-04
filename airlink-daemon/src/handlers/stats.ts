@@ -75,10 +75,13 @@ export function saveStats(stats: SystemStat): void {
   statsLog.push(stats);
   cleanOldEntries();
 
-  // write to temp, then rename — same atomicity guarantee as before
-  Bun.write(tempStoragePath, JSON.stringify(statsLog, null, 2))
-    .then(() => rename(tempStoragePath, storagePath))
-    .catch((err) => logger.error('failed to write stats file', err));
+  try {
+    const { writeFileSync, renameSync } = require('fs');
+    writeFileSync(tempStoragePath, JSON.stringify(statsLog, null, 2), 'utf8');
+    renameSync(tempStoragePath, storagePath);
+  } catch (err: unknown) {
+    logger.error('failed to write stats file', err as Error);
+  }
 }
 
 export function getTotalStats(): SystemStat[] {

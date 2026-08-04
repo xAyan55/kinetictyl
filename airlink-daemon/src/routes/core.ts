@@ -1,16 +1,16 @@
+import { existsSync, readFileSync } from 'fs';
 import config from '../config';
 import { getTotalStats } from '../handlers/stats';
 
-// read the meta version from storage/config.json at startup
-let daemonVersion = '3.0.0';
+let daemonVersion = '1.0.0';
 try {
-  const cfg = (await Bun.file('storage/config.json').json()) as {
-    meta?: { version?: string };
-  };
-  daemonVersion = cfg?.meta?.version ?? daemonVersion;
-} catch {
-  /* file missing or malformed — use default */
-}
+  if (existsSync('storage/config.json')) {
+    const cfg = JSON.parse(readFileSync('storage/config.json', 'utf8')) as {
+      meta?: { version?: string };
+    };
+    daemonVersion = cfg?.meta?.version ?? daemonVersion;
+  }
+} catch {}
 
 function formatUptime(s: number): string {
   const d = Math.floor(s / 86400);
@@ -27,7 +27,7 @@ export function handleRoot(_req: Request): Response {
   return new Response(
     JSON.stringify({
       versionFamily: 1,
-      versionRelease: `CynexGPD ${daemonVersion}`,
+      versionRelease: `Kinetictyl Agent ${daemonVersion}`,
       status: 'Online',
       remote: config.remote,
     }),

@@ -227,7 +227,6 @@ const adminModule: Module = {
                 data: {
                   id: String(server.UUID),
                   stopCmd: server.image?.stop || 'stop',
-                  instanceType: server.instanceType,
                 },
               };
 
@@ -323,15 +322,9 @@ const adminModule: Module = {
               description,
               nodeId: parseInt(nodeId),
               imageId: imageId ? parseInt(imageId) : 1,
-              dockerImage: '',
               memory: parseInt(Memory),
               cpu: parseInt(Cpu),
               storage: parseInt(Storage),
-              instanceType: 'LXC',
-              osTemplate: osTemplate || 'ubuntu/24.04',
-              swap: swap ? parseInt(swap) : undefined,
-              bandwidth: bandwidth ? parseInt(bandwidth) : undefined,
-              rootPassword: rootPassword || undefined,
             });
 
             if (allowStartupEdit === 'true') {
@@ -614,11 +607,7 @@ const adminModule: Module = {
                   } else if (Array.isArray(scripts.install)) {
                     // Resolve the docker image so the daemon pulls it during
                     // install rather than on the first Start click.
-                    let dockerImageValue: string | undefined;
-                    try {
-                      const parsed = JSON.parse(server.dockerImage || '{}');
-                      dockerImageValue = Object.values(parsed)[0] as string | undefined;
-                    } catch { /* leave undefined */ }
+                    let dockerImageValue: string | undefined = undefined;
 
                     await axios.post(
                       `${daemonUrl}/container/install`,

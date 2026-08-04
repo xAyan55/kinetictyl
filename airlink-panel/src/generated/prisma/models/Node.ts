@@ -285,9 +285,6 @@ export type NodeWhereInput = {
   allocatedPorts?: Prisma.StringNullableFilter<"Node"> | string | null
   sftpPort?: Prisma.IntFilter<"Node"> | number
   servers?: Prisma.ServerListRelationFilter
-  storagePools?: Prisma.StoragePoolListRelationFilter
-  networkPools?: Prisma.NetworkPoolListRelationFilter
-  capability?: Prisma.XOR<Prisma.NodeCapabilityNullableScalarRelationFilter, Prisma.NodeCapabilityWhereInput> | null
 }
 
 export type NodeOrderByWithRelationInput = {
@@ -303,9 +300,6 @@ export type NodeOrderByWithRelationInput = {
   allocatedPorts?: Prisma.SortOrderInput | Prisma.SortOrder
   sftpPort?: Prisma.SortOrder
   servers?: Prisma.ServerOrderByRelationAggregateInput
-  storagePools?: Prisma.StoragePoolOrderByRelationAggregateInput
-  networkPools?: Prisma.NetworkPoolOrderByRelationAggregateInput
-  capability?: Prisma.NodeCapabilityOrderByWithRelationInput
 }
 
 export type NodeWhereUniqueInput = Prisma.AtLeast<{
@@ -324,9 +318,6 @@ export type NodeWhereUniqueInput = Prisma.AtLeast<{
   allocatedPorts?: Prisma.StringNullableFilter<"Node"> | string | null
   sftpPort?: Prisma.IntFilter<"Node"> | number
   servers?: Prisma.ServerListRelationFilter
-  storagePools?: Prisma.StoragePoolListRelationFilter
-  networkPools?: Prisma.NetworkPoolListRelationFilter
-  capability?: Prisma.XOR<Prisma.NodeCapabilityNullableScalarRelationFilter, Prisma.NodeCapabilityWhereInput> | null
 }, "id">
 
 export type NodeOrderByWithAggregationInput = {
@@ -377,9 +368,6 @@ export type NodeCreateInput = {
   allocatedPorts?: string | null
   sftpPort?: number
   servers?: Prisma.ServerCreateNestedManyWithoutNodeInput
-  storagePools?: Prisma.StoragePoolCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityCreateNestedOneWithoutNodeInput
 }
 
 export type NodeUncheckedCreateInput = {
@@ -395,9 +383,6 @@ export type NodeUncheckedCreateInput = {
   allocatedPorts?: string | null
   sftpPort?: number
   servers?: Prisma.ServerUncheckedCreateNestedManyWithoutNodeInput
-  storagePools?: Prisma.StoragePoolUncheckedCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolUncheckedCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityUncheckedCreateNestedOneWithoutNodeInput
 }
 
 export type NodeUpdateInput = {
@@ -412,9 +397,6 @@ export type NodeUpdateInput = {
   allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
   servers?: Prisma.ServerUpdateManyWithoutNodeNestedInput
-  storagePools?: Prisma.StoragePoolUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUpdateOneWithoutNodeNestedInput
 }
 
 export type NodeUncheckedUpdateInput = {
@@ -430,9 +412,6 @@ export type NodeUncheckedUpdateInput = {
   allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
   servers?: Prisma.ServerUncheckedUpdateManyWithoutNodeNestedInput
-  storagePools?: Prisma.StoragePoolUncheckedUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUncheckedUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUncheckedUpdateOneWithoutNodeNestedInput
 }
 
 export type NodeCreateManyInput = {
@@ -555,48 +534,6 @@ export type NodeUpdateOneRequiredWithoutServersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.NodeUpdateToOneWithWhereWithoutServersInput, Prisma.NodeUpdateWithoutServersInput>, Prisma.NodeUncheckedUpdateWithoutServersInput>
 }
 
-export type NodeCreateNestedOneWithoutStoragePoolsInput = {
-  create?: Prisma.XOR<Prisma.NodeCreateWithoutStoragePoolsInput, Prisma.NodeUncheckedCreateWithoutStoragePoolsInput>
-  connectOrCreate?: Prisma.NodeCreateOrConnectWithoutStoragePoolsInput
-  connect?: Prisma.NodeWhereUniqueInput
-}
-
-export type NodeUpdateOneRequiredWithoutStoragePoolsNestedInput = {
-  create?: Prisma.XOR<Prisma.NodeCreateWithoutStoragePoolsInput, Prisma.NodeUncheckedCreateWithoutStoragePoolsInput>
-  connectOrCreate?: Prisma.NodeCreateOrConnectWithoutStoragePoolsInput
-  upsert?: Prisma.NodeUpsertWithoutStoragePoolsInput
-  connect?: Prisma.NodeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.NodeUpdateToOneWithWhereWithoutStoragePoolsInput, Prisma.NodeUpdateWithoutStoragePoolsInput>, Prisma.NodeUncheckedUpdateWithoutStoragePoolsInput>
-}
-
-export type NodeCreateNestedOneWithoutNetworkPoolsInput = {
-  create?: Prisma.XOR<Prisma.NodeCreateWithoutNetworkPoolsInput, Prisma.NodeUncheckedCreateWithoutNetworkPoolsInput>
-  connectOrCreate?: Prisma.NodeCreateOrConnectWithoutNetworkPoolsInput
-  connect?: Prisma.NodeWhereUniqueInput
-}
-
-export type NodeUpdateOneRequiredWithoutNetworkPoolsNestedInput = {
-  create?: Prisma.XOR<Prisma.NodeCreateWithoutNetworkPoolsInput, Prisma.NodeUncheckedCreateWithoutNetworkPoolsInput>
-  connectOrCreate?: Prisma.NodeCreateOrConnectWithoutNetworkPoolsInput
-  upsert?: Prisma.NodeUpsertWithoutNetworkPoolsInput
-  connect?: Prisma.NodeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.NodeUpdateToOneWithWhereWithoutNetworkPoolsInput, Prisma.NodeUpdateWithoutNetworkPoolsInput>, Prisma.NodeUncheckedUpdateWithoutNetworkPoolsInput>
-}
-
-export type NodeCreateNestedOneWithoutCapabilityInput = {
-  create?: Prisma.XOR<Prisma.NodeCreateWithoutCapabilityInput, Prisma.NodeUncheckedCreateWithoutCapabilityInput>
-  connectOrCreate?: Prisma.NodeCreateOrConnectWithoutCapabilityInput
-  connect?: Prisma.NodeWhereUniqueInput
-}
-
-export type NodeUpdateOneRequiredWithoutCapabilityNestedInput = {
-  create?: Prisma.XOR<Prisma.NodeCreateWithoutCapabilityInput, Prisma.NodeUncheckedCreateWithoutCapabilityInput>
-  connectOrCreate?: Prisma.NodeCreateOrConnectWithoutCapabilityInput
-  upsert?: Prisma.NodeUpsertWithoutCapabilityInput
-  connect?: Prisma.NodeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.NodeUpdateToOneWithWhereWithoutCapabilityInput, Prisma.NodeUpdateWithoutCapabilityInput>, Prisma.NodeUncheckedUpdateWithoutCapabilityInput>
-}
-
 export type NodeCreateWithoutServersInput = {
   name: string
   ram?: number
@@ -608,9 +545,6 @@ export type NodeCreateWithoutServersInput = {
   createdAt?: Date | string
   allocatedPorts?: string | null
   sftpPort?: number
-  storagePools?: Prisma.StoragePoolCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityCreateNestedOneWithoutNodeInput
 }
 
 export type NodeUncheckedCreateWithoutServersInput = {
@@ -625,9 +559,6 @@ export type NodeUncheckedCreateWithoutServersInput = {
   createdAt?: Date | string
   allocatedPorts?: string | null
   sftpPort?: number
-  storagePools?: Prisma.StoragePoolUncheckedCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolUncheckedCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityUncheckedCreateNestedOneWithoutNodeInput
 }
 
 export type NodeCreateOrConnectWithoutServersInput = {
@@ -657,9 +588,6 @@ export type NodeUpdateWithoutServersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  storagePools?: Prisma.StoragePoolUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUpdateOneWithoutNodeNestedInput
 }
 
 export type NodeUncheckedUpdateWithoutServersInput = {
@@ -674,255 +602,6 @@ export type NodeUncheckedUpdateWithoutServersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  storagePools?: Prisma.StoragePoolUncheckedUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUncheckedUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUncheckedUpdateOneWithoutNodeNestedInput
-}
-
-export type NodeCreateWithoutStoragePoolsInput = {
-  name: string
-  ram?: number
-  cpu?: number
-  disk?: number
-  address?: string
-  port?: number
-  key: string
-  createdAt?: Date | string
-  allocatedPorts?: string | null
-  sftpPort?: number
-  servers?: Prisma.ServerCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityCreateNestedOneWithoutNodeInput
-}
-
-export type NodeUncheckedCreateWithoutStoragePoolsInput = {
-  id?: number
-  name: string
-  ram?: number
-  cpu?: number
-  disk?: number
-  address?: string
-  port?: number
-  key: string
-  createdAt?: Date | string
-  allocatedPorts?: string | null
-  sftpPort?: number
-  servers?: Prisma.ServerUncheckedCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolUncheckedCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityUncheckedCreateNestedOneWithoutNodeInput
-}
-
-export type NodeCreateOrConnectWithoutStoragePoolsInput = {
-  where: Prisma.NodeWhereUniqueInput
-  create: Prisma.XOR<Prisma.NodeCreateWithoutStoragePoolsInput, Prisma.NodeUncheckedCreateWithoutStoragePoolsInput>
-}
-
-export type NodeUpsertWithoutStoragePoolsInput = {
-  update: Prisma.XOR<Prisma.NodeUpdateWithoutStoragePoolsInput, Prisma.NodeUncheckedUpdateWithoutStoragePoolsInput>
-  create: Prisma.XOR<Prisma.NodeCreateWithoutStoragePoolsInput, Prisma.NodeUncheckedCreateWithoutStoragePoolsInput>
-  where?: Prisma.NodeWhereInput
-}
-
-export type NodeUpdateToOneWithWhereWithoutStoragePoolsInput = {
-  where?: Prisma.NodeWhereInput
-  data: Prisma.XOR<Prisma.NodeUpdateWithoutStoragePoolsInput, Prisma.NodeUncheckedUpdateWithoutStoragePoolsInput>
-}
-
-export type NodeUpdateWithoutStoragePoolsInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ram?: Prisma.IntFieldUpdateOperationsInput | number
-  cpu?: Prisma.IntFieldUpdateOperationsInput | number
-  disk?: Prisma.IntFieldUpdateOperationsInput | number
-  address?: Prisma.StringFieldUpdateOperationsInput | string
-  port?: Prisma.IntFieldUpdateOperationsInput | number
-  key?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  servers?: Prisma.ServerUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUpdateOneWithoutNodeNestedInput
-}
-
-export type NodeUncheckedUpdateWithoutStoragePoolsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ram?: Prisma.IntFieldUpdateOperationsInput | number
-  cpu?: Prisma.IntFieldUpdateOperationsInput | number
-  disk?: Prisma.IntFieldUpdateOperationsInput | number
-  address?: Prisma.StringFieldUpdateOperationsInput | string
-  port?: Prisma.IntFieldUpdateOperationsInput | number
-  key?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  servers?: Prisma.ServerUncheckedUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUncheckedUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUncheckedUpdateOneWithoutNodeNestedInput
-}
-
-export type NodeCreateWithoutNetworkPoolsInput = {
-  name: string
-  ram?: number
-  cpu?: number
-  disk?: number
-  address?: string
-  port?: number
-  key: string
-  createdAt?: Date | string
-  allocatedPorts?: string | null
-  sftpPort?: number
-  servers?: Prisma.ServerCreateNestedManyWithoutNodeInput
-  storagePools?: Prisma.StoragePoolCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityCreateNestedOneWithoutNodeInput
-}
-
-export type NodeUncheckedCreateWithoutNetworkPoolsInput = {
-  id?: number
-  name: string
-  ram?: number
-  cpu?: number
-  disk?: number
-  address?: string
-  port?: number
-  key: string
-  createdAt?: Date | string
-  allocatedPorts?: string | null
-  sftpPort?: number
-  servers?: Prisma.ServerUncheckedCreateNestedManyWithoutNodeInput
-  storagePools?: Prisma.StoragePoolUncheckedCreateNestedManyWithoutNodeInput
-  capability?: Prisma.NodeCapabilityUncheckedCreateNestedOneWithoutNodeInput
-}
-
-export type NodeCreateOrConnectWithoutNetworkPoolsInput = {
-  where: Prisma.NodeWhereUniqueInput
-  create: Prisma.XOR<Prisma.NodeCreateWithoutNetworkPoolsInput, Prisma.NodeUncheckedCreateWithoutNetworkPoolsInput>
-}
-
-export type NodeUpsertWithoutNetworkPoolsInput = {
-  update: Prisma.XOR<Prisma.NodeUpdateWithoutNetworkPoolsInput, Prisma.NodeUncheckedUpdateWithoutNetworkPoolsInput>
-  create: Prisma.XOR<Prisma.NodeCreateWithoutNetworkPoolsInput, Prisma.NodeUncheckedCreateWithoutNetworkPoolsInput>
-  where?: Prisma.NodeWhereInput
-}
-
-export type NodeUpdateToOneWithWhereWithoutNetworkPoolsInput = {
-  where?: Prisma.NodeWhereInput
-  data: Prisma.XOR<Prisma.NodeUpdateWithoutNetworkPoolsInput, Prisma.NodeUncheckedUpdateWithoutNetworkPoolsInput>
-}
-
-export type NodeUpdateWithoutNetworkPoolsInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ram?: Prisma.IntFieldUpdateOperationsInput | number
-  cpu?: Prisma.IntFieldUpdateOperationsInput | number
-  disk?: Prisma.IntFieldUpdateOperationsInput | number
-  address?: Prisma.StringFieldUpdateOperationsInput | string
-  port?: Prisma.IntFieldUpdateOperationsInput | number
-  key?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  servers?: Prisma.ServerUpdateManyWithoutNodeNestedInput
-  storagePools?: Prisma.StoragePoolUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUpdateOneWithoutNodeNestedInput
-}
-
-export type NodeUncheckedUpdateWithoutNetworkPoolsInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ram?: Prisma.IntFieldUpdateOperationsInput | number
-  cpu?: Prisma.IntFieldUpdateOperationsInput | number
-  disk?: Prisma.IntFieldUpdateOperationsInput | number
-  address?: Prisma.StringFieldUpdateOperationsInput | string
-  port?: Prisma.IntFieldUpdateOperationsInput | number
-  key?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  servers?: Prisma.ServerUncheckedUpdateManyWithoutNodeNestedInput
-  storagePools?: Prisma.StoragePoolUncheckedUpdateManyWithoutNodeNestedInput
-  capability?: Prisma.NodeCapabilityUncheckedUpdateOneWithoutNodeNestedInput
-}
-
-export type NodeCreateWithoutCapabilityInput = {
-  name: string
-  ram?: number
-  cpu?: number
-  disk?: number
-  address?: string
-  port?: number
-  key: string
-  createdAt?: Date | string
-  allocatedPorts?: string | null
-  sftpPort?: number
-  servers?: Prisma.ServerCreateNestedManyWithoutNodeInput
-  storagePools?: Prisma.StoragePoolCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolCreateNestedManyWithoutNodeInput
-}
-
-export type NodeUncheckedCreateWithoutCapabilityInput = {
-  id?: number
-  name: string
-  ram?: number
-  cpu?: number
-  disk?: number
-  address?: string
-  port?: number
-  key: string
-  createdAt?: Date | string
-  allocatedPorts?: string | null
-  sftpPort?: number
-  servers?: Prisma.ServerUncheckedCreateNestedManyWithoutNodeInput
-  storagePools?: Prisma.StoragePoolUncheckedCreateNestedManyWithoutNodeInput
-  networkPools?: Prisma.NetworkPoolUncheckedCreateNestedManyWithoutNodeInput
-}
-
-export type NodeCreateOrConnectWithoutCapabilityInput = {
-  where: Prisma.NodeWhereUniqueInput
-  create: Prisma.XOR<Prisma.NodeCreateWithoutCapabilityInput, Prisma.NodeUncheckedCreateWithoutCapabilityInput>
-}
-
-export type NodeUpsertWithoutCapabilityInput = {
-  update: Prisma.XOR<Prisma.NodeUpdateWithoutCapabilityInput, Prisma.NodeUncheckedUpdateWithoutCapabilityInput>
-  create: Prisma.XOR<Prisma.NodeCreateWithoutCapabilityInput, Prisma.NodeUncheckedCreateWithoutCapabilityInput>
-  where?: Prisma.NodeWhereInput
-}
-
-export type NodeUpdateToOneWithWhereWithoutCapabilityInput = {
-  where?: Prisma.NodeWhereInput
-  data: Prisma.XOR<Prisma.NodeUpdateWithoutCapabilityInput, Prisma.NodeUncheckedUpdateWithoutCapabilityInput>
-}
-
-export type NodeUpdateWithoutCapabilityInput = {
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ram?: Prisma.IntFieldUpdateOperationsInput | number
-  cpu?: Prisma.IntFieldUpdateOperationsInput | number
-  disk?: Prisma.IntFieldUpdateOperationsInput | number
-  address?: Prisma.StringFieldUpdateOperationsInput | string
-  port?: Prisma.IntFieldUpdateOperationsInput | number
-  key?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  servers?: Prisma.ServerUpdateManyWithoutNodeNestedInput
-  storagePools?: Prisma.StoragePoolUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUpdateManyWithoutNodeNestedInput
-}
-
-export type NodeUncheckedUpdateWithoutCapabilityInput = {
-  id?: Prisma.IntFieldUpdateOperationsInput | number
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  ram?: Prisma.IntFieldUpdateOperationsInput | number
-  cpu?: Prisma.IntFieldUpdateOperationsInput | number
-  disk?: Prisma.IntFieldUpdateOperationsInput | number
-  address?: Prisma.StringFieldUpdateOperationsInput | string
-  port?: Prisma.IntFieldUpdateOperationsInput | number
-  key?: Prisma.StringFieldUpdateOperationsInput | string
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  allocatedPorts?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  sftpPort?: Prisma.IntFieldUpdateOperationsInput | number
-  servers?: Prisma.ServerUncheckedUpdateManyWithoutNodeNestedInput
-  storagePools?: Prisma.StoragePoolUncheckedUpdateManyWithoutNodeNestedInput
-  networkPools?: Prisma.NetworkPoolUncheckedUpdateManyWithoutNodeNestedInput
 }
 
 
@@ -932,14 +611,10 @@ export type NodeUncheckedUpdateWithoutCapabilityInput = {
 
 export type NodeCountOutputType = {
   servers: number
-  storagePools: number
-  networkPools: number
 }
 
 export type NodeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   servers?: boolean | NodeCountOutputTypeCountServersArgs
-  storagePools?: boolean | NodeCountOutputTypeCountStoragePoolsArgs
-  networkPools?: boolean | NodeCountOutputTypeCountNetworkPoolsArgs
 }
 
 /**
@@ -959,20 +634,6 @@ export type NodeCountOutputTypeCountServersArgs<ExtArgs extends runtime.Types.Ex
   where?: Prisma.ServerWhereInput
 }
 
-/**
- * NodeCountOutputType without action
- */
-export type NodeCountOutputTypeCountStoragePoolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.StoragePoolWhereInput
-}
-
-/**
- * NodeCountOutputType without action
- */
-export type NodeCountOutputTypeCountNetworkPoolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.NetworkPoolWhereInput
-}
-
 
 export type NodeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -987,9 +648,6 @@ export type NodeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   allocatedPorts?: boolean
   sftpPort?: boolean
   servers?: boolean | Prisma.Node$serversArgs<ExtArgs>
-  storagePools?: boolean | Prisma.Node$storagePoolsArgs<ExtArgs>
-  networkPools?: boolean | Prisma.Node$networkPoolsArgs<ExtArgs>
-  capability?: boolean | Prisma.Node$capabilityArgs<ExtArgs>
   _count?: boolean | Prisma.NodeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["node"]>
 
@@ -1038,9 +696,6 @@ export type NodeSelectScalar = {
 export type NodeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "ram" | "cpu" | "disk" | "address" | "port" | "key" | "createdAt" | "allocatedPorts" | "sftpPort", ExtArgs["result"]["node"]>
 export type NodeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   servers?: boolean | Prisma.Node$serversArgs<ExtArgs>
-  storagePools?: boolean | Prisma.Node$storagePoolsArgs<ExtArgs>
-  networkPools?: boolean | Prisma.Node$networkPoolsArgs<ExtArgs>
-  capability?: boolean | Prisma.Node$capabilityArgs<ExtArgs>
   _count?: boolean | Prisma.NodeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type NodeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1050,9 +705,6 @@ export type $NodePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "Node"
   objects: {
     servers: Prisma.$ServerPayload<ExtArgs>[]
-    storagePools: Prisma.$StoragePoolPayload<ExtArgs>[]
-    networkPools: Prisma.$NetworkPoolPayload<ExtArgs>[]
-    capability: Prisma.$NodeCapabilityPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
@@ -1461,9 +1113,6 @@ readonly fields: NodeFieldRefs;
 export interface Prisma__NodeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   servers<T extends Prisma.Node$serversArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Node$serversArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ServerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  storagePools<T extends Prisma.Node$storagePoolsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Node$storagePoolsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StoragePoolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  networkPools<T extends Prisma.Node$networkPoolsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Node$networkPoolsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NetworkPoolPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  capability<T extends Prisma.Node$capabilityArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Node$capabilityArgs<ExtArgs>>): Prisma.Prisma__NodeCapabilityClient<runtime.Types.Result.GetResult<Prisma.$NodeCapabilityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1916,73 +1565,6 @@ export type Node$serversArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.ServerScalarFieldEnum | Prisma.ServerScalarFieldEnum[]
-}
-
-/**
- * Node.storagePools
- */
-export type Node$storagePoolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the StoragePool
-   */
-  select?: Prisma.StoragePoolSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the StoragePool
-   */
-  omit?: Prisma.StoragePoolOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.StoragePoolInclude<ExtArgs> | null
-  where?: Prisma.StoragePoolWhereInput
-  orderBy?: Prisma.StoragePoolOrderByWithRelationInput | Prisma.StoragePoolOrderByWithRelationInput[]
-  cursor?: Prisma.StoragePoolWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.StoragePoolScalarFieldEnum | Prisma.StoragePoolScalarFieldEnum[]
-}
-
-/**
- * Node.networkPools
- */
-export type Node$networkPoolsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the NetworkPool
-   */
-  select?: Prisma.NetworkPoolSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the NetworkPool
-   */
-  omit?: Prisma.NetworkPoolOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.NetworkPoolInclude<ExtArgs> | null
-  where?: Prisma.NetworkPoolWhereInput
-  orderBy?: Prisma.NetworkPoolOrderByWithRelationInput | Prisma.NetworkPoolOrderByWithRelationInput[]
-  cursor?: Prisma.NetworkPoolWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.NetworkPoolScalarFieldEnum | Prisma.NetworkPoolScalarFieldEnum[]
-}
-
-/**
- * Node.capability
- */
-export type Node$capabilityArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the NodeCapability
-   */
-  select?: Prisma.NodeCapabilitySelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the NodeCapability
-   */
-  omit?: Prisma.NodeCapabilityOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.NodeCapabilityInclude<ExtArgs> | null
-  where?: Prisma.NodeCapabilityWhereInput
 }
 
 /**

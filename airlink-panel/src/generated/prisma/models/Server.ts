@@ -35,8 +35,6 @@ export type ServerAvgAggregateOutputType = {
   ownerId: number | null
   nodeId: number | null
   imageId: number | null
-  swap: number | null
-  bandwidth: number | null
 }
 
 export type ServerSumAggregateOutputType = {
@@ -48,8 +46,6 @@ export type ServerSumAggregateOutputType = {
   ownerId: number | null
   nodeId: number | null
   imageId: number | null
-  swap: number | null
-  bandwidth: number | null
 }
 
 export type ServerMinAggregateOutputType = {
@@ -65,7 +61,6 @@ export type ServerMinAggregateOutputType = {
   Storage: number | null
   Variables: string | null
   StartCommand: string | null
-  dockerImage: string | null
   allowStartupEdit: boolean | null
   Installing: boolean | null
   Queued: boolean | null
@@ -74,13 +69,15 @@ export type ServerMinAggregateOutputType = {
   ownerId: number | null
   nodeId: number | null
   imageId: number | null
-  instanceType: $Enums.InstanceType | null
-  swap: number | null
-  bandwidth: number | null
-  ipv4: string | null
-  ipv6: string | null
-  osTemplate: string | null
-  rootPassword: string | null
+  javaVersion: string | null
+  softwareType: string | null
+  softwareVersion: string | null
+  serverJarPath: string | null
+  autoRestart: boolean | null
+  eulaAccepted: boolean | null
+  startupFlags: string | null
+  onlineMode: boolean | null
+  whitelistEnabled: boolean | null
 }
 
 export type ServerMaxAggregateOutputType = {
@@ -96,7 +93,6 @@ export type ServerMaxAggregateOutputType = {
   Storage: number | null
   Variables: string | null
   StartCommand: string | null
-  dockerImage: string | null
   allowStartupEdit: boolean | null
   Installing: boolean | null
   Queued: boolean | null
@@ -105,13 +101,15 @@ export type ServerMaxAggregateOutputType = {
   ownerId: number | null
   nodeId: number | null
   imageId: number | null
-  instanceType: $Enums.InstanceType | null
-  swap: number | null
-  bandwidth: number | null
-  ipv4: string | null
-  ipv6: string | null
-  osTemplate: string | null
-  rootPassword: string | null
+  javaVersion: string | null
+  softwareType: string | null
+  softwareVersion: string | null
+  serverJarPath: string | null
+  autoRestart: boolean | null
+  eulaAccepted: boolean | null
+  startupFlags: string | null
+  onlineMode: boolean | null
+  whitelistEnabled: boolean | null
 }
 
 export type ServerCountAggregateOutputType = {
@@ -127,7 +125,6 @@ export type ServerCountAggregateOutputType = {
   Storage: number
   Variables: number
   StartCommand: number
-  dockerImage: number
   allowStartupEdit: number
   Installing: number
   Queued: number
@@ -136,13 +133,15 @@ export type ServerCountAggregateOutputType = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType: number
-  swap: number
-  bandwidth: number
-  ipv4: number
-  ipv6: number
-  osTemplate: number
-  rootPassword: number
+  javaVersion: number
+  softwareType: number
+  softwareVersion: number
+  serverJarPath: number
+  autoRestart: number
+  eulaAccepted: number
+  startupFlags: number
+  onlineMode: number
+  whitelistEnabled: number
   _all: number
 }
 
@@ -156,8 +155,6 @@ export type ServerAvgAggregateInputType = {
   ownerId?: true
   nodeId?: true
   imageId?: true
-  swap?: true
-  bandwidth?: true
 }
 
 export type ServerSumAggregateInputType = {
@@ -169,8 +166,6 @@ export type ServerSumAggregateInputType = {
   ownerId?: true
   nodeId?: true
   imageId?: true
-  swap?: true
-  bandwidth?: true
 }
 
 export type ServerMinAggregateInputType = {
@@ -186,7 +181,6 @@ export type ServerMinAggregateInputType = {
   Storage?: true
   Variables?: true
   StartCommand?: true
-  dockerImage?: true
   allowStartupEdit?: true
   Installing?: true
   Queued?: true
@@ -195,13 +189,15 @@ export type ServerMinAggregateInputType = {
   ownerId?: true
   nodeId?: true
   imageId?: true
-  instanceType?: true
-  swap?: true
-  bandwidth?: true
-  ipv4?: true
-  ipv6?: true
-  osTemplate?: true
-  rootPassword?: true
+  javaVersion?: true
+  softwareType?: true
+  softwareVersion?: true
+  serverJarPath?: true
+  autoRestart?: true
+  eulaAccepted?: true
+  startupFlags?: true
+  onlineMode?: true
+  whitelistEnabled?: true
 }
 
 export type ServerMaxAggregateInputType = {
@@ -217,7 +213,6 @@ export type ServerMaxAggregateInputType = {
   Storage?: true
   Variables?: true
   StartCommand?: true
-  dockerImage?: true
   allowStartupEdit?: true
   Installing?: true
   Queued?: true
@@ -226,13 +221,15 @@ export type ServerMaxAggregateInputType = {
   ownerId?: true
   nodeId?: true
   imageId?: true
-  instanceType?: true
-  swap?: true
-  bandwidth?: true
-  ipv4?: true
-  ipv6?: true
-  osTemplate?: true
-  rootPassword?: true
+  javaVersion?: true
+  softwareType?: true
+  softwareVersion?: true
+  serverJarPath?: true
+  autoRestart?: true
+  eulaAccepted?: true
+  startupFlags?: true
+  onlineMode?: true
+  whitelistEnabled?: true
 }
 
 export type ServerCountAggregateInputType = {
@@ -248,7 +245,6 @@ export type ServerCountAggregateInputType = {
   Storage?: true
   Variables?: true
   StartCommand?: true
-  dockerImage?: true
   allowStartupEdit?: true
   Installing?: true
   Queued?: true
@@ -257,13 +253,15 @@ export type ServerCountAggregateInputType = {
   ownerId?: true
   nodeId?: true
   imageId?: true
-  instanceType?: true
-  swap?: true
-  bandwidth?: true
-  ipv4?: true
-  ipv6?: true
-  osTemplate?: true
-  rootPassword?: true
+  javaVersion?: true
+  softwareType?: true
+  softwareVersion?: true
+  serverJarPath?: true
+  autoRestart?: true
+  eulaAccepted?: true
+  startupFlags?: true
+  onlineMode?: true
+  whitelistEnabled?: true
   _all?: true
 }
 
@@ -366,7 +364,6 @@ export type ServerGroupByOutputType = {
   Storage: number
   Variables: string | null
   StartCommand: string | null
-  dockerImage: string | null
   allowStartupEdit: boolean
   Installing: boolean
   Queued: boolean
@@ -375,13 +372,15 @@ export type ServerGroupByOutputType = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType: $Enums.InstanceType
-  swap: number | null
-  bandwidth: number | null
-  ipv4: string | null
-  ipv6: string | null
-  osTemplate: string | null
-  rootPassword: string | null
+  javaVersion: string
+  softwareType: string
+  softwareVersion: string
+  serverJarPath: string | null
+  autoRestart: boolean
+  eulaAccepted: boolean
+  startupFlags: string | null
+  onlineMode: boolean
+  whitelistEnabled: boolean
   _count: ServerCountAggregateOutputType | null
   _avg: ServerAvgAggregateOutputType | null
   _sum: ServerSumAggregateOutputType | null
@@ -420,7 +419,6 @@ export type ServerWhereInput = {
   Storage?: Prisma.IntFilter<"Server"> | number
   Variables?: Prisma.StringNullableFilter<"Server"> | string | null
   StartCommand?: Prisma.StringNullableFilter<"Server"> | string | null
-  dockerImage?: Prisma.StringNullableFilter<"Server"> | string | null
   allowStartupEdit?: Prisma.BoolFilter<"Server"> | boolean
   Installing?: Prisma.BoolFilter<"Server"> | boolean
   Queued?: Prisma.BoolFilter<"Server"> | boolean
@@ -429,13 +427,15 @@ export type ServerWhereInput = {
   ownerId?: Prisma.IntFilter<"Server"> | number
   nodeId?: Prisma.IntFilter<"Server"> | number
   imageId?: Prisma.IntFilter<"Server"> | number
-  instanceType?: Prisma.EnumInstanceTypeFilter<"Server"> | $Enums.InstanceType
-  swap?: Prisma.IntNullableFilter<"Server"> | number | null
-  bandwidth?: Prisma.IntNullableFilter<"Server"> | number | null
-  ipv4?: Prisma.StringNullableFilter<"Server"> | string | null
-  ipv6?: Prisma.StringNullableFilter<"Server"> | string | null
-  osTemplate?: Prisma.StringNullableFilter<"Server"> | string | null
-  rootPassword?: Prisma.StringNullableFilter<"Server"> | string | null
+  javaVersion?: Prisma.StringFilter<"Server"> | string
+  softwareType?: Prisma.StringFilter<"Server"> | string
+  softwareVersion?: Prisma.StringFilter<"Server"> | string
+  serverJarPath?: Prisma.StringNullableFilter<"Server"> | string | null
+  autoRestart?: Prisma.BoolFilter<"Server"> | boolean
+  eulaAccepted?: Prisma.BoolFilter<"Server"> | boolean
+  startupFlags?: Prisma.StringNullableFilter<"Server"> | string | null
+  onlineMode?: Prisma.BoolFilter<"Server"> | boolean
+  whitelistEnabled?: Prisma.BoolFilter<"Server"> | boolean
   sftpCredential?: Prisma.XOR<Prisma.SftpCredentialNullableScalarRelationFilter, Prisma.SftpCredentialWhereInput> | null
   node?: Prisma.XOR<Prisma.NodeScalarRelationFilter, Prisma.NodeWhereInput>
   owner?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.UsersWhereInput>
@@ -457,7 +457,6 @@ export type ServerOrderByWithRelationInput = {
   Storage?: Prisma.SortOrder
   Variables?: Prisma.SortOrderInput | Prisma.SortOrder
   StartCommand?: Prisma.SortOrderInput | Prisma.SortOrder
-  dockerImage?: Prisma.SortOrderInput | Prisma.SortOrder
   allowStartupEdit?: Prisma.SortOrder
   Installing?: Prisma.SortOrder
   Queued?: Prisma.SortOrder
@@ -466,13 +465,15 @@ export type ServerOrderByWithRelationInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  instanceType?: Prisma.SortOrder
-  swap?: Prisma.SortOrderInput | Prisma.SortOrder
-  bandwidth?: Prisma.SortOrderInput | Prisma.SortOrder
-  ipv4?: Prisma.SortOrderInput | Prisma.SortOrder
-  ipv6?: Prisma.SortOrderInput | Prisma.SortOrder
-  osTemplate?: Prisma.SortOrderInput | Prisma.SortOrder
-  rootPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  javaVersion?: Prisma.SortOrder
+  softwareType?: Prisma.SortOrder
+  softwareVersion?: Prisma.SortOrder
+  serverJarPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  autoRestart?: Prisma.SortOrder
+  eulaAccepted?: Prisma.SortOrder
+  startupFlags?: Prisma.SortOrderInput | Prisma.SortOrder
+  onlineMode?: Prisma.SortOrder
+  whitelistEnabled?: Prisma.SortOrder
   sftpCredential?: Prisma.SftpCredentialOrderByWithRelationInput
   node?: Prisma.NodeOrderByWithRelationInput
   owner?: Prisma.UsersOrderByWithRelationInput
@@ -497,7 +498,6 @@ export type ServerWhereUniqueInput = Prisma.AtLeast<{
   Storage?: Prisma.IntFilter<"Server"> | number
   Variables?: Prisma.StringNullableFilter<"Server"> | string | null
   StartCommand?: Prisma.StringNullableFilter<"Server"> | string | null
-  dockerImage?: Prisma.StringNullableFilter<"Server"> | string | null
   allowStartupEdit?: Prisma.BoolFilter<"Server"> | boolean
   Installing?: Prisma.BoolFilter<"Server"> | boolean
   Queued?: Prisma.BoolFilter<"Server"> | boolean
@@ -506,13 +506,15 @@ export type ServerWhereUniqueInput = Prisma.AtLeast<{
   ownerId?: Prisma.IntFilter<"Server"> | number
   nodeId?: Prisma.IntFilter<"Server"> | number
   imageId?: Prisma.IntFilter<"Server"> | number
-  instanceType?: Prisma.EnumInstanceTypeFilter<"Server"> | $Enums.InstanceType
-  swap?: Prisma.IntNullableFilter<"Server"> | number | null
-  bandwidth?: Prisma.IntNullableFilter<"Server"> | number | null
-  ipv4?: Prisma.StringNullableFilter<"Server"> | string | null
-  ipv6?: Prisma.StringNullableFilter<"Server"> | string | null
-  osTemplate?: Prisma.StringNullableFilter<"Server"> | string | null
-  rootPassword?: Prisma.StringNullableFilter<"Server"> | string | null
+  javaVersion?: Prisma.StringFilter<"Server"> | string
+  softwareType?: Prisma.StringFilter<"Server"> | string
+  softwareVersion?: Prisma.StringFilter<"Server"> | string
+  serverJarPath?: Prisma.StringNullableFilter<"Server"> | string | null
+  autoRestart?: Prisma.BoolFilter<"Server"> | boolean
+  eulaAccepted?: Prisma.BoolFilter<"Server"> | boolean
+  startupFlags?: Prisma.StringNullableFilter<"Server"> | string | null
+  onlineMode?: Prisma.BoolFilter<"Server"> | boolean
+  whitelistEnabled?: Prisma.BoolFilter<"Server"> | boolean
   sftpCredential?: Prisma.XOR<Prisma.SftpCredentialNullableScalarRelationFilter, Prisma.SftpCredentialWhereInput> | null
   node?: Prisma.XOR<Prisma.NodeScalarRelationFilter, Prisma.NodeWhereInput>
   owner?: Prisma.XOR<Prisma.UsersScalarRelationFilter, Prisma.UsersWhereInput>
@@ -534,7 +536,6 @@ export type ServerOrderByWithAggregationInput = {
   Storage?: Prisma.SortOrder
   Variables?: Prisma.SortOrderInput | Prisma.SortOrder
   StartCommand?: Prisma.SortOrderInput | Prisma.SortOrder
-  dockerImage?: Prisma.SortOrderInput | Prisma.SortOrder
   allowStartupEdit?: Prisma.SortOrder
   Installing?: Prisma.SortOrder
   Queued?: Prisma.SortOrder
@@ -543,13 +544,15 @@ export type ServerOrderByWithAggregationInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  instanceType?: Prisma.SortOrder
-  swap?: Prisma.SortOrderInput | Prisma.SortOrder
-  bandwidth?: Prisma.SortOrderInput | Prisma.SortOrder
-  ipv4?: Prisma.SortOrderInput | Prisma.SortOrder
-  ipv6?: Prisma.SortOrderInput | Prisma.SortOrder
-  osTemplate?: Prisma.SortOrderInput | Prisma.SortOrder
-  rootPassword?: Prisma.SortOrderInput | Prisma.SortOrder
+  javaVersion?: Prisma.SortOrder
+  softwareType?: Prisma.SortOrder
+  softwareVersion?: Prisma.SortOrder
+  serverJarPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  autoRestart?: Prisma.SortOrder
+  eulaAccepted?: Prisma.SortOrder
+  startupFlags?: Prisma.SortOrderInput | Prisma.SortOrder
+  onlineMode?: Prisma.SortOrder
+  whitelistEnabled?: Prisma.SortOrder
   _count?: Prisma.ServerCountOrderByAggregateInput
   _avg?: Prisma.ServerAvgOrderByAggregateInput
   _max?: Prisma.ServerMaxOrderByAggregateInput
@@ -573,7 +576,6 @@ export type ServerScalarWhereWithAggregatesInput = {
   Storage?: Prisma.IntWithAggregatesFilter<"Server"> | number
   Variables?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
   StartCommand?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
-  dockerImage?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
   allowStartupEdit?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
   Installing?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
   Queued?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
@@ -582,13 +584,15 @@ export type ServerScalarWhereWithAggregatesInput = {
   ownerId?: Prisma.IntWithAggregatesFilter<"Server"> | number
   nodeId?: Prisma.IntWithAggregatesFilter<"Server"> | number
   imageId?: Prisma.IntWithAggregatesFilter<"Server"> | number
-  instanceType?: Prisma.EnumInstanceTypeWithAggregatesFilter<"Server"> | $Enums.InstanceType
-  swap?: Prisma.IntNullableWithAggregatesFilter<"Server"> | number | null
-  bandwidth?: Prisma.IntNullableWithAggregatesFilter<"Server"> | number | null
-  ipv4?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
-  ipv6?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
-  osTemplate?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
-  rootPassword?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
+  javaVersion?: Prisma.StringWithAggregatesFilter<"Server"> | string
+  softwareType?: Prisma.StringWithAggregatesFilter<"Server"> | string
+  softwareVersion?: Prisma.StringWithAggregatesFilter<"Server"> | string
+  serverJarPath?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
+  autoRestart?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
+  eulaAccepted?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
+  startupFlags?: Prisma.StringNullableWithAggregatesFilter<"Server"> | string | null
+  onlineMode?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
+  whitelistEnabled?: Prisma.BoolWithAggregatesFilter<"Server"> | boolean
 }
 
 export type ServerCreateInput = {
@@ -603,19 +607,20 @@ export type ServerCreateInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialCreateNestedOneWithoutServerInput
   node: Prisma.NodeCreateNestedOneWithoutServersInput
   owner: Prisma.UsersCreateNestedOneWithoutServersInput
@@ -637,7 +642,6 @@ export type ServerUncheckedCreateInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -646,13 +650,15 @@ export type ServerUncheckedCreateInput = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedCreateNestedOneWithoutServerInput
   backups?: Prisma.BackupUncheckedCreateNestedManyWithoutServerInput
   folder?: Prisma.ServerFolderMemberUncheckedCreateNestedOneWithoutServerInput
@@ -670,19 +676,20 @@ export type ServerUpdateInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUpdateOneWithoutServerNestedInput
   node?: Prisma.NodeUpdateOneRequiredWithoutServersNestedInput
   owner?: Prisma.UsersUpdateOneRequiredWithoutServersNestedInput
@@ -704,7 +711,6 @@ export type ServerUncheckedUpdateInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -713,13 +719,15 @@ export type ServerUncheckedUpdateInput = {
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedUpdateOneWithoutServerNestedInput
   backups?: Prisma.BackupUncheckedUpdateManyWithoutServerNestedInput
   folder?: Prisma.ServerFolderMemberUncheckedUpdateOneWithoutServerNestedInput
@@ -738,7 +746,6 @@ export type ServerCreateManyInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -747,13 +754,15 @@ export type ServerCreateManyInput = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
 }
 
 export type ServerUpdateManyMutationInput = {
@@ -768,19 +777,20 @@ export type ServerUpdateManyMutationInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ServerUncheckedUpdateManyInput = {
@@ -796,7 +806,6 @@ export type ServerUncheckedUpdateManyInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -805,13 +814,15 @@ export type ServerUncheckedUpdateManyInput = {
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ServerListRelationFilter = {
@@ -837,7 +848,6 @@ export type ServerCountOrderByAggregateInput = {
   Storage?: Prisma.SortOrder
   Variables?: Prisma.SortOrder
   StartCommand?: Prisma.SortOrder
-  dockerImage?: Prisma.SortOrder
   allowStartupEdit?: Prisma.SortOrder
   Installing?: Prisma.SortOrder
   Queued?: Prisma.SortOrder
@@ -846,13 +856,15 @@ export type ServerCountOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  instanceType?: Prisma.SortOrder
-  swap?: Prisma.SortOrder
-  bandwidth?: Prisma.SortOrder
-  ipv4?: Prisma.SortOrder
-  ipv6?: Prisma.SortOrder
-  osTemplate?: Prisma.SortOrder
-  rootPassword?: Prisma.SortOrder
+  javaVersion?: Prisma.SortOrder
+  softwareType?: Prisma.SortOrder
+  softwareVersion?: Prisma.SortOrder
+  serverJarPath?: Prisma.SortOrder
+  autoRestart?: Prisma.SortOrder
+  eulaAccepted?: Prisma.SortOrder
+  startupFlags?: Prisma.SortOrder
+  onlineMode?: Prisma.SortOrder
+  whitelistEnabled?: Prisma.SortOrder
 }
 
 export type ServerAvgOrderByAggregateInput = {
@@ -864,8 +876,6 @@ export type ServerAvgOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  swap?: Prisma.SortOrder
-  bandwidth?: Prisma.SortOrder
 }
 
 export type ServerMaxOrderByAggregateInput = {
@@ -881,7 +891,6 @@ export type ServerMaxOrderByAggregateInput = {
   Storage?: Prisma.SortOrder
   Variables?: Prisma.SortOrder
   StartCommand?: Prisma.SortOrder
-  dockerImage?: Prisma.SortOrder
   allowStartupEdit?: Prisma.SortOrder
   Installing?: Prisma.SortOrder
   Queued?: Prisma.SortOrder
@@ -890,13 +899,15 @@ export type ServerMaxOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  instanceType?: Prisma.SortOrder
-  swap?: Prisma.SortOrder
-  bandwidth?: Prisma.SortOrder
-  ipv4?: Prisma.SortOrder
-  ipv6?: Prisma.SortOrder
-  osTemplate?: Prisma.SortOrder
-  rootPassword?: Prisma.SortOrder
+  javaVersion?: Prisma.SortOrder
+  softwareType?: Prisma.SortOrder
+  softwareVersion?: Prisma.SortOrder
+  serverJarPath?: Prisma.SortOrder
+  autoRestart?: Prisma.SortOrder
+  eulaAccepted?: Prisma.SortOrder
+  startupFlags?: Prisma.SortOrder
+  onlineMode?: Prisma.SortOrder
+  whitelistEnabled?: Prisma.SortOrder
 }
 
 export type ServerMinOrderByAggregateInput = {
@@ -912,7 +923,6 @@ export type ServerMinOrderByAggregateInput = {
   Storage?: Prisma.SortOrder
   Variables?: Prisma.SortOrder
   StartCommand?: Prisma.SortOrder
-  dockerImage?: Prisma.SortOrder
   allowStartupEdit?: Prisma.SortOrder
   Installing?: Prisma.SortOrder
   Queued?: Prisma.SortOrder
@@ -921,13 +931,15 @@ export type ServerMinOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  instanceType?: Prisma.SortOrder
-  swap?: Prisma.SortOrder
-  bandwidth?: Prisma.SortOrder
-  ipv4?: Prisma.SortOrder
-  ipv6?: Prisma.SortOrder
-  osTemplate?: Prisma.SortOrder
-  rootPassword?: Prisma.SortOrder
+  javaVersion?: Prisma.SortOrder
+  softwareType?: Prisma.SortOrder
+  softwareVersion?: Prisma.SortOrder
+  serverJarPath?: Prisma.SortOrder
+  autoRestart?: Prisma.SortOrder
+  eulaAccepted?: Prisma.SortOrder
+  startupFlags?: Prisma.SortOrder
+  onlineMode?: Prisma.SortOrder
+  whitelistEnabled?: Prisma.SortOrder
 }
 
 export type ServerSumOrderByAggregateInput = {
@@ -939,8 +951,6 @@ export type ServerSumOrderByAggregateInput = {
   ownerId?: Prisma.SortOrder
   nodeId?: Prisma.SortOrder
   imageId?: Prisma.SortOrder
-  swap?: Prisma.SortOrder
-  bandwidth?: Prisma.SortOrder
 }
 
 export type ServerScalarRelationFilter = {
@@ -988,18 +998,6 @@ export type ServerUncheckedUpdateManyWithoutOwnerNestedInput = {
   update?: Prisma.ServerUpdateWithWhereUniqueWithoutOwnerInput | Prisma.ServerUpdateWithWhereUniqueWithoutOwnerInput[]
   updateMany?: Prisma.ServerUpdateManyWithWhereWithoutOwnerInput | Prisma.ServerUpdateManyWithWhereWithoutOwnerInput[]
   deleteMany?: Prisma.ServerScalarWhereInput | Prisma.ServerScalarWhereInput[]
-}
-
-export type EnumInstanceTypeFieldUpdateOperationsInput = {
-  set?: $Enums.InstanceType
-}
-
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
 }
 
 export type ServerCreateNestedManyWithoutImageInput = {
@@ -1140,19 +1138,20 @@ export type ServerCreateWithoutOwnerInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialCreateNestedOneWithoutServerInput
   node: Prisma.NodeCreateNestedOneWithoutServersInput
   image: Prisma.ImagesCreateNestedOneWithoutServersInput
@@ -1173,7 +1172,6 @@ export type ServerUncheckedCreateWithoutOwnerInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1181,13 +1179,15 @@ export type ServerUncheckedCreateWithoutOwnerInput = {
   version?: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedCreateNestedOneWithoutServerInput
   backups?: Prisma.BackupUncheckedCreateNestedManyWithoutServerInput
   folder?: Prisma.ServerFolderMemberUncheckedCreateNestedOneWithoutServerInput
@@ -1234,7 +1234,6 @@ export type ServerScalarWhereInput = {
   Storage?: Prisma.IntFilter<"Server"> | number
   Variables?: Prisma.StringNullableFilter<"Server"> | string | null
   StartCommand?: Prisma.StringNullableFilter<"Server"> | string | null
-  dockerImage?: Prisma.StringNullableFilter<"Server"> | string | null
   allowStartupEdit?: Prisma.BoolFilter<"Server"> | boolean
   Installing?: Prisma.BoolFilter<"Server"> | boolean
   Queued?: Prisma.BoolFilter<"Server"> | boolean
@@ -1243,13 +1242,15 @@ export type ServerScalarWhereInput = {
   ownerId?: Prisma.IntFilter<"Server"> | number
   nodeId?: Prisma.IntFilter<"Server"> | number
   imageId?: Prisma.IntFilter<"Server"> | number
-  instanceType?: Prisma.EnumInstanceTypeFilter<"Server"> | $Enums.InstanceType
-  swap?: Prisma.IntNullableFilter<"Server"> | number | null
-  bandwidth?: Prisma.IntNullableFilter<"Server"> | number | null
-  ipv4?: Prisma.StringNullableFilter<"Server"> | string | null
-  ipv6?: Prisma.StringNullableFilter<"Server"> | string | null
-  osTemplate?: Prisma.StringNullableFilter<"Server"> | string | null
-  rootPassword?: Prisma.StringNullableFilter<"Server"> | string | null
+  javaVersion?: Prisma.StringFilter<"Server"> | string
+  softwareType?: Prisma.StringFilter<"Server"> | string
+  softwareVersion?: Prisma.StringFilter<"Server"> | string
+  serverJarPath?: Prisma.StringNullableFilter<"Server"> | string | null
+  autoRestart?: Prisma.BoolFilter<"Server"> | boolean
+  eulaAccepted?: Prisma.BoolFilter<"Server"> | boolean
+  startupFlags?: Prisma.StringNullableFilter<"Server"> | string | null
+  onlineMode?: Prisma.BoolFilter<"Server"> | boolean
+  whitelistEnabled?: Prisma.BoolFilter<"Server"> | boolean
 }
 
 export type ServerCreateWithoutImageInput = {
@@ -1264,19 +1265,20 @@ export type ServerCreateWithoutImageInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialCreateNestedOneWithoutServerInput
   node: Prisma.NodeCreateNestedOneWithoutServersInput
   owner: Prisma.UsersCreateNestedOneWithoutServersInput
@@ -1297,7 +1299,6 @@ export type ServerUncheckedCreateWithoutImageInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1305,13 +1306,15 @@ export type ServerUncheckedCreateWithoutImageInput = {
   version?: number
   ownerId: number
   nodeId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedCreateNestedOneWithoutServerInput
   backups?: Prisma.BackupUncheckedCreateNestedManyWithoutServerInput
   folder?: Prisma.ServerFolderMemberUncheckedCreateNestedOneWithoutServerInput
@@ -1354,19 +1357,20 @@ export type ServerCreateWithoutNodeInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialCreateNestedOneWithoutServerInput
   owner: Prisma.UsersCreateNestedOneWithoutServersInput
   image: Prisma.ImagesCreateNestedOneWithoutServersInput
@@ -1387,7 +1391,6 @@ export type ServerUncheckedCreateWithoutNodeInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1395,13 +1398,15 @@ export type ServerUncheckedCreateWithoutNodeInput = {
   version?: number
   ownerId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedCreateNestedOneWithoutServerInput
   backups?: Prisma.BackupUncheckedCreateNestedManyWithoutServerInput
   folder?: Prisma.ServerFolderMemberUncheckedCreateNestedOneWithoutServerInput
@@ -1444,19 +1449,20 @@ export type ServerCreateWithoutFolderInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialCreateNestedOneWithoutServerInput
   node: Prisma.NodeCreateNestedOneWithoutServersInput
   owner: Prisma.UsersCreateNestedOneWithoutServersInput
@@ -1477,7 +1483,6 @@ export type ServerUncheckedCreateWithoutFolderInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1486,13 +1491,15 @@ export type ServerUncheckedCreateWithoutFolderInput = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedCreateNestedOneWithoutServerInput
   backups?: Prisma.BackupUncheckedCreateNestedManyWithoutServerInput
 }
@@ -1525,19 +1532,20 @@ export type ServerUpdateWithoutFolderInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUpdateOneWithoutServerNestedInput
   node?: Prisma.NodeUpdateOneRequiredWithoutServersNestedInput
   owner?: Prisma.UsersUpdateOneRequiredWithoutServersNestedInput
@@ -1558,7 +1566,6 @@ export type ServerUncheckedUpdateWithoutFolderInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1567,13 +1574,15 @@ export type ServerUncheckedUpdateWithoutFolderInput = {
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedUpdateOneWithoutServerNestedInput
   backups?: Prisma.BackupUncheckedUpdateManyWithoutServerNestedInput
 }
@@ -1590,19 +1599,20 @@ export type ServerCreateWithoutBackupsInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialCreateNestedOneWithoutServerInput
   node: Prisma.NodeCreateNestedOneWithoutServersInput
   owner: Prisma.UsersCreateNestedOneWithoutServersInput
@@ -1623,7 +1633,6 @@ export type ServerUncheckedCreateWithoutBackupsInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1632,13 +1641,15 @@ export type ServerUncheckedCreateWithoutBackupsInput = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedCreateNestedOneWithoutServerInput
   folder?: Prisma.ServerFolderMemberUncheckedCreateNestedOneWithoutServerInput
 }
@@ -1671,19 +1682,20 @@ export type ServerUpdateWithoutBackupsInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUpdateOneWithoutServerNestedInput
   node?: Prisma.NodeUpdateOneRequiredWithoutServersNestedInput
   owner?: Prisma.UsersUpdateOneRequiredWithoutServersNestedInput
@@ -1704,7 +1716,6 @@ export type ServerUncheckedUpdateWithoutBackupsInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1713,13 +1724,15 @@ export type ServerUncheckedUpdateWithoutBackupsInput = {
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedUpdateOneWithoutServerNestedInput
   folder?: Prisma.ServerFolderMemberUncheckedUpdateOneWithoutServerNestedInput
 }
@@ -1736,19 +1749,20 @@ export type ServerCreateWithoutSftpCredentialInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
   Suspended?: boolean
   version?: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   node: Prisma.NodeCreateNestedOneWithoutServersInput
   owner: Prisma.UsersCreateNestedOneWithoutServersInput
   image: Prisma.ImagesCreateNestedOneWithoutServersInput
@@ -1769,7 +1783,6 @@ export type ServerUncheckedCreateWithoutSftpCredentialInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1778,13 +1791,15 @@ export type ServerUncheckedCreateWithoutSftpCredentialInput = {
   ownerId: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   backups?: Prisma.BackupUncheckedCreateNestedManyWithoutServerInput
   folder?: Prisma.ServerFolderMemberUncheckedCreateNestedOneWithoutServerInput
 }
@@ -1817,19 +1832,20 @@ export type ServerUpdateWithoutSftpCredentialInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   node?: Prisma.NodeUpdateOneRequiredWithoutServersNestedInput
   owner?: Prisma.UsersUpdateOneRequiredWithoutServersNestedInput
   image?: Prisma.ImagesUpdateOneRequiredWithoutServersNestedInput
@@ -1850,7 +1866,6 @@ export type ServerUncheckedUpdateWithoutSftpCredentialInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1859,13 +1874,15 @@ export type ServerUncheckedUpdateWithoutSftpCredentialInput = {
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   backups?: Prisma.BackupUncheckedUpdateManyWithoutServerNestedInput
   folder?: Prisma.ServerFolderMemberUncheckedUpdateOneWithoutServerNestedInput
 }
@@ -1883,7 +1900,6 @@ export type ServerCreateManyOwnerInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -1891,13 +1907,15 @@ export type ServerCreateManyOwnerInput = {
   version?: number
   nodeId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
 }
 
 export type ServerUpdateWithoutOwnerInput = {
@@ -1912,19 +1930,20 @@ export type ServerUpdateWithoutOwnerInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUpdateOneWithoutServerNestedInput
   node?: Prisma.NodeUpdateOneRequiredWithoutServersNestedInput
   image?: Prisma.ImagesUpdateOneRequiredWithoutServersNestedInput
@@ -1945,7 +1964,6 @@ export type ServerUncheckedUpdateWithoutOwnerInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1953,13 +1971,15 @@ export type ServerUncheckedUpdateWithoutOwnerInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedUpdateOneWithoutServerNestedInput
   backups?: Prisma.BackupUncheckedUpdateManyWithoutServerNestedInput
   folder?: Prisma.ServerFolderMemberUncheckedUpdateOneWithoutServerNestedInput
@@ -1978,7 +1998,6 @@ export type ServerUncheckedUpdateManyWithoutOwnerInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1986,13 +2005,15 @@ export type ServerUncheckedUpdateManyWithoutOwnerInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ServerCreateManyImageInput = {
@@ -2008,7 +2029,6 @@ export type ServerCreateManyImageInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -2016,13 +2036,15 @@ export type ServerCreateManyImageInput = {
   version?: number
   ownerId: number
   nodeId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
 }
 
 export type ServerUpdateWithoutImageInput = {
@@ -2037,19 +2059,20 @@ export type ServerUpdateWithoutImageInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUpdateOneWithoutServerNestedInput
   node?: Prisma.NodeUpdateOneRequiredWithoutServersNestedInput
   owner?: Prisma.UsersUpdateOneRequiredWithoutServersNestedInput
@@ -2070,7 +2093,6 @@ export type ServerUncheckedUpdateWithoutImageInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2078,13 +2100,15 @@ export type ServerUncheckedUpdateWithoutImageInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedUpdateOneWithoutServerNestedInput
   backups?: Prisma.BackupUncheckedUpdateManyWithoutServerNestedInput
   folder?: Prisma.ServerFolderMemberUncheckedUpdateOneWithoutServerNestedInput
@@ -2103,7 +2127,6 @@ export type ServerUncheckedUpdateManyWithoutImageInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2111,13 +2134,15 @@ export type ServerUncheckedUpdateManyWithoutImageInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   nodeId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ServerCreateManyNodeInput = {
@@ -2133,7 +2158,6 @@ export type ServerCreateManyNodeInput = {
   Storage: number
   Variables?: string | null
   StartCommand?: string | null
-  dockerImage?: string | null
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -2141,13 +2165,15 @@ export type ServerCreateManyNodeInput = {
   version?: number
   ownerId: number
   imageId: number
-  instanceType?: $Enums.InstanceType
-  swap?: number | null
-  bandwidth?: number | null
-  ipv4?: string | null
-  ipv6?: string | null
-  osTemplate?: string | null
-  rootPassword?: string | null
+  javaVersion?: string
+  softwareType?: string
+  softwareVersion?: string
+  serverJarPath?: string | null
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: string | null
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
 }
 
 export type ServerUpdateWithoutNodeInput = {
@@ -2162,19 +2188,20 @@ export type ServerUpdateWithoutNodeInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Suspended?: Prisma.BoolFieldUpdateOperationsInput | boolean
   version?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUpdateOneWithoutServerNestedInput
   owner?: Prisma.UsersUpdateOneRequiredWithoutServersNestedInput
   image?: Prisma.ImagesUpdateOneRequiredWithoutServersNestedInput
@@ -2195,7 +2222,6 @@ export type ServerUncheckedUpdateWithoutNodeInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2203,13 +2229,15 @@ export type ServerUncheckedUpdateWithoutNodeInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   sftpCredential?: Prisma.SftpCredentialUncheckedUpdateOneWithoutServerNestedInput
   backups?: Prisma.BackupUncheckedUpdateManyWithoutServerNestedInput
   folder?: Prisma.ServerFolderMemberUncheckedUpdateOneWithoutServerNestedInput
@@ -2228,7 +2256,6 @@ export type ServerUncheckedUpdateManyWithoutNodeInput = {
   Storage?: Prisma.IntFieldUpdateOperationsInput | number
   Variables?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   StartCommand?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  dockerImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   allowStartupEdit?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Installing?: Prisma.BoolFieldUpdateOperationsInput | boolean
   Queued?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2236,13 +2263,15 @@ export type ServerUncheckedUpdateManyWithoutNodeInput = {
   version?: Prisma.IntFieldUpdateOperationsInput | number
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   imageId?: Prisma.IntFieldUpdateOperationsInput | number
-  instanceType?: Prisma.EnumInstanceTypeFieldUpdateOperationsInput | $Enums.InstanceType
-  swap?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  bandwidth?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
-  ipv4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  ipv6?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  osTemplate?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  rootPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  javaVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareType?: Prisma.StringFieldUpdateOperationsInput | string
+  softwareVersion?: Prisma.StringFieldUpdateOperationsInput | string
+  serverJarPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  autoRestart?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  eulaAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  startupFlags?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onlineMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  whitelistEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -2289,7 +2318,6 @@ export type ServerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   Storage?: boolean
   Variables?: boolean
   StartCommand?: boolean
-  dockerImage?: boolean
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -2298,13 +2326,15 @@ export type ServerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   ownerId?: boolean
   nodeId?: boolean
   imageId?: boolean
-  instanceType?: boolean
-  swap?: boolean
-  bandwidth?: boolean
-  ipv4?: boolean
-  ipv6?: boolean
-  osTemplate?: boolean
-  rootPassword?: boolean
+  javaVersion?: boolean
+  softwareType?: boolean
+  softwareVersion?: boolean
+  serverJarPath?: boolean
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: boolean
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   sftpCredential?: boolean | Prisma.Server$sftpCredentialArgs<ExtArgs>
   node?: boolean | Prisma.NodeDefaultArgs<ExtArgs>
   owner?: boolean | Prisma.UsersDefaultArgs<ExtArgs>
@@ -2327,7 +2357,6 @@ export type ServerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   Storage?: boolean
   Variables?: boolean
   StartCommand?: boolean
-  dockerImage?: boolean
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -2336,13 +2365,15 @@ export type ServerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   ownerId?: boolean
   nodeId?: boolean
   imageId?: boolean
-  instanceType?: boolean
-  swap?: boolean
-  bandwidth?: boolean
-  ipv4?: boolean
-  ipv6?: boolean
-  osTemplate?: boolean
-  rootPassword?: boolean
+  javaVersion?: boolean
+  softwareType?: boolean
+  softwareVersion?: boolean
+  serverJarPath?: boolean
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: boolean
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   node?: boolean | Prisma.NodeDefaultArgs<ExtArgs>
   owner?: boolean | Prisma.UsersDefaultArgs<ExtArgs>
   image?: boolean | Prisma.ImagesDefaultArgs<ExtArgs>
@@ -2361,7 +2392,6 @@ export type ServerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   Storage?: boolean
   Variables?: boolean
   StartCommand?: boolean
-  dockerImage?: boolean
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -2370,13 +2400,15 @@ export type ServerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   ownerId?: boolean
   nodeId?: boolean
   imageId?: boolean
-  instanceType?: boolean
-  swap?: boolean
-  bandwidth?: boolean
-  ipv4?: boolean
-  ipv6?: boolean
-  osTemplate?: boolean
-  rootPassword?: boolean
+  javaVersion?: boolean
+  softwareType?: boolean
+  softwareVersion?: boolean
+  serverJarPath?: boolean
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: boolean
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
   node?: boolean | Prisma.NodeDefaultArgs<ExtArgs>
   owner?: boolean | Prisma.UsersDefaultArgs<ExtArgs>
   image?: boolean | Prisma.ImagesDefaultArgs<ExtArgs>
@@ -2395,7 +2427,6 @@ export type ServerSelectScalar = {
   Storage?: boolean
   Variables?: boolean
   StartCommand?: boolean
-  dockerImage?: boolean
   allowStartupEdit?: boolean
   Installing?: boolean
   Queued?: boolean
@@ -2404,16 +2435,18 @@ export type ServerSelectScalar = {
   ownerId?: boolean
   nodeId?: boolean
   imageId?: boolean
-  instanceType?: boolean
-  swap?: boolean
-  bandwidth?: boolean
-  ipv4?: boolean
-  ipv6?: boolean
-  osTemplate?: boolean
-  rootPassword?: boolean
+  javaVersion?: boolean
+  softwareType?: boolean
+  softwareVersion?: boolean
+  serverJarPath?: boolean
+  autoRestart?: boolean
+  eulaAccepted?: boolean
+  startupFlags?: boolean
+  onlineMode?: boolean
+  whitelistEnabled?: boolean
 }
 
-export type ServerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "UUID" | "name" | "description" | "createdAt" | "expiresAt" | "Ports" | "Memory" | "Cpu" | "Storage" | "Variables" | "StartCommand" | "dockerImage" | "allowStartupEdit" | "Installing" | "Queued" | "Suspended" | "version" | "ownerId" | "nodeId" | "imageId" | "instanceType" | "swap" | "bandwidth" | "ipv4" | "ipv6" | "osTemplate" | "rootPassword", ExtArgs["result"]["server"]>
+export type ServerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "UUID" | "name" | "description" | "createdAt" | "expiresAt" | "Ports" | "Memory" | "Cpu" | "Storage" | "Variables" | "StartCommand" | "allowStartupEdit" | "Installing" | "Queued" | "Suspended" | "version" | "ownerId" | "nodeId" | "imageId" | "javaVersion" | "softwareType" | "softwareVersion" | "serverJarPath" | "autoRestart" | "eulaAccepted" | "startupFlags" | "onlineMode" | "whitelistEnabled", ExtArgs["result"]["server"]>
 export type ServerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sftpCredential?: boolean | Prisma.Server$sftpCredentialArgs<ExtArgs>
   node?: boolean | Prisma.NodeDefaultArgs<ExtArgs>
@@ -2457,7 +2490,6 @@ export type $ServerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     Storage: number
     Variables: string | null
     StartCommand: string | null
-    dockerImage: string | null
     allowStartupEdit: boolean
     Installing: boolean
     Queued: boolean
@@ -2466,13 +2498,15 @@ export type $ServerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     ownerId: number
     nodeId: number
     imageId: number
-    instanceType: $Enums.InstanceType
-    swap: number | null
-    bandwidth: number | null
-    ipv4: string | null
-    ipv6: string | null
-    osTemplate: string | null
-    rootPassword: string | null
+    javaVersion: string
+    softwareType: string
+    softwareVersion: string
+    serverJarPath: string | null
+    autoRestart: boolean
+    eulaAccepted: boolean
+    startupFlags: string | null
+    onlineMode: boolean
+    whitelistEnabled: boolean
   }, ExtArgs["result"]["server"]>
   composites: {}
 }
@@ -2914,7 +2948,6 @@ export interface ServerFieldRefs {
   readonly Storage: Prisma.FieldRef<"Server", 'Int'>
   readonly Variables: Prisma.FieldRef<"Server", 'String'>
   readonly StartCommand: Prisma.FieldRef<"Server", 'String'>
-  readonly dockerImage: Prisma.FieldRef<"Server", 'String'>
   readonly allowStartupEdit: Prisma.FieldRef<"Server", 'Boolean'>
   readonly Installing: Prisma.FieldRef<"Server", 'Boolean'>
   readonly Queued: Prisma.FieldRef<"Server", 'Boolean'>
@@ -2923,13 +2956,15 @@ export interface ServerFieldRefs {
   readonly ownerId: Prisma.FieldRef<"Server", 'Int'>
   readonly nodeId: Prisma.FieldRef<"Server", 'Int'>
   readonly imageId: Prisma.FieldRef<"Server", 'Int'>
-  readonly instanceType: Prisma.FieldRef<"Server", 'InstanceType'>
-  readonly swap: Prisma.FieldRef<"Server", 'Int'>
-  readonly bandwidth: Prisma.FieldRef<"Server", 'Int'>
-  readonly ipv4: Prisma.FieldRef<"Server", 'String'>
-  readonly ipv6: Prisma.FieldRef<"Server", 'String'>
-  readonly osTemplate: Prisma.FieldRef<"Server", 'String'>
-  readonly rootPassword: Prisma.FieldRef<"Server", 'String'>
+  readonly javaVersion: Prisma.FieldRef<"Server", 'String'>
+  readonly softwareType: Prisma.FieldRef<"Server", 'String'>
+  readonly softwareVersion: Prisma.FieldRef<"Server", 'String'>
+  readonly serverJarPath: Prisma.FieldRef<"Server", 'String'>
+  readonly autoRestart: Prisma.FieldRef<"Server", 'Boolean'>
+  readonly eulaAccepted: Prisma.FieldRef<"Server", 'Boolean'>
+  readonly startupFlags: Prisma.FieldRef<"Server", 'String'>
+  readonly onlineMode: Prisma.FieldRef<"Server", 'Boolean'>
+  readonly whitelistEnabled: Prisma.FieldRef<"Server", 'Boolean'>
 }
     
 

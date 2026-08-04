@@ -17,9 +17,9 @@
 # don't use set -e — arithmetic like (( x++ )) returns 1 on zero and kills the script
 set -uo pipefail
 
-readonly VERSION="3.2.0-Stable"
-readonly LOG="/tmp/cynexgp-installer.log"
-readonly PANEL_REPO="https://github.com/xAyan55/cynex.git"
+readonly VERSION="1.0.0-Kinetictyl"
+readonly LOG="/tmp/kinetictyl-installer.log"
+readonly PANEL_REPO="https://github.com/xAyan55/kinetictyl.git"
 readonly DAEMON_RELEASE_API="https://api.github.com/repos/xAyan55/cynex/releases/latest"
 
 PNPM_REGISTRY="https://registry.npmjs.org"

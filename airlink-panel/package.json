@@ -1,12 +1,12 @@
 {
-  "name": "CynexGP",
+  "name": "kinetictyl-panel",
   "version": "1.0.0",
-  "description": "CynexGP - A modern game server management panel",
+  "description": "Kinetictyl - Dedicated Minecraft server management panel",
   "repository": {
     "type": "git",
-    "url": "https://github.com/xAyan55/cynex"
+    "url": "https://github.com/xAyan55/kinetictyl"
   },
-  "author": "CynexGP",
+  "author": "Kinetictyl",
   "license": "MIT",
   "scripts": {
     "setup": "pnpm install && prisma generate && prisma db push && pnpm run build",

@@ -22,14 +22,6 @@ export const AllocationType = {
 export type AllocationType = (typeof AllocationType)[keyof typeof AllocationType]
 
 
-export const InstanceType = {
-  MINECRAFT: 'MINECRAFT',
-  LXC: 'LXC'
-} as const
-
-export type InstanceType = (typeof InstanceType)[keyof typeof InstanceType]
-
-
 export const AllocationSource = {
   DEFAULT: 'DEFAULT',
   PURCHASE: 'PURCHASE',

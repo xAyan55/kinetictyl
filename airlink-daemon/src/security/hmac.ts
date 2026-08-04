@@ -1,21 +1,15 @@
-import { timingSafeEqual } from 'node:crypto';
+import crypto, { timingSafeEqual } from 'crypto';
 import config from '../config';
 import logger from '../logger';
 
 const WINDOW_SECS = 30;
 const seenNonces = new Set<string>();
 
-// Must match HMAC_PAYLOAD_VERSION in the panel's daemonRequest.ts.
-// Increment both sides together when changing the signing format.
 const HMAC_PAYLOAD_VERSION = 1;
 
-// Why this format: ${ts}:${nonce}:${method}:${path}:${body}
-// - ts: timestamps the request, enables 30s expiry window
-// - nonce: random per-request, prevents replay within the window
-// - method+path+body: binds signature to a specific operation
 function sign(key: string, method: string, path: string, body: string, ts: number, nonce: string): string {
   const payload = `${ts}:${nonce}:${method.toUpperCase()}:${path}:${body}`;
-  return new Bun.CryptoHasher('sha256', key).update(payload).digest('hex');
+  return crypto.createHmac('sha256', key).update(payload).digest('hex');
 }
 
 function rememberNonce(ts: number, nonceValue: string): Response | null {
@@ -37,15 +31,13 @@ function rememberNonce(ts: number, nonceValue: string): Response | null {
   return null;
 }
 
-// returns null if valid, returns a Response error if not
 export async function verifyHmac(req: Request, key: string): Promise<Response | null> {
-  const tsHeader = req.headers.get('x-cynexgp-timestamp');
-  const sigHeader = req.headers.get('x-cynexgp-signature');
-  const nonceHeader = req.headers.get('x-cynexgp-nonce') ?? '';
+  const tsHeader = req.headers.get('x-kinetictyl-timestamp') || req.headers.get('x-cynexgp-timestamp');
+  const sigHeader = req.headers.get('x-kinetictyl-signature') || req.headers.get('x-cynexgp-signature');
+  const nonceHeader = req.headers.get('x-kinetictyl-nonce') || req.headers.get('x-cynexgp-nonce') || '';
 
   if (!tsHeader || !sigHeader) {
-    if (Bun.env.REQUIRE_HMAC === 'false') {
-      logger.warn(`unsigned request allowed (REQUIRE_HMAC=false): ${req.method} ${new URL(req.url).pathname}`);
+    if (process.env.REQUIRE_HMAC === 'false') {
       return null;
     }
     return new Response(JSON.stringify({ error: 'missing HMAC headers' }), {

@@ -53,10 +53,8 @@ export async function jailRename(base: string, oldRel: string, newRel: string): 
 
   // make sure dest parent exists
   const destParent = dirname(safeDest);
-  await Bun.spawn(['mkdir', '-p', destParent], {
-    stdout: 'pipe',
-    stderr: 'pipe',
-  }).exited;
+  const { mkdirSync, existsSync } = await import('fs');
+  if (!existsSync(destParent)) mkdirSync(destParent, { recursive: true });
 
   await rename(safeSrc, safeDest);
 }

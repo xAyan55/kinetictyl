@@ -1,48 +1,49 @@
-// polls container stats every 2s and pushes them over the WS
-// the panel uses this to update the server card indicators in real time
-
-import type { ServerWebSocket } from 'bun';
-import { getContainerState, getContainerStats, isContainerRunning } from '../handlers/docker';
-import type { WsData } from './server';
+import type { WebSocket } from 'ws';
+import { getServerMetrics, getServerStatus } from '../handlers/processManager';
 
 const POLL_MS = 2000;
 
-export function startStatusPolling(containerId: string, ws: ServerWebSocket<WsData>): ReturnType<typeof setInterval> {
-  // send initial state right away — don't make the client wait 2s
-  sendState(containerId, ws);
-  sendStats(containerId, ws);
+export function startStatusPolling(uuid: string, ws: WebSocket): ReturnType<typeof setInterval> {
+  sendState(uuid, ws);
+  sendStats(uuid, ws);
 
   let tick = 0;
   return setInterval(async () => {
-    if (ws.readyState !== 1) return; // connection is gone, interval will be cleared by wsClose
+    if (ws.readyState !== 1) return;
     tick++;
-    await sendState(containerId, ws);
-    // stats are expensive (docker API call) — only every other tick (~4s)
-    if (tick % 2 === 0) await sendStats(containerId, ws);
+    sendState(uuid, ws);
+    if (tick % 2 === 0) await sendStats(uuid, ws);
   }, POLL_MS);
 }
 
-async function sendState(containerId: string, ws: ServerWebSocket<WsData>): Promise<void> {
+function sendState(uuid: string, ws: WebSocket): void {
   if (ws.readyState !== 1) return;
-  const knownRunning = isContainerRunning(containerId);
-  if (knownRunning !== null) {
-    ws.send(JSON.stringify({ event: 'state', data: { running: knownRunning } }));
-  } else {
-    const state = await getContainerState(containerId);
-    if (ws.readyState === 1) ws.send(JSON.stringify({ event: 'state', data: state }));
-  }
+  const status = getServerStatus(uuid);
+  ws.send(JSON.stringify({ event: 'state', data: { running: status.running, state: status.state } }));
 }
 
-async function sendStats(containerId: string, ws: ServerWebSocket<WsData>): Promise<void> {
+async function sendStats(uuid: string, ws: WebSocket): Promise<void> {
   if (ws.readyState !== 1) return;
   try {
-    const stats = await getContainerStats(containerId);
-    if (stats && ws.readyState === 1) {
-      ws.send(JSON.stringify({ event: 'stats', data: stats }));
+    const metrics = await getServerMetrics(uuid);
+    if (ws.readyState === 1) {
+      ws.send(
+        JSON.stringify({
+          event: 'stats',
+          data: {
+            running: metrics.running,
+            memory: {
+              usage: metrics.memory * 1024 * 1024,
+              limit: metrics.maxMemory * 1024 * 1024,
+              percentage: metrics.maxMemory > 0 ? (metrics.memory / metrics.maxMemory) * 100 : 0,
+            },
+            cpu: { percentage: metrics.cpu },
+            storage: { usage: metrics.disk },
+          },
+        }),
+      );
     }
-  } catch {
-    // stats unavailable — send nothing, client keeps previous values
-  }
+  } catch {}
 }
 
 export function stopStatusPolling(timer: ReturnType<typeof setInterval>): void {

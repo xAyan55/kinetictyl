@@ -4,7 +4,7 @@ import { NodeAllocator } from './NodeAllocator';
 import { QueueManager } from './QueueManager';
 import { ResourceService } from './ResourceService';
 import { ConfigService } from './config/ConfigService';
-import { AllocationType, InstanceType } from '../generated/prisma/client';
+import { AllocationType } from '../generated/prisma/client';
 import {
   getUsedExternalPorts,
   parseImagePortRequirements,
@@ -24,23 +24,18 @@ export interface ProvisionOptions {
   name: string;
   description?: string;
   nodeId?: number;
-  imageId: number;
-  dockerImage: string;
+  imageId?: number;
   memory?: number;
   cpu?: number;
   storage?: number;
-  instanceType?: 'MINECRAFT' | 'LXC';
-  osTemplate?: string;
-  swap?: number;
-  bandwidth?: number;
-  rootPassword?: string;
+  javaVersion?: string;
+  softwareType?: string;
+  softwareVersion?: string;
 }
 
 export class ServerProvisioner {
   static async provisionServer(userId: number, options: ProvisionOptions) {
-    const settings = await prisma.settings.findUnique({ where: { id: 1 } });
     const user = await prisma.users.findUnique({ where: { id: userId } });
-
     if (!user) throw new Error('User not found.');
 
     // 1. Resolve resource limits
@@ -58,96 +53,68 @@ export class ServerProvisioner {
     let cpu = Math.min(options.cpu || 100, maxCpu);
     let storage = Math.min(options.storage || 5120, maxStor);
 
-    // 2. Resolve Node
+    // 2. Resolve Node (Auto-create local node if none exists)
     let node: any = null;
     if (options.nodeId) {
       node = await prisma.node.findUnique({ where: { id: options.nodeId } });
     } else {
-      node = await NodeAllocator.findBestNode(memory, storage);
+      let existingNodes = await prisma.node.findMany();
+      if (existingNodes.length === 0) {
+        node = await prisma.node.create({
+          data: {
+            name: 'Local Node',
+            address: '127.0.0.1',
+            port: 3001,
+            key: 'default_key_change_me_12345',
+            ram: 16384,
+            cpu: 800,
+            disk: 102400,
+            allocatedPorts: JSON.stringify([25565, 25566, 25567, 25568, 25569, 25570]),
+            sftpPort: 3003,
+          },
+        });
+      } else {
+        node = await NodeAllocator.findBestNode(memory, storage);
+        if (!node) node = existingNodes[0];
+      }
     }
 
     if (!node) {
       throw new Error('No suitable node available for deployment.');
     }
 
-    // ── LXC / VPS provisioning path ──────────────────────────────────────
-    if (options.instanceType === 'LXC') {
-      const server = await prisma.server.create({
-        data: {
-          name: options.name.trim(),
-          description: options.description?.trim() || null,
-          ownerId: user.id,
-          nodeId: node.id,
-          imageId: options.imageId,
-          instanceType: InstanceType.LXC,
-          Ports: '[]',
-          Memory: memory,
-          Cpu: cpu,
-          Storage: storage,
-          swap: options.swap ?? null,
-          bandwidth: options.bandwidth ?? null,
-          osTemplate: options.osTemplate ?? 'ubuntu/24.04',
-          rootPassword: options.rootPassword ?? null,
-          Installing: true,
-          Queued: true,
-        },
-      });
-
-      logger.info(`ServerProvisioner: Queued LXC VPS ${server.UUID} for installation.`);
-      QueueManager.triggerDeployment(server.UUID, []);
-      return server;
-    }
-
-    // ── Minecraft / Docker provisioning path (unchanged) ────────────────
     // 3. Resolve Ports
-    const image = await prisma.images.findUnique({ where: { id: options.imageId } });
-    if (!image) throw new Error('Selected server software image was not found.');
-
     let allocatedPorts: number[] = [];
     try {
       if (node.allocatedPorts) allocatedPorts = JSON.parse(node.allocatedPorts);
     } catch {
-      throw new Error('Node port configuration is corrupt.');
+      allocatedPorts = [25565, 25566, 25567, 25568, 25569];
     }
 
-    const portRequirements = parseImagePortRequirements(image.portRequirements);
-    const requiredPortCount = Math.max(1, portRequirements.length);
     const existingServers = await prisma.server.findMany({ where: { nodeId: node.id } });
-    const assignedPorts = pickAvailablePorts(allocatedPorts, getUsedExternalPorts(existingServers), requiredPortCount);
+    const assignedPorts = pickAvailablePorts(allocatedPorts, getUsedExternalPorts(existingServers), 1);
 
-    if (assignedPorts.length < requiredPortCount) {
-      throw new Error(`Insufficient available ports on node ${node.name}. Need ${requiredPortCount}.`);
-    }
+    const primaryPort = assignedPorts[0] || (25565 + existingServers.length);
+    const portsJson = serializeServerPorts([
+      {
+        name: 'Primary Port',
+        internalPort: primaryPort,
+        externalPort: primaryPort,
+        primary: true,
+      },
+    ]);
 
-    const portsJson = serializeServerPorts(assignedPorts.map((externalPort, index) => {
-      const requirement = portRequirements[index];
-      return {
-        name: requirement?.name || `Port ${index + 1}`,
-        internalPort: requirement?.internalPort || externalPort,
-        externalPort,
-        primary: index === 0,
-      };
-    }));
-
-    // 4. Resolve variables and command
-    let dockerImages: any[] = [];
-    try {
-      dockerImages = JSON.parse(image.dockerImages || '[]');
-    } catch {
-      throw new Error('Image docker images configuration is invalid.');
-    }
-
-    const imageDocker = dockerImages.find((img: any) => Object.keys(img).includes(options.dockerImage));
-    if (!imageDocker) throw new Error('Requested Docker image variant not found.');
-
-    const startCommand = image.startup;
-    if (!startCommand) throw new Error('Selected image has no startup command template.');
-
-    let imageVariables: any[] = [];
-    try {
-      imageVariables = JSON.parse(image.variables || '[]');
-    } catch {
-      imageVariables = [];
+    // 4. Resolve Image/Egg template
+    let imageId = options.imageId || 1;
+    let image = await prisma.images.findFirst({ where: { id: imageId } });
+    if (!image) {
+      image = await prisma.images.create({
+        data: {
+          name: 'Paper Minecraft',
+          description: 'High performance Paper Minecraft Server',
+          startup: 'java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar nogui',
+        },
+      });
     }
 
     // 5. Create Server Record
@@ -162,17 +129,18 @@ export class ServerProvisioner {
         Memory: memory,
         Cpu: cpu,
         Storage: storage,
-        Variables: JSON.stringify(imageVariables),
-        StartCommand: startCommand,
-        dockerImage: JSON.stringify(imageDocker),
+        javaVersion: options.javaVersion || '17',
+        softwareType: options.softwareType || 'paper',
+        softwareVersion: options.softwareVersion || 'latest',
+        StartCommand: image.startup,
         Installing: true,
         Queued: true,
       },
     });
 
     // 6. Trigger deployment via QueueManager
-    logger.info(`ServerProvisioner: Queued server ${server.UUID} for installation.`);
-    QueueManager.triggerDeployment(server.UUID, assignedPorts);
+    logger.info(`ServerProvisioner: Queued Minecraft server ${server.UUID} for installation.`);
+    QueueManager.triggerDeployment(server.UUID, [primaryPort]);
 
     return server;
   }

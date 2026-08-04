@@ -420,11 +420,7 @@ export const ModelName = {
   MonetizationSchedulerJob: 'MonetizationSchedulerJob',
   UserEarnPreferences: 'UserEarnPreferences',
   ResourceProfile: 'ResourceProfile',
-  ImageRegistry: 'ImageRegistry',
-  StoragePool: 'StoragePool',
-  NetworkPool: 'NetworkPool',
   OperationQueue: 'OperationQueue',
-  NodeCapability: 'NodeCapability',
   LinkvertiseSession: 'LinkvertiseSession',
   LinkvertiseCompletion: 'LinkvertiseCompletion'
 } as const
@@ -442,7 +438,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "users" | "session" | "server" | "images" | "node" | "settings" | "serverFolder" | "serverFolderMember" | "apiKey" | "loginHistory" | "playerStats" | "addon" | "addonSetting" | "backup" | "sftpCredential" | "wallet" | "walletTransaction" | "userAllocation" | "storeProduct" | "storePurchase" | "coupon" | "couponRedemption" | "config" | "auditLog" | "notification" | "plan" | "offer" | "offerReward" | "earnSession" | "afkSession" | "userStreak" | "monetizationFraudLog" | "providerHealthRecord" | "monetizationSchedulerJob" | "userEarnPreferences" | "resourceProfile" | "imageRegistry" | "storagePool" | "networkPool" | "operationQueue" | "nodeCapability" | "linkvertiseSession" | "linkvertiseCompletion"
+    modelProps: "users" | "session" | "server" | "images" | "node" | "settings" | "serverFolder" | "serverFolderMember" | "apiKey" | "loginHistory" | "playerStats" | "addon" | "addonSetting" | "backup" | "sftpCredential" | "wallet" | "walletTransaction" | "userAllocation" | "storeProduct" | "storePurchase" | "coupon" | "couponRedemption" | "config" | "auditLog" | "notification" | "plan" | "offer" | "offerReward" | "earnSession" | "afkSession" | "userStreak" | "monetizationFraudLog" | "providerHealthRecord" | "monetizationSchedulerJob" | "userEarnPreferences" | "resourceProfile" | "operationQueue" | "linkvertiseSession" | "linkvertiseCompletion"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -3110,228 +3106,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
-    ImageRegistry: {
-      payload: Prisma.$ImageRegistryPayload<ExtArgs>
-      fields: Prisma.ImageRegistryFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.ImageRegistryFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.ImageRegistryFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>
-        }
-        findFirst: {
-          args: Prisma.ImageRegistryFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.ImageRegistryFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>
-        }
-        findMany: {
-          args: Prisma.ImageRegistryFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>[]
-        }
-        create: {
-          args: Prisma.ImageRegistryCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>
-        }
-        createMany: {
-          args: Prisma.ImageRegistryCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.ImageRegistryCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>[]
-        }
-        delete: {
-          args: Prisma.ImageRegistryDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>
-        }
-        update: {
-          args: Prisma.ImageRegistryUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>
-        }
-        deleteMany: {
-          args: Prisma.ImageRegistryDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.ImageRegistryUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.ImageRegistryUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>[]
-        }
-        upsert: {
-          args: Prisma.ImageRegistryUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$ImageRegistryPayload>
-        }
-        aggregate: {
-          args: Prisma.ImageRegistryAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateImageRegistry>
-        }
-        groupBy: {
-          args: Prisma.ImageRegistryGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ImageRegistryGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.ImageRegistryCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.ImageRegistryCountAggregateOutputType> | number
-        }
-      }
-    }
-    StoragePool: {
-      payload: Prisma.$StoragePoolPayload<ExtArgs>
-      fields: Prisma.StoragePoolFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.StoragePoolFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.StoragePoolFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>
-        }
-        findFirst: {
-          args: Prisma.StoragePoolFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.StoragePoolFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>
-        }
-        findMany: {
-          args: Prisma.StoragePoolFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>[]
-        }
-        create: {
-          args: Prisma.StoragePoolCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>
-        }
-        createMany: {
-          args: Prisma.StoragePoolCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.StoragePoolCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>[]
-        }
-        delete: {
-          args: Prisma.StoragePoolDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>
-        }
-        update: {
-          args: Prisma.StoragePoolUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>
-        }
-        deleteMany: {
-          args: Prisma.StoragePoolDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.StoragePoolUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.StoragePoolUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>[]
-        }
-        upsert: {
-          args: Prisma.StoragePoolUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$StoragePoolPayload>
-        }
-        aggregate: {
-          args: Prisma.StoragePoolAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateStoragePool>
-        }
-        groupBy: {
-          args: Prisma.StoragePoolGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.StoragePoolGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.StoragePoolCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.StoragePoolCountAggregateOutputType> | number
-        }
-      }
-    }
-    NetworkPool: {
-      payload: Prisma.$NetworkPoolPayload<ExtArgs>
-      fields: Prisma.NetworkPoolFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.NetworkPoolFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.NetworkPoolFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>
-        }
-        findFirst: {
-          args: Prisma.NetworkPoolFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.NetworkPoolFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>
-        }
-        findMany: {
-          args: Prisma.NetworkPoolFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>[]
-        }
-        create: {
-          args: Prisma.NetworkPoolCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>
-        }
-        createMany: {
-          args: Prisma.NetworkPoolCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.NetworkPoolCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>[]
-        }
-        delete: {
-          args: Prisma.NetworkPoolDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>
-        }
-        update: {
-          args: Prisma.NetworkPoolUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>
-        }
-        deleteMany: {
-          args: Prisma.NetworkPoolDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.NetworkPoolUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.NetworkPoolUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>[]
-        }
-        upsert: {
-          args: Prisma.NetworkPoolUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NetworkPoolPayload>
-        }
-        aggregate: {
-          args: Prisma.NetworkPoolAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateNetworkPool>
-        }
-        groupBy: {
-          args: Prisma.NetworkPoolGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.NetworkPoolGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.NetworkPoolCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.NetworkPoolCountAggregateOutputType> | number
-        }
-      }
-    }
     OperationQueue: {
       payload: Prisma.$OperationQueuePayload<ExtArgs>
       fields: Prisma.OperationQueueFieldRefs
@@ -3403,80 +3177,6 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.OperationQueueCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.OperationQueueCountAggregateOutputType> | number
-        }
-      }
-    }
-    NodeCapability: {
-      payload: Prisma.$NodeCapabilityPayload<ExtArgs>
-      fields: Prisma.NodeCapabilityFieldRefs
-      operations: {
-        findUnique: {
-          args: Prisma.NodeCapabilityFindUniqueArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload> | null
-        }
-        findUniqueOrThrow: {
-          args: Prisma.NodeCapabilityFindUniqueOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>
-        }
-        findFirst: {
-          args: Prisma.NodeCapabilityFindFirstArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload> | null
-        }
-        findFirstOrThrow: {
-          args: Prisma.NodeCapabilityFindFirstOrThrowArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>
-        }
-        findMany: {
-          args: Prisma.NodeCapabilityFindManyArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>[]
-        }
-        create: {
-          args: Prisma.NodeCapabilityCreateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>
-        }
-        createMany: {
-          args: Prisma.NodeCapabilityCreateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        createManyAndReturn: {
-          args: Prisma.NodeCapabilityCreateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>[]
-        }
-        delete: {
-          args: Prisma.NodeCapabilityDeleteArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>
-        }
-        update: {
-          args: Prisma.NodeCapabilityUpdateArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>
-        }
-        deleteMany: {
-          args: Prisma.NodeCapabilityDeleteManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateMany: {
-          args: Prisma.NodeCapabilityUpdateManyArgs<ExtArgs>
-          result: BatchPayload
-        }
-        updateManyAndReturn: {
-          args: Prisma.NodeCapabilityUpdateManyAndReturnArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>[]
-        }
-        upsert: {
-          args: Prisma.NodeCapabilityUpsertArgs<ExtArgs>
-          result: runtime.Types.Utils.PayloadToResult<Prisma.$NodeCapabilityPayload>
-        }
-        aggregate: {
-          args: Prisma.NodeCapabilityAggregateArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.AggregateNodeCapability>
-        }
-        groupBy: {
-          args: Prisma.NodeCapabilityGroupByArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.NodeCapabilityGroupByOutputType>[]
-        }
-        count: {
-          args: Prisma.NodeCapabilityCountArgs<ExtArgs>
-          result: runtime.Types.Utils.Optional<Prisma.NodeCapabilityCountAggregateOutputType> | number
         }
       }
     }
@@ -3707,7 +3407,6 @@ export const ServerScalarFieldEnum = {
   Storage: 'Storage',
   Variables: 'Variables',
   StartCommand: 'StartCommand',
-  dockerImage: 'dockerImage',
   allowStartupEdit: 'allowStartupEdit',
   Installing: 'Installing',
   Queued: 'Queued',
@@ -3716,13 +3415,15 @@ export const ServerScalarFieldEnum = {
   ownerId: 'ownerId',
   nodeId: 'nodeId',
   imageId: 'imageId',
-  instanceType: 'instanceType',
-  swap: 'swap',
-  bandwidth: 'bandwidth',
-  ipv4: 'ipv4',
-  ipv6: 'ipv6',
-  osTemplate: 'osTemplate',
-  rootPassword: 'rootPassword'
+  javaVersion: 'javaVersion',
+  softwareType: 'softwareType',
+  softwareVersion: 'softwareVersion',
+  serverJarPath: 'serverJarPath',
+  autoRestart: 'autoRestart',
+  eulaAccepted: 'eulaAccepted',
+  startupFlags: 'startupFlags',
+  onlineMode: 'onlineMode',
+  whitelistEnabled: 'whitelistEnabled'
 } as const
 
 export type ServerScalarFieldEnum = (typeof ServerScalarFieldEnum)[keyof typeof ServerScalarFieldEnum]
@@ -4239,50 +3940,6 @@ export const ResourceProfileScalarFieldEnum = {
 export type ResourceProfileScalarFieldEnum = (typeof ResourceProfileScalarFieldEnum)[keyof typeof ResourceProfileScalarFieldEnum]
 
 
-export const ImageRegistryScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  distribution: 'distribution',
-  release: 'release',
-  architecture: 'architecture',
-  cloudImage: 'cloudImage',
-  url: 'url',
-  checksum: 'checksum',
-  minDisk: 'minDisk',
-  minRam: 'minRam',
-  enabled: 'enabled',
-  deprecated: 'deprecated'
-} as const
-
-export type ImageRegistryScalarFieldEnum = (typeof ImageRegistryScalarFieldEnum)[keyof typeof ImageRegistryScalarFieldEnum]
-
-
-export const StoragePoolScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  driver: 'driver',
-  source: 'source',
-  capacity: 'capacity',
-  nodeId: 'nodeId'
-} as const
-
-export type StoragePoolScalarFieldEnum = (typeof StoragePoolScalarFieldEnum)[keyof typeof StoragePoolScalarFieldEnum]
-
-
-export const NetworkPoolScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  subnet: 'subnet',
-  gateway: 'gateway',
-  bridge: 'bridge',
-  type: 'type',
-  ips: 'ips',
-  nodeId: 'nodeId'
-} as const
-
-export type NetworkPoolScalarFieldEnum = (typeof NetworkPoolScalarFieldEnum)[keyof typeof NetworkPoolScalarFieldEnum]
-
-
 export const OperationQueueScalarFieldEnum = {
   id: 'id',
   uuid: 'uuid',
@@ -4296,22 +3953,6 @@ export const OperationQueueScalarFieldEnum = {
 } as const
 
 export type OperationQueueScalarFieldEnum = (typeof OperationQueueScalarFieldEnum)[keyof typeof OperationQueueScalarFieldEnum]
-
-
-export const NodeCapabilityScalarFieldEnum = {
-  id: 'id',
-  nodeId: 'nodeId',
-  dockerInstalled: 'dockerInstalled',
-  dockerVersion: 'dockerVersion',
-  lxcInstalled: 'lxcInstalled',
-  lxcVersion: 'lxcVersion',
-  lxdVersion: 'lxdVersion',
-  cgroupVersion: 'cgroupVersion',
-  storageDriver: 'storageDriver',
-  features: 'features'
-} as const
-
-export type NodeCapabilityScalarFieldEnum = (typeof NodeCapabilityScalarFieldEnum)[keyof typeof NodeCapabilityScalarFieldEnum]
 
 
 export const LinkvertiseSessionScalarFieldEnum = {
@@ -4428,13 +4069,6 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-/**
- * Reference to a field of type 'InstanceType'
- */
-export type EnumInstanceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InstanceType'>
     
 
 
@@ -4702,11 +4336,7 @@ export type GlobalOmitConfig = {
   monetizationSchedulerJob?: Prisma.MonetizationSchedulerJobOmit
   userEarnPreferences?: Prisma.UserEarnPreferencesOmit
   resourceProfile?: Prisma.ResourceProfileOmit
-  imageRegistry?: Prisma.ImageRegistryOmit
-  storagePool?: Prisma.StoragePoolOmit
-  networkPool?: Prisma.NetworkPoolOmit
   operationQueue?: Prisma.OperationQueueOmit
-  nodeCapability?: Prisma.NodeCapabilityOmit
   linkvertiseSession?: Prisma.LinkvertiseSessionOmit
   linkvertiseCompletion?: Prisma.LinkvertiseCompletionOmit
 }
