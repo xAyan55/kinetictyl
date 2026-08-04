@@ -1,0 +1,136 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  email        String     @unique
+  passwordHash String
+  role         String     @default("user") // "admin" | "user"
+  totpSecret   String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sessions     Session[]
+  apiKeys      ApiKey[]
+  servers      Server[]
+  auditLogs    AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String
+  userAgent String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  name       String
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model Node {
+  id                 Int       @id @default(autoincrement())
+  name               String    @unique
+  address            String
+  agentTokenHash     String
+  cpuCores           Int
+  ramTotal           BigInt    // In bytes
+  diskTotal          BigInt    // In bytes
+  ramOverallocPct    Int       @default(0)
+  diskOverallocPct   Int       @default(0)
+  portRangeStart     Int
+  portRangeEnd       Int
+  isLocal            Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  servers            Server[]
+}
+
+model Server {
+  id            String         @id @default(uuid())
+  name          String
+  ownerId       Int
+  owner         User           @relation(fields: [ownerId], references: [id])
+  nodeId        Int
+  node          Node           @relation(fields: [nodeId], references: [id])
+  type          String         // e.g., PAPER, VANILLA, FABRIC
+  version       String         // e.g., 1.21.4
+  buildUuid     String
+  port          Int
+  ramLimit      BigInt         // Max Memory (-Xmx) in bytes
+  diskLimit     BigInt         // Disk Quota in bytes
+  cpuLimit      Int            // Percentage (100 = 1 core)
+  javaOverride  String?        // Custom Java path/version
+  status        String         @default("offline") // installing, offline, starting, running, stopping, crashed, suspended
+  suspended     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  backups       Backup[]
+  schedules     Schedule[]
+  auditLogs     AuditLog[]
+}
+
+model Backup {
+  id         String   @id @default(uuid())
+  serverId   String
+  server     Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  filename   String
+  sizeBytes  BigInt
+  checksum   String   // SHA256
+  createdAt  DateTime @default(now())
+}
+
+model Schedule {
+  id             String   @id @default(uuid())
+  serverId       String
+  server         Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  name           String
+  cronExpression String
+  isActive       Boolean  @default(true)
+  lastRunAt      DateTime?
+  createdAt      DateTime @default(now())
+  tasks          Task[]
+}
+
+model Task {
+  id            String   @id @default(uuid())
+  scheduleId    String
+  schedule      Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  action        String   // "command" | "power" | "backup"
+  payload       String
+  sequenceOrder Int
+  createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  actorId      Int?
+  actor        User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  serverId     String?
+  server       Server?  @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  action       String   // e.g., "auth.login", "server.start"
+  metadataJson String
+  ipAddress    String
+  createdAt    DateTime @default(now())
+}
+
+model MetricSample {
+  id        Int      @id @default(autoincrement())
+  targetId  String
+  cpuPct    Float
+  ramBytes  BigInt
+  diskBytes BigInt
+  timestamp DateTime @default(now())
+}
