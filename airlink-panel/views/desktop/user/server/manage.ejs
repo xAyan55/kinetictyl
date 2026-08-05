@@ -82,19 +82,19 @@
           <!-- Control buttons -->
           <div class="flex gap-2.5 shrink-0 w-full sm:w-auto">
             <button id="startButton" type="button"
-              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-green px-4 py-2.5 text-xs font-bold text-black hover:bg-brand-green-hover transition-all cursor-pointer <%= server.Suspended ? 'opacity-50 cursor-not-allowed' : '' %>" <%= server.Suspended ? 'disabled' : '' %>>
-              <%- icon('play', { class: 'size-4 text-black' }) %>
-              <%= req.translations.start %>
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-600/20 transition-all cursor-pointer <%= (server.Suspended || (typeof serverStatus !== 'undefined' && serverStatus.installing)) ? 'opacity-50 cursor-not-allowed' : '' %>" <%= (server.Suspended || (typeof serverStatus !== 'undefined' && serverStatus.installing)) ? 'disabled' : '' %>>
+              <%- icon('play', { class: 'size-4 text-white' }) %>
+              <%= req.translations.start || "Start" %>
             </button>
             <button id="restartButton" type="button"
-              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-purple px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-purple-hover transition-all cursor-pointer <%= server.Suspended ? 'opacity-50 cursor-not-allowed' : '' %>" <%= server.Suspended ? 'disabled' : '' %>>
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-amber-600/20 transition-all cursor-pointer <%= (server.Suspended || (typeof serverStatus !== 'undefined' && serverStatus.installing)) ? 'opacity-50 cursor-not-allowed' : '' %>" <%= (server.Suspended || (typeof serverStatus !== 'undefined' && serverStatus.installing)) ? 'disabled' : '' %>>
               <%- icon('refresh-cw', { class: 'size-4 text-white' }) %>
-              <%= req.translations.restart %>
+              <%= req.translations.restart || "Restart" %>
             </button>
             <button id="stopButton" type="button"
-              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-red-500 transition-all cursor-pointer <%= server.Suspended ? 'opacity-50 cursor-not-allowed' : '' %>" <%= server.Suspended ? 'disabled' : '' %>>
+              class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-600/20 transition-all cursor-pointer <%= (server.Suspended || (typeof serverStatus !== 'undefined' && serverStatus.installing)) ? 'opacity-50 cursor-not-allowed' : '' %>" <%= (server.Suspended || (typeof serverStatus !== 'undefined' && serverStatus.installing)) ? 'disabled' : '' %>>
               <%- icon('square', { class: 'size-4 text-white' }) %>
-              <%= req.translations.stop %>
+              <%= req.translations.stop || "Stop" %>
             </button>
           </div>
         </div>
@@ -1117,13 +1117,25 @@ connectWebSocket();
     function hideConsolePlaceholder() {}
     function showConsolePlaceholder() {}
 
+    const isServerInstalling = <%= (typeof installed !== 'undefined' && !installed.installed) || (typeof serverStatus !== 'undefined' && serverStatus.installing) ? 'true' : 'false' %>;
+
     function setAllStatsOffline() {
         showConsolePlaceholder();
         const statusElement = document.getElementById('status');
-        statusElement.textContent = 'Offline';
-        statusElement.className = 'mt-1 text-lg font-medium tracking-tight text-red-500';
-        updateHeaderDot('offline');
-        updateStatusChart('rgba(239, 68, 68, 0.1)', 'rgba(239, 68, 68, 0.2)');
+        if (isServerInstalling) {
+            if (statusElement) {
+                statusElement.textContent = 'Installing';
+                statusElement.className = 'mt-1 text-lg font-medium tracking-tight text-blue-400';
+            }
+            updateStatusChart('rgba(59, 130, 246, 0.1)', 'rgba(59, 130, 246, 0.3)');
+            lockInput('Installing server...');
+        } else {
+            if (statusElement) {
+                statusElement.textContent = 'Offline';
+                statusElement.className = 'mt-1 text-lg font-medium tracking-tight text-red-500';
+            }
+            updateStatusChart('rgba(239, 68, 68, 0.1)', 'rgba(239, 68, 68, 0.2)');
+        }
 
         // Update RAM usage
         document.getElementById('ramUsage').textContent = `0% (0 MB / ${formatRam(<%- server.Memory %> * 1024 * 1024)})`;

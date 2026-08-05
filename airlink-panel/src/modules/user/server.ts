@@ -344,12 +344,20 @@ const dashboardModule: Module = {
               features = features.filter((feature) => feature !== 'eula');
             }
           }
-          const serverStatus = await getServerStatus(getServerStatusInput(server));
+          const [serverStatus, installed] = await Promise.all([
+            getServerStatus(getServerStatusInput(server)),
+            checkForServerInstallation(getParamAsString(serverId)),
+          ]);
+
+          if (!installed.installed && (installed.state === 'installing' || server.Installing || server.Queued)) {
+            serverStatus.installing = true;
+            serverStatus.state = 'installing';
+          }
 
           return res.render('user/server/manage', {
             errorMessage,
             features: features || [],
-            installed: await checkForServerInstallation(getParamAsString(serverId)),
+            installed,
             user,
             req,
             server,
@@ -391,9 +399,8 @@ const dashboardModule: Module = {
 
           const { node } = server;
 
-          // Run runtime status and install state checks in parallel so neither
-          // one blocks the other — total latency is max(A, B) not A + B.
-          const [serverStatus, installResult] = await Promise.all([
+          // Run runtime status and install state checks in parallel
+          const [serverStatus, daemonState, installed] = await Promise.all([
             getServerStatus({
               nodeAddress: node.address,
               nodePort: node.port,
@@ -404,9 +411,18 @@ const dashboardModule: Module = {
               `${daemonSchemeSync()}://${node.address}:${node.port}/servers/status/${server.UUID}`,
               { auth: { username: 'Kinetictyl', password: node.key }, timeout: 4000 }
             ).then(r => r.data.state as string).catch(() => null),
+            checkForServerInstallation(server.UUID),
           ]);
 
-          res.status(200).json({ ...serverStatus, state: installResult });
+          const isInstalling = !installed.installed && (installed.state === 'installing' || daemonState === 'installing' || server.Installing || server.Queued);
+          const finalState = isInstalling ? 'installing' : (serverStatus.online ? 'running' : (daemonState || 'offline'));
+
+          res.status(200).json({
+            ...serverStatus,
+            installing: isInstalling,
+            installed: installed.installed,
+            state: finalState,
+          });
           return;
         } catch (error) {
           logger.error('Error fetching server status:', error);

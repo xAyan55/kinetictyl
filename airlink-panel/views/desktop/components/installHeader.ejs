@@ -81,9 +81,12 @@
     fetch('/server/' + serverUUID + '/status')
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var state = data.state || (data.installed ? 'installed' : data.failed ? 'failed' : 'installing');
-        if (state === 'installed') markDone();
-        else if (state === 'failed') markFailed();
+        var isInstalling = data.installing === true || data.state === 'installing';
+        if (!isInstalling && (data.installed || data.state === 'installed' || data.state === 'offline' || data.state === 'running')) {
+          markDone();
+        } else if (data.failed || data.state === 'failed') {
+          markFailed();
+        }
       })
       .catch(function() {});
   }
