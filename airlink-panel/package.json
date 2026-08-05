@@ -14,7 +14,7 @@
     "prestart": "prisma generate",
     "start:dev": "concurrently \"npm run dev\"",
     "dev": "prisma migrate deploy && prisma generate && nodemon",
-    "build": "tsc && tsc -p tsconfig.prisma.json && tailwindcss -i ./public/tw.css -o ./public/styles.css",
+    "build": "tsc && tsc -p tsconfig.prisma.json && tailwindcss -i ./public/tw.css -o ./public/styles.css --minify",
     "build:css": "tailwindcss -i ./public/tw.css -o ./public/styles.css --watch",
     "migrate:dev": "prisma migrate dev",
     "migrate:deploy": "prisma migrate deploy && prisma generate",
