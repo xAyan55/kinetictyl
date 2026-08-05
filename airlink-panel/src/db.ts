@@ -1,10 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-
-declare const require: any;
-declare const process: any;
-
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Load .env early so DATABASE_URL is available
 const envPath = path.resolve(process.cwd(), '.env');
@@ -35,8 +31,7 @@ function resolveDbUrl(raw: string): string {
 }
 
 const rawUrl = process.env.DATABASE_URL || 'file:./storage/dev.db';
-const dbUrl = resolveDbUrl(rawUrl);
-process.env.DATABASE_URL = dbUrl;
+process.env.DATABASE_URL = resolveDbUrl(rawUrl);
 
 const prisma = new PrismaClient();
 
