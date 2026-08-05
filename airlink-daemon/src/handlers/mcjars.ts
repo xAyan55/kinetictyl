@@ -16,9 +16,19 @@ export const SUPPORTED_SOFTWARE: SoftwareCategory[] = [
   { id: 'spigot', name: 'Spigot', description: 'High performance Minecraft server software derived from CraftBukkit', defaultJava: '21' },
   { id: 'vanilla', name: 'Vanilla', description: 'Official Minecraft server software from Mojang', defaultJava: '21' },
   { id: 'forge', name: 'Forge', description: 'Popular modded server platform for Minecraft', defaultJava: '21' },
+  { id: 'neoforge', name: 'NeoForge', description: 'Modern modded server platform for Minecraft', defaultJava: '21' },
   { id: 'fabric', name: 'Fabric', description: 'Lightweight, modular modding toolchain for Minecraft', defaultJava: '21' },
+  { id: 'folia', name: 'Folia', description: 'Multi-threaded Paper fork for huge player counts', defaultJava: '21' },
+  { id: 'pufferfish', name: 'Pufferfish', description: 'High-performance Paper fork optimized for large servers', defaultJava: '21' },
   { id: 'velocity', name: 'Velocity', description: 'Next-generation Minecraft proxy server', defaultJava: '21' },
   { id: 'waterfall', name: 'Waterfall', description: 'BungeeCord fork with improved stability and security', defaultJava: '21' },
+  { id: 'bungeecord', name: 'BungeeCord', description: 'Classic Minecraft proxy server software', defaultJava: '21' },
+  { id: 'mohist', name: 'Mohist', description: 'Forge & Paper hybrid server software', defaultJava: '21' },
+  { id: 'arclight', name: 'Arclight', description: 'Mixins-based Forge & Paper hybrid', defaultJava: '21' },
+  { id: 'sponge', name: 'SpongeVanilla', description: 'Sponge plugin platform for Vanilla Minecraft', defaultJava: '21' },
+  { id: 'leaves', name: 'Leaves', description: 'Paper fork aimed at restoring vanilla mechanics', defaultJava: '21' },
+  { id: 'divinemc', name: 'DivineMC', description: 'Purpur fork tailored for high performance and features', defaultJava: '21' },
+  { id: 'leaf', name: 'Leaf', description: 'Paper fork focused on performance optimizations', defaultJava: '21' },
 ];
 
 const MCJARS_API_BASE = 'https://api.mcjars.app/v2';
@@ -44,6 +54,11 @@ export async function fetchMcJarsVersions(type: string): Promise<string[]> {
   return ['1.21.4', '1.21.3', '1.21.1', '1.21', '1.20.6', '1.20.4', '1.20.2', '1.20.1', '1.19.4', '1.18.2', '1.16.5', '1.12.2', '1.8.8'];
 }
 
+const DEFAULT_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Accept': '*/*',
+};
+
 export async function downloadServerJar(type: string, version: string, destinationPath: string, onLog?: (msg: string) => void): Promise<boolean> {
   const cleanType = type.toLowerCase();
   const dir = dirname(destinationPath);
@@ -58,23 +73,24 @@ export async function downloadServerJar(type: string, version: string, destinati
 
   log(`Downloading server jar for ${cleanType} ${version} to ${destinationPath}`);
 
-  // 1. Dedicated PaperMC API provider (fetches exact latest build)
-  if (cleanType === 'paper') {
+  // 1. Dedicated PaperMC API provider
+  if (cleanType === 'paper' || cleanType === 'folia') {
     try {
-      log(`Checking PaperMC API for version ${version}...`);
-      const vRes = await fetch(`https://api.papermc.io/v2/projects/paper/versions/${version}`);
+      log(`Checking PaperMC API for ${cleanType} ${version}...`);
+      const project = cleanType === 'folia' ? 'folia' : 'paper';
+      const vRes = await fetch(`https://api.papermc.io/v2/projects/${project}/versions/${version}`, { headers: DEFAULT_HEADERS });
       if (vRes.ok) {
         const vData = (await vRes.json()) as any;
         if (Array.isArray(vData.builds) && vData.builds.length > 0) {
           const latestBuild = vData.builds[vData.builds.length - 1];
-          const downloadUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${latestBuild}/downloads/paper-${version}-${latestBuild}.jar`;
-          log(`Fetching Paper build #${latestBuild}...`);
-          const res = await fetch(downloadUrl, { redirect: 'follow' });
+          const downloadUrl = `https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}/downloads/${project}-${version}-${latestBuild}.jar`;
+          log(`Fetching ${project} build #${latestBuild}...`);
+          const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
           if (res.ok && res.body) {
             const fileStream = createWriteStream(destinationPath);
             // @ts-ignore
             await pipeline(res.body, fileStream);
-            log(`Successfully downloaded Paper ${version} build #${latestBuild}.`);
+            log(`Successfully downloaded ${project} ${version} build #${latestBuild}.`);
             return true;
           }
         }
@@ -89,7 +105,7 @@ export async function downloadServerJar(type: string, version: string, destinati
     try {
       log(`Checking Purpur API for version ${version}...`);
       const downloadUrl = `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
-      const res = await fetch(downloadUrl, { redirect: 'follow' });
+      const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
       if (res.ok && res.body) {
         const fileStream = createWriteStream(destinationPath);
         // @ts-ignore
@@ -106,17 +122,17 @@ export async function downloadServerJar(type: string, version: string, destinati
   if (cleanType === 'vanilla') {
     try {
       log(`Checking Mojang Manifest for Vanilla version ${version}...`);
-      const mRes = await fetch('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');
+      const mRes = await fetch('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json', { headers: DEFAULT_HEADERS });
       if (mRes.ok) {
         const mData = (await mRes.json()) as any;
         const entry = mData.versions?.find((v: any) => v.id === version);
         if (entry && entry.url) {
-          const pRes = await fetch(entry.url);
+          const pRes = await fetch(entry.url, { headers: DEFAULT_HEADERS });
           if (pRes.ok) {
             const pData = (await pRes.json()) as any;
             const downloadUrl = pData.downloads?.server?.url;
             if (downloadUrl) {
-              const res = await fetch(downloadUrl, { redirect: 'follow' });
+              const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
               if (res.ok && res.body) {
                 const fileStream = createWriteStream(destinationPath);
                 // @ts-ignore
@@ -138,7 +154,7 @@ export async function downloadServerJar(type: string, version: string, destinati
     try {
       log(`Checking Fabric Meta API for version ${version}...`);
       const downloadUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/0.16.10/1.0.1/server/jar`;
-      const res = await fetch(downloadUrl, { redirect: 'follow' });
+      const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
       if (res.ok && res.body) {
         const fileStream = createWriteStream(destinationPath);
         // @ts-ignore
@@ -151,8 +167,10 @@ export async function downloadServerJar(type: string, version: string, destinati
     }
   }
 
-  // 5. MCJars & ServerJars endpoints
+  // 5. MCJars v3 / v2 & ServerJars endpoints
   const mirrorUrls = [
+    `https://mcjars.app/api/v3/builds/${cleanType}/${version}/latest/download`,
+    `https://mcjars.app/api/v2/builds/${cleanType}/${version}/latest/download`,
     `https://api.mcjars.app/v2/download/${cleanType}/${version}/latest`,
     `https://api.mcjars.app/v2/download/${cleanType}/${version}`,
     `https://serverjars.com/api/v1/download/servers/${cleanType}/${version}`,
@@ -161,8 +179,8 @@ export async function downloadServerJar(type: string, version: string, destinati
 
   for (const url of mirrorUrls) {
     try {
-      log(`Trying fallback mirror: ${url}`);
-      const res = await fetch(url, { redirect: 'follow' });
+      log(`Trying mirror: ${url}`);
+      const res = await fetch(url, { headers: DEFAULT_HEADERS, redirect: 'follow' });
       if (res.ok && res.body) {
         const contentType = res.headers.get('content-type') || '';
         if (!contentType.includes('html') && !contentType.includes('json')) {

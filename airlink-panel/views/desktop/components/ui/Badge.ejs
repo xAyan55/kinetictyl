@@ -6,7 +6,10 @@
   let badgeClass = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ';
   let dotClass = 'w-1.5 h-1.5 rounded-full ';
 
-  if (var_status === 'online' || var_status === 'running' || var_status === 'success') {
+  if (var_status === 'installing') {
+    badgeClass += 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+    dotClass += 'bg-blue-400 animate-pulse';
+  } else if (var_status === 'online' || var_status === 'running' || var_status === 'success') {
     badgeClass += 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
     dotClass += 'bg-emerald-400 animate-pulse';
   } else if (var_status === 'starting' || var_status === 'warning') {

@@ -24,7 +24,15 @@
           <p class="text-[11px] text-neutral-500 mt-1 truncate italic">No description</p>
         <% } %>
       </div>
-      <%- include('./Badge', { status: var_server.status, label: var_server.status === 'running' ? 'Online' : 'Offline' }) %>
+      <%
+  let cardStatus = var_server.status;
+  let cardLabel = var_server.status === 'running' ? 'Online' : 'Offline';
+  if (var_server.Installing || var_server.Queued || cardStatus === 'installing') {
+    cardStatus = 'installing';
+    cardLabel = 'Installing';
+  }
+%>
+<%- include('./Badge', { status: cardStatus, label: cardLabel }) %>
     </div>
 
     <!-- Connection Info -->

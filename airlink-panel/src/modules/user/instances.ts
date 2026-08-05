@@ -136,9 +136,11 @@ const instancesModule: Module = {
                 }
               }
 
+              const rawState = statusResponse.data?.state;
+              const isInstalling = server.Installing || server.Queued || rawState === 'installing';
               return {
                 ...server,
-                status: server.Suspended ? 'suspended' : (isRunning ? 'running' : 'stopped'),
+                status: isInstalling ? 'installing' : (isRunning ? 'running' : 'stopped'),
                 ramUsage,
                 cpuUsage,
                 ramUsed,

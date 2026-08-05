@@ -216,9 +216,11 @@ const dashboardModule: Module = {
                 }
               }
 
+              const rawState = statusResponse.data?.state;
+              const isInstalling = server.Installing || server.Queued || rawState === 'installing';
               return {
                 ...server,
-                status: isRunning ? 'running' : 'stopped',
+                status: isInstalling ? 'installing' : (isRunning ? 'running' : 'stopped'),
                 ramUsage,
                 cpuUsage,
                 ramUsed,
