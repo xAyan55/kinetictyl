@@ -1069,12 +1069,10 @@ connectWebSocket();
         error:    { cls: 'text-red-400',    chart: ['rgba(239,68,68,0.1)',   'rgba(239,68,68,0.2)'] },
     };
 
-    // Returns a clean, user-facing label for the status card.
-    // Layer-level pulling detail is collapsed to "Pulling image".
     const statusCardLabels = {
-        pulling:  'Pulling image',
-        creating: 'Creating container',
-        starting: 'Starting container',
+        pulling:  'Downloading server jar',
+        creating: 'Preparing server files',
+        starting: 'Starting Java process',
         started:  'Starting server',
         stopping: 'Stopping server',
         stopped:  'Server stopped',
@@ -1082,49 +1080,35 @@ connectWebSocket();
         error:    'Error',
     };
 
-    function statusLabel(type) {
-        return statusCardLabels[type] || null;
-    }
-
-    // Updates the big status label (Online / Offline / Starting etc.)
     function setStatusText(text, colorClass) {
         const el = document.getElementById('status');
         if (!el) return;
         el.textContent = text;
-        el.className = 'mt-1 text-lg font-medium tracking-tight leading-snug ' + colorClass;
+        el.className = 'mt-0.5 text-base font-semibold leading-tight ' + colorClass;
     }
 
-    // Shows a colored, animated lifecycle label in the status card.
-    // The status card always shows the clean label (e.g. "Pulling image"),
-    // never raw layer-level daemon output. Pass msg=null to fade out and release.
     function setStatusLog(msg, eventType) {
-        const msgEl = document.getElementById('status-msg');
-        if (!msgEl) return;
-
+        const logEl = document.getElementById('status-log-text');
+        if (!logEl) return;
         if (statusMsgFadeTimer) { clearTimeout(statusMsgFadeTimer); statusMsgFadeTimer = null; }
-
         if (msg === null) {
-            msgEl.classList.add('opacity-0', 'translate-y-1');
-            statusMsgFadeTimer = setTimeout(() => {
-                msgEl.textContent = '';
-                msgEl.className = 'text-xs font-medium mt-0.5 leading-snug transition-all duration-300 opacity-0 translate-y-1 pointer-events-none';
-                lifecycleActive = false;
-                statusMsgFadeTimer = null;
-            }, 300);
+            lifecycleActive = false;
+            logEl.textContent = '';
+            logEl.classList.add('hidden', 'opacity-0');
         } else {
             lifecycleActive = true;
             hideConsolePlaceholder();
-            // Use the clean label — never raw layer output in the status card
-            const label = statusLabel(eventType) || msg;
-            const color = (statusColors[eventType] || { cls: 'text-neutral-500 dark:text-neutral-400' }).cls;
-            msgEl.classList.add('opacity-0', 'translate-y-1');
+            const label = statusCardLabels[eventType] || msg;
+            const color = (statusColors[eventType] || {}).cls || 'text-neutral-400';
+            logEl.classList.add('opacity-0');
             statusMsgFadeTimer = setTimeout(() => {
-                msgEl.textContent = label;
-                msgEl.className = `text-xs font-medium mt-0.5 leading-snug transition-all duration-300 ${color}`;
-                void msgEl.offsetHeight;
-                msgEl.classList.remove('opacity-0', 'translate-y-1');
+                logEl.textContent = label;
+                logEl.className = `text-[10px] font-medium truncate transition-opacity duration-200 ${color}`;
+                logEl.classList.remove('hidden');
+                void logEl.offsetHeight;
+                logEl.classList.remove('opacity-0');
                 statusMsgFadeTimer = null;
-            }, 150);
+            }, 120);
         }
     }
 
@@ -1136,40 +1120,38 @@ connectWebSocket();
         statusChart.update();
     }
 
-    // Function to set all stats to offline state
     function hideConsolePlaceholder() {}
     function showConsolePlaceholder() {}
 
     function setAllStatsOffline() {
         showConsolePlaceholder();
-        // Update status display
         const statusElement = document.getElementById('status');
         statusElement.textContent = 'Offline';
         statusElement.className = 'mt-1 text-lg font-medium tracking-tight text-red-500';
-
-        // Update status chart
+        updateHeaderDot('offline');
         updateStatusChart('rgba(239, 68, 68, 0.1)', 'rgba(239, 68, 68, 0.2)');
 
         // Update RAM usage
-        document.getElementById('ramUsage').textContent = `${Math.round(0)}% (0 MB / ${formatRam(<%- server.Memory %> * 1024 * 1024)})`;
+        document.getElementById('ramUsage').textContent = `0% (0 MB / ${formatRam(<%- server.Memory %> * 1024 * 1024)})`;
 
         // Update CPU usage
         const cpuAllocPct = <%- server.Cpu %>;
         const cpuCores = (cpuAllocPct / 100).toFixed(1);
-        document.getElementById('cpuUsage').textContent = `${Math.round(0)}% of ${cpuCores} core${cpuCores === '1.0' ? '' : 's'}`;
+        document.getElementById('cpuUsage').textContent = `0% of ${cpuCores} core${cpuCores === '1.0' ? '' : 's'}`;
 
         // Update disk usage
-        document.getElementById('diskUsage').textContent = `${Math.round(0)}% (0 Bytes / 10 GB)`;
+        document.getElementById('diskUsage').textContent = '0% (0 Bytes / 10 GB)';
 
         // Hide players decoration if it exists
-
-        // No need to show daemon down message as it's been removed
+        <% if (features.includes('players')) { %>
+        const playersDeco = document.getElementById('players-deco');
+        playersDeco.classList.add('translate-y-32');
+        <% } %>
 
         // Reset charts
         resetCharts();
     }
 
-    // Function to reset all charts
     function resetCharts() {
         // Reset RAM chart
         ramChart.data.labels = [];
@@ -1200,13 +1182,13 @@ connectWebSocket();
         const lcSock = new WebSocket(`${proto}://${location.host}/events/<%= server.UUID %>`);
 
         const stateMap = {
-            pulling:  { label: 'Pulling image',      color: 'text-blue-500' },
-            creating: { label: 'Creating container',  color: 'text-blue-500' },
-            starting: { label: 'Starting container',  color: 'text-yellow-500' },
-            started:  { label: 'Starting server',     color: 'text-yellow-500' },
-            stopping: { label: 'Stopping',            color: 'text-orange-500' },
-            stopped:  { label: 'Offline',             color: 'text-red-500' },
-            killed:   { label: 'Offline',             color: 'text-red-500' },
+            pulling:  { label: 'Downloading server jar',  color: 'text-blue-500' },
+            creating: { label: 'Preparing server files', color: 'text-blue-500' },
+            starting: { label: 'Starting Java process',  color: 'text-yellow-500' },
+            started:  { label: 'Starting server',        color: 'text-yellow-500' },
+            stopping: { label: 'Stopping',               color: 'text-orange-500' },
+            stopped:  { label: 'Offline',                color: 'text-red-500' },
+            killed:   { label: 'Offline',                color: 'text-red-500' },
         };
 
         const lockingStates = new Set(['pulling', 'creating', 'starting']);
