@@ -46,8 +46,14 @@ export async function handleContainerInstaller(req: Request): Promise<Response> 
   const targetJarPath = join(serverDir, 'server.jar');
 
   try {
-    logger.info(`Installing server ${id} (${softwareType} ${softwareVersion})`);
-    await downloadServerJar(softwareType, softwareVersion, targetJarPath);
+    let ver = softwareVersion;
+    if (!ver || ver === 'latest') {
+      const versions = await fetchMcJarsVersions(softwareType);
+      ver = versions[0] || '1.21.4';
+    }
+
+    logger.info(`Installing server ${id} (${softwareType} ${ver})`);
+    await downloadServerJar(softwareType, ver, targetJarPath);
     prepareServerFiles({
       uuid: id,
       memory,

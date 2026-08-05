@@ -113,7 +113,9 @@ export async function startServer(config: StartServerConfig): Promise<boolean> {
   const jarPath = join(serverDir, jarName);
 
   if (!existsSync(jarPath)) {
-    throw new Error(`Server JAR file '${jarName}' not found in server directory.`);
+    logger.warn(`Server JAR file '${jarName}' not found in ${serverDir}. Attempting auto-download...`);
+    const { downloadServerJar } = await import('./mcjars.js');
+    await downloadServerJar(config.softwareType || 'paper', config.softwareVersion || '1.21.4', jarPath);
   }
 
   // Java args

@@ -643,10 +643,18 @@ const dashboardModule: Module = {
             },
           };
 
-          let files = (await axios(filesRequest)).data as any[];
-          files = typeof files === 'string' ? JSON.parse(files) : files;
+          let filesData = (await axios(filesRequest)).data;
+          let files: any[] = [];
+          if (Array.isArray(filesData)) {
+            files = filesData;
+          } else if (typeof filesData === 'string') {
+            try {
+              const parsed = JSON.parse(filesData);
+              if (Array.isArray(parsed)) files = parsed;
+            } catch {}
+          }
 
-          files = files.filter((file: any) => file.name !== 'airlink' && file.name !== 'cynexgp');
+          files = files.filter((file: any) => file && file.name !== 'airlink' && file.name !== 'cynexgp');
 
           files = files.sort((a: any, b: any) => {
             if (a.type === 'directory' && b.type === 'file') {
