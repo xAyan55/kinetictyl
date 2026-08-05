@@ -40,7 +40,7 @@
                   class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition"
                   placeholder="<%= user.username %>'s Minecraft Server">
                 <button type="button" onclick="generateRandomName()" title="Generate Random Name"
-                  class="absolute right-3 p-1 text-neutral-400 hover:text-white transition">
+                  class="absolute right-3 p-1 text-neutral-400 hover:text-white transition cursor-pointer">
                   <%- icon('refresh-cw', { size: 14 }) %>
                 </button>
               </div>
@@ -87,11 +87,11 @@
           </div>
         </div>
 
-        <!-- CARD 2: HARDWARE RESOURCES -->
+        <!-- CARD 2: HARDWARE RESOURCES & PORT SELECTION -->
         <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
           <div class="flex items-center gap-2 border-b border-white/5 pb-3">
             <%- icon('cpu', { size: 16, class: 'text-brand-green' }) %>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Hardware Resources</h2>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Hardware Resources & Network</h2>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
@@ -147,16 +147,16 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                Connection Port
+              <label for="serverPortSelect" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Select Port <span class="text-red-400">*</span>
               </label>
-              <input type="hidden" id="serverPorts" name="Ports" value='[{"Port":"25565:25565","primary":true}]'>
-              <button type="button" id="assignPortsBtn"
-                class="w-full inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition">
-                <span>Assign Ports</span>
-                <span id="assignPortsCount" class="text-xs font-mono text-brand-green font-bold">25565</span>
-              </button>
-              <p class="text-[11px] text-neutral-500 mt-1">Auto-assigned primary node port</p>
+              <input type="hidden" id="serverPorts" name="Ports" value="25565">
+              <select id="serverPortSelect"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer font-mono"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="25565" selected class="bg-neutral-900 text-white">25565 (Default Port)</option>
+              </select>
+              <p class="text-[11px] text-neutral-500 mt-1">Select from available node ports</p>
             </div>
           </div>
         </div>
@@ -188,17 +188,21 @@
 
             <div>
               <label for="softwareVersion" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
-                Minecraft Version
+                Minecraft Version <span class="text-brand-green font-normal">(Latest Supported)</span>
               </label>
               <select id="softwareVersion" name="softwareVersion"
-                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer font-mono"
                 style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
-                <option value="1.21.4" selected class="bg-neutral-900 text-white">1.21.4</option>
+                <option value="1.21.4" selected class="bg-neutral-900 text-white">1.21.4 (Latest)</option>
                 <option value="1.21.3" class="bg-neutral-900 text-white">1.21.3</option>
                 <option value="1.21.1" class="bg-neutral-900 text-white">1.21.1</option>
+                <option value="1.21" class="bg-neutral-900 text-white">1.21</option>
+                <option value="1.20.6" class="bg-neutral-900 text-white">1.20.6</option>
                 <option value="1.20.4" class="bg-neutral-900 text-white">1.20.4</option>
+                <option value="1.20.2" class="bg-neutral-900 text-white">1.20.2</option>
                 <option value="1.20.1" class="bg-neutral-900 text-white">1.20.1</option>
                 <option value="1.19.4" class="bg-neutral-900 text-white">1.19.4</option>
+                <option value="1.19.2" class="bg-neutral-900 text-white">1.19.2</option>
                 <option value="1.18.2" class="bg-neutral-900 text-white">1.18.2</option>
                 <option value="1.16.5" class="bg-neutral-900 text-white">1.16.5</option>
                 <option value="1.12.2" class="bg-neutral-900 text-white">1.12.2</option>
@@ -253,7 +257,7 @@
                 <p class="text-xs font-bold text-white">Auto Restart</p>
                 <p class="text-[11px] text-neutral-400">Restart on crash</p>
               </div>
-              <input type="checkbox" name="autoRestart" id="autoRestart" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+              <input type="checkbox" name="autoRestart" id="autoRestart" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green cursor-pointer">
             </div>
 
             <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
@@ -261,7 +265,7 @@
                 <p class="text-xs font-bold text-white">Accept EULA</p>
                 <p class="text-[11px] text-neutral-400">Mojang agreement</p>
               </div>
-              <input type="checkbox" name="eula" id="eula" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+              <input type="checkbox" name="eula" id="eula" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green cursor-pointer">
             </div>
 
             <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
@@ -269,7 +273,7 @@
                 <p class="text-xs font-bold text-white">Online Mode</p>
                 <p class="text-[11px] text-neutral-400">Mojang auth</p>
               </div>
-              <input type="checkbox" name="onlineMode" id="onlineMode" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+              <input type="checkbox" name="onlineMode" id="onlineMode" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green cursor-pointer">
             </div>
 
             <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
@@ -277,16 +281,21 @@
                 <p class="text-xs font-bold text-white">Whitelist</p>
                 <p class="text-[11px] text-neutral-400">Access control</p>
               </div>
-              <input type="checkbox" name="whitelist" id="whitelist" value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+              <input type="checkbox" name="whitelist" id="whitelist" value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green cursor-pointer">
             </div>
           </div>
         </div>
 
+        <div id="errorMsg" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 px-5 py-4">
+          <p class="text-sm font-semibold text-red-400" id="errorText"></p>
+        </div>
+
         <!-- ACTION BUTTON -->
         <div class="pt-2 flex justify-end">
-          <button type="submit"
-            class="rounded-xl bg-brand-green px-8 py-3 text-sm font-bold text-black hover:bg-brand-green-hover transition shadow-lg cursor-pointer">
-            Create Minecraft Server
+          <button type="submit" id="createBtn"
+            class="rounded-xl bg-brand-green px-8 py-3 text-sm font-bold text-black hover:bg-brand-green-hover transition shadow-lg cursor-pointer flex items-center gap-2">
+            <span id="createBtnText">Create Minecraft Server</span>
+            <span id="createBtnSpinner" class="hidden w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>
           </button>
         </div>
 
@@ -297,6 +306,9 @@
 
 <script nonce="<%- nonce %>">
   document.addEventListener('DOMContentLoaded', () => {
+    const serverNodeSelect = document.getElementById('serverNode');
+    const serverPortSelect = document.getElementById('serverPortSelect');
+    const serverPortsInput = document.getElementById('serverPorts');
     const softwareTypeSelect = document.getElementById('softwareType');
     const softwareVersionSelect = document.getElementById('softwareVersion');
     const javaVersionSelect = document.getElementById('javaVersion');
@@ -305,16 +317,85 @@
     const serverMemoryInput = document.getElementById('serverMemory');
     const form = document.getElementById('createServerForm');
 
+    // Dynamically update available ports when selected Node changes
+    async function updateAvailablePortsForNode() {
+      const nodeId = serverNodeSelect.value;
+      serverPortSelect.innerHTML = '';
+      if (!nodeId) return;
+
+      try {
+        const res = await fetch('/admin/nodes/list');
+        const nodes = await res.json();
+        const selectedNode = nodes.find(n => String(n.id) === String(nodeId));
+
+        let allocated = [25565, 25566, 25567, 25568, 25569, 25570];
+        if (selectedNode && selectedNode.allocatedPorts) {
+          try {
+            const parsed = typeof selectedNode.allocatedPorts === 'string' ? JSON.parse(selectedNode.allocatedPorts) : selectedNode.allocatedPorts;
+            if (Array.isArray(parsed) && parsed.length > 0) allocated = parsed;
+          } catch (e) {}
+        }
+
+        // Get used ports on this node
+        const usedPorts = new Set();
+        if (selectedNode && Array.isArray(selectedNode.instances)) {
+          selectedNode.instances.forEach(server => {
+            try {
+              if (server.Ports) {
+                const portsArr = typeof server.Ports === 'string' ? JSON.parse(server.Ports) : server.Ports;
+                portsArr.forEach(p => {
+                  const portNum = Number(p.externalPort || String(p.Port || '').split(':')[0]);
+                  if (!isNaN(portNum)) usedPorts.add(portNum);
+                });
+              }
+            } catch (e) {}
+          });
+        }
+
+        const available = allocated.filter(p => !usedPorts.has(Number(p)));
+        const finalPorts = available.length > 0 ? available : allocated;
+
+        finalPorts.forEach((p, idx) => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = `${p} ${idx === 0 ? '(Available Primary)' : ''}`;
+          opt.className = 'bg-neutral-900 text-white';
+          serverPortSelect.appendChild(opt);
+        });
+
+        if (finalPorts.length > 0) {
+          serverPortSelect.selectedIndex = 0;
+          serverPortsInput.value = String(finalPorts[0]);
+        }
+      } catch (err) {
+        console.error('Error fetching node ports:', err);
+        const opt = document.createElement('option');
+        opt.value = '25565';
+        opt.textContent = '25565 (Default)';
+        opt.className = 'bg-neutral-900 text-white';
+        serverPortSelect.appendChild(opt);
+        serverPortsInput.value = '25565';
+      }
+    }
+
+    serverPortSelect.addEventListener('change', () => {
+      serverPortsInput.value = serverPortSelect.value;
+    });
+
+    serverNodeSelect.addEventListener('change', updateAvailablePortsForNode);
+    updateAvailablePortsForNode();
+
+    // Dynamically fetch live versions when software type changes
     async function loadSoftwareVersions(type) {
       try {
         const res = await fetch('/api/mcjars/versions/' + type);
         const data = await res.json();
         if (data && Array.isArray(data.versions) && data.versions.length > 0) {
           softwareVersionSelect.innerHTML = '';
-          data.versions.forEach(ver => {
+          data.versions.forEach((ver, idx) => {
             const opt = document.createElement('option');
             opt.value = ver;
-            opt.textContent = ver;
+            opt.textContent = `${ver}${idx === 0 ? ' (Latest)' : ''}`;
             opt.className = 'bg-neutral-900 text-white';
             softwareVersionSelect.appendChild(opt);
           });
@@ -376,35 +457,45 @@
     syncUnit('serverMemoryDisplay', 'serverMemoryUnit', 'serverMemory');
     syncUnit('serverStorageDisplay', 'serverStorageUnit', 'serverStorage');
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const errBox = document.getElementById('errorMsg');
+      const errText = document.getElementById('errorText');
+      errBox.classList.add('hidden');
+
+      const btn = document.getElementById('createBtn');
+      document.getElementById('createBtnText').textContent = 'Creating...';
+      document.getElementById('createBtnSpinner').classList.remove('hidden');
+      btn.disabled = true;
+
       const formData = new FormData(form);
       const data = Object.fromEntries(formData);
+      data.Ports = serverPortSelect.value;
 
-      const loader = showLoadingPopup('Creating Server', 'Provisioning Minecraft server via Kinetictyl Agent...');
-      loader.updateProgress(40, 'Setting up server environment...');
-
-      fetch('/admin/servers/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Server creation failed');
-          return res;
-        })
-        .then(() => {
-          loader.updateProgress(100, 'Server created!');
-          setTimeout(() => {
-            loader.close();
-            showToast('Minecraft server created and queued for deployment!', 'success');
-            setTimeout(() => { window.location.href = '/admin/servers'; }, 600);
-          }, 400);
-        })
-        .catch(err => {
-          loader.close();
-          showToast('Failed to create server: ' + err.message, 'error');
+      try {
+        const res = await fetch('/admin/servers/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
         });
+        const d = await res.json();
+        if (d.success) {
+          showToast('Minecraft server created and queued for deployment!', 'success');
+          setTimeout(() => { window.location.href = '/admin/servers'; }, 600);
+        } else {
+          errText.textContent = d.error || 'Failed to create server.';
+          errBox.classList.remove('hidden');
+          document.getElementById('createBtnText').textContent = 'Create Minecraft Server';
+          document.getElementById('createBtnSpinner').classList.add('hidden');
+          btn.disabled = false;
+        }
+      } catch (err) {
+        errText.textContent = 'Network error. Please try again.';
+        errBox.classList.remove('hidden');
+        document.getElementById('createBtnText').textContent = 'Create Minecraft Server';
+        document.getElementById('createBtnSpinner').classList.add('hidden');
+        btn.disabled = false;
+      }
     });
   });
 

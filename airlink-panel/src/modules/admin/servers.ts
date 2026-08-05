@@ -331,7 +331,7 @@ const adminModule: Module = {
 
         const userId = parseInt(ownerId, 10);
         if (!name || !nodeId || !Memory || !Cpu || !Storage || isNaN(userId)) {
-          res.status(400).send('Missing required fields');
+          res.status(400).json({ error: 'Missing required fields' });
           return;
         }
 
@@ -341,7 +341,7 @@ const adminModule: Module = {
           });
 
           if (!node) {
-            res.status(400).send('Selected node not found');
+            res.status(400).json({ error: 'Selected node not found' });
             return;
           }
 
@@ -353,17 +353,37 @@ const adminModule: Module = {
           } catch (error) {
             logger.error('Error parsing allocated ports:', error);
           }
-          if (allocatedPorts.length === 0) {
-            allocatedPorts = [25565, 25566, 25567, 25568, 25569];
-          }
 
           const existingServers = await prisma.server.findMany({
             where: { nodeId: parseInt(nodeId, 10) },
           });
           const submittedPorts = ports ? normalizeServerPorts(ports) : parseServerPorts(`[{"Port":"${Ports || '25565'}","primary":true}]`);
+          
+          // Auto-include submitted ports in node's allocated ports if missing
+          let updatedAllocated = [...allocatedPorts];
+          let updatedNodeAllocated = false;
+          for (const sp of submittedPorts) {
+            const p = sp.externalPort;
+            if (p && !updatedAllocated.includes(p)) {
+              updatedAllocated.push(p);
+              updatedNodeAllocated = true;
+            }
+          }
+          if (updatedAllocated.length === 0) {
+            updatedAllocated = [25565, 25566, 25567, 25568, 25569, 25570];
+            updatedNodeAllocated = true;
+          }
+          if (updatedNodeAllocated) {
+            await prisma.node.update({
+              where: { id: node.id },
+              data: { allocatedPorts: JSON.stringify(updatedAllocated) },
+            });
+            allocatedPorts = updatedAllocated;
+          }
+
           const portError = validatePortAssignments(submittedPorts, allocatedPorts, getUsedExternalPorts(existingServers), 1);
           if (portError) {
-            res.status(400).send(portError);
+            res.status(400).json({ error: portError });
             return;
           }
 
@@ -415,10 +435,10 @@ const adminModule: Module = {
           QueueManager.triggerDeployment(createdServer.UUID, [primaryPort]);
 
           logger.info(`Admin created server ${createdServer.name} (${createdServer.UUID})`);
-          res.status(200).send('Server created successfully');
+          res.status(200).json({ success: true, serverUUID: createdServer.UUID });
         } catch (error: unknown) {
           logger.error('Error creating server:', error);
-          res.status(500).send('Error creating server');
+          res.status(500).json({ error: error instanceof Error ? error.message : 'Error creating server' });
         }
       },
     );
