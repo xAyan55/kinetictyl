@@ -28,7 +28,7 @@ Examples:
 
 if (args.includes('--help') || args.includes('-h')) {
   if (firstArg === 'configure') {
-    const { printConfigureHelp } = await import('./configure');
+    const { printConfigureHelp } = await import('./configure.js');
     printConfigureHelp();
   } else {
     printHelp();
@@ -37,7 +37,7 @@ if (args.includes('--help') || args.includes('-h')) {
 }
 
 if (firstArg === 'configure') {
-  const { runConfigure } = await import('./configure');
+  const { runConfigure } = await import('./configure.js');
   await runConfigure(process.argv.slice(3));
   process.exit(0);
 }
@@ -48,6 +48,6 @@ if (firstArg && firstArg !== 'start') {
   process.exit(1);
 }
 
-await import('./protobufLong');
-await import('./bootstrap');
-await import('./server');
+await import('./protobufLong.js');
+await import('./bootstrap.js');
+await import('./server.js');
