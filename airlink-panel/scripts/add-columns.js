@@ -5,19 +5,8 @@
  * Safe to run multiple times — silently skips columns that already exist.
  */
 
-const Database = require('better-sqlite3');
-const path = require('path');
-const fs = require('fs');
-
-const dbPath = path.join(__dirname, '..', 'prisma', 'dev.db');
-
-if (!fs.existsSync(dbPath)) {
-  console.error('Database not found at', dbPath);
-  console.error('If your DB is elsewhere, edit the dbPath in this script.');
-  process.exit(1);
-}
-
-const db = new Database(dbPath);
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const columns = [
   { table: 'settings', name: 'loginWallpaper',      def: 'TEXT' },
@@ -31,16 +20,24 @@ const columns = [
   { table: 'Users',    name: 'lockedUntil',         def: 'DATETIME' },
 ];
 
-for (const col of columns) {
-  const existing = db.prepare(`PRAGMA table_info("${col.table}")`).all();
-  const exists = existing.some(c => c.name === col.name);
-  if (exists) {
-    console.log(`  skip  ${col.table}.${col.name} (already exists)`);
-  } else {
-    db.prepare(`ALTER TABLE "${col.table}" ADD COLUMN "${col.name}" ${col.def}`).run();
-    console.log(`  added ${col.table}.${col.name}`);
+async function main() {
+  for (const col of columns) {
+    try {
+      const rows = await prisma.$queryRawUnsafe(`PRAGMA table_info("${col.table}")`);
+      const exists = Array.isArray(rows) && rows.some(r => r.name === col.name);
+      if (exists) {
+        console.log(`  skip  ${col.table}.${col.name} (already exists)`);
+      } else {
+        await prisma.$executeRawUnsafe(`ALTER TABLE "${col.table}" ADD COLUMN "${col.name}" ${col.def}`);
+        console.log(`  added ${col.table}.${col.name}`);
+      }
+    } catch (e) {
+      console.warn(`  error processing ${col.table}.${col.name}: ${e.message}`);
+    }
   }
 }
 
-db.close();
-console.log('\nDone. Restart the panel.');
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
+

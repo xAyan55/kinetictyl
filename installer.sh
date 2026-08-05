@@ -498,7 +498,13 @@ tui_input() {
 # Dependencies Setup
 # =============================================================================
 ensure_deps() {
-    local deps=(curl wget git openssl unzip tar)
+    local deps=(curl wget git openssl unzip tar python3 make gcc g++)
+    case "$FAM" in
+        debian) deps+=(build-essential) ;;
+        redhat) deps+=(gcc-c++) ;;
+        arch)   deps+=(base-devel) ;;
+        alpine) deps+=(build-base) ;;
+    esac
     local missing=()
     for d in "${deps[@]}"; do
         command -v "$d" &>/dev/null || missing+=("$d")
@@ -604,8 +610,8 @@ ensure_swap() {
     mem_total=$(free -m 2>/dev/null | awk '/Mem:/ {print $2}') || mem_total=2048
     if [[ "$mem_total" -lt 2048 ]]; then
         if ! swapon -s 2>/dev/null | grep -q /swapfile; then
-            log "Low RAM ($mem_total MB) detected. Setting up 1GB swapfile..."
-            fallocate -l 1G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=1024 2>/dev/null || true
+            log "Low RAM ($mem_total MB) detected. Setting up 2GB swapfile..."
+            fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048 2>/dev/null || true
             chmod 600 /swapfile 2>/dev/null || true
             mkswap /swapfile 2>/dev/null || true
             swapon /swapfile 2>/dev/null || true
@@ -618,7 +624,7 @@ phase_panel_deps() {
     cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
     "$PNPM" config set concurrency 1 &>/dev/null || true
     "$PNPM" config set fetch-concurrency 1 &>/dev/null || true
-    NODE_OPTIONS="--max-old-space-size=512" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
+    NODE_OPTIONS="--max-old-space-size=2048" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
     npm install --legacy-peer-deps --no-audit --no-fund || die "Panel dependency install failed"
 }
 
@@ -645,7 +651,7 @@ phase_daemon_deps() {
     cd /var/www/kinetictyl/airlink-daemon || die "Daemon directory missing"
     "$PNPM" config set concurrency 1 &>/dev/null || true
     "$PNPM" config set fetch-concurrency 1 &>/dev/null || true
-    NODE_OPTIONS="--max-old-space-size=512" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
+    NODE_OPTIONS="--max-old-space-size=2048" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
     npm install --legacy-peer-deps --no-audit --no-fund || die "Daemon dependency install failed"
 }
 
