@@ -16,7 +16,7 @@ const daemonKey = required('key', 'default_key_change_me_12345');
 const config = {
   remote: required('remote', '127.0.0.1'),
   key: daemonKey,
-  port: parseInt(process.env.PORT || '3001', 10),
+  port: parseInt(process.env.port || process.env.PORT || '3001', 10),
   debug: process.env.DEBUG === 'true',
   version: '1.0.0',
   statsInterval: parseInt(process.env.STATS_INTERVAL ?? '10000', 10),
