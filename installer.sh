@@ -6,7 +6,7 @@
 
 set -uo pipefail
 
-readonly VERSION="1.0.0-Kinetictyl"
+readonly SCRIPT_VERSION="1.0.0-Kinetictyl"
 readonly LOG="/tmp/kinetictyl-installer.log"
 readonly PANEL_REPO="https://github.com/xAyan55/kinetictyl.git"
 
@@ -146,7 +146,7 @@ ni_header() {
     printf " | . \| | | | |  __/ |_| | (__| |_| |_| | |\n"
     printf " |_|\_\_|_| |_|\___|\__|_|\___|\__|\__,_|_|\n"
     printf "\n"
-    printf "  ${BOLD}Kinetictyl Installer${RESET} ${C_GRAY}v${VERSION}${RESET}  ${C_GRAY}%s${RESET}\n\n" "$(date '+%Y-%m-%d %H:%M:%S')"
+    printf "  ${BOLD}Kinetictyl Installer${RESET} ${C_GRAY}v${SCRIPT_VERSION}${RESET}  ${C_GRAY}%s${RESET}\n\n" "$(date '+%Y-%m-%d %H:%M:%S')"
 }
 
 ni_start() { NI_TOTAL="$1"; NI_STEP=0; }
@@ -413,7 +413,7 @@ tui_menu() {
         done
 
         move_to $(( box_r + box_h - 2 )) $(( box_c + 2 ))
-        printf "${DIM}v${VERSION}${RESET}"
+        printf "${DIM}v${SCRIPT_VERSION}${RESET}"
 
         read_key
         case "$_KEY" in
@@ -624,8 +624,8 @@ phase_panel_deps() {
     cd /var/www/kinetictyl/airlink-panel || die "Panel directory missing"
     "$PNPM" config set concurrency 1 &>/dev/null || true
     "$PNPM" config set fetch-concurrency 1 &>/dev/null || true
-    NODE_OPTIONS="--max-old-space-size=2048" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
-    npm install --legacy-peer-deps --no-audit --no-fund || die "Panel dependency install failed"
+    NODE_OPTIONS="--max-old-space-size=2048" NODE_ENV=development "$PNPM" install --ignore-scripts --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
+    npm install --ignore-scripts --legacy-peer-deps --no-audit --no-fund || die "Panel dependency install failed"
 }
 
 phase_panel_build() {
@@ -651,8 +651,8 @@ phase_daemon_deps() {
     cd /var/www/kinetictyl/airlink-daemon || die "Daemon directory missing"
     "$PNPM" config set concurrency 1 &>/dev/null || true
     "$PNPM" config set fetch-concurrency 1 &>/dev/null || true
-    NODE_OPTIONS="--max-old-space-size=2048" NODE_ENV=development "$PNPM" install --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
-    npm install --legacy-peer-deps --no-audit --no-fund || die "Daemon dependency install failed"
+    NODE_OPTIONS="--max-old-space-size=2048" NODE_ENV=development "$PNPM" install --ignore-scripts --no-frozen-lockfile --config.concurrency=1 --network-concurrency 1 --child-concurrency 1 || \
+    npm install --ignore-scripts --legacy-peer-deps --no-audit --no-fund || die "Daemon dependency install failed"
 }
 
 phase_daemon_build() {
@@ -752,7 +752,7 @@ run_install() {
 [[ $EUID -eq 0 ]] || { echo "Run as root or with sudo."; exit 1; }
 
 touch "$LOG" || true
-log "=== Kinetictyl Installer v${VERSION} started ==="
+log "=== Kinetictyl Installer v${SCRIPT_VERSION} started ==="
 
 parse_args "$@"
 detect_os
