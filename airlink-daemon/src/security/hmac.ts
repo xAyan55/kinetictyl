@@ -145,12 +145,13 @@ export function checkBasicAuth(req: Request, expectedKey: string): Response | nu
   // constant-time compare — don't use ===
   const passBuf = Buffer.from(pass);
   const expBuf = Buffer.from(expectedKey);
-  if (user !== 'CynexGP' || passBuf.length !== expBuf.length || !timingSafeEqual(passBuf, expBuf)) {
+  const validUser = user === 'Kinetictyl' || user === 'CynexGP';
+  if (!validUser || passBuf.length !== expBuf.length || !timingSafeEqual(passBuf, expBuf)) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401,
       headers: {
         'Content-Type': 'application/json',
-        'WWW-Authenticate': 'Basic realm="cynexgpd"',
+        'WWW-Authenticate': 'Basic realm="kinetictyl"',
       },
     });
   }

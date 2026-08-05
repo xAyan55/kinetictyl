@@ -145,10 +145,10 @@ async function proxyConsole(
       if (command) {
         try {
           await axios.post(
-            `${daemonSchemeSync()}://${node.address}:${node.port}/container/command`,
+            `${daemonSchemeSync()}://${node.address}:${node.port}/servers/command`,
             { id: serverId, command },
             {
-              auth: { username: 'CynexGP', password: node.key },
+              auth: { username: 'Kinetictyl', password: node.key },
               timeout: 10_000,
             },
           );
@@ -212,7 +212,7 @@ const wsServerConsoleModule: Module = {
     description: 'This file is for the server console functionality.',
     version: '2.0.0',
     moduleVersion: '1.0.0',
-    author: 'CynexGP',
+    author: 'Kinetictyl',
     license: 'MIT',
   },
 
@@ -234,7 +234,7 @@ const wsServerConsoleModule: Module = {
           ws,
           req,
           userId,
-          (addr, port, id) => `${wsScheme()}://${addr}:${port}/container/${id}`,
+          (addr, port, id) => `${wsScheme()}://${addr}:${port}/server/${id}`,
           'interactive',
         );
       },
@@ -255,7 +255,7 @@ const wsServerConsoleModule: Module = {
           req,
           userId,
           (addr, port, id) =>
-            `${wsScheme()}://${addr}:${port}/containerstatus/${id}`,
+            `${wsScheme()}://${addr}:${port}/serverstatus/${id}`,
           'readonly',
         );
       },
@@ -276,7 +276,7 @@ const wsServerConsoleModule: Module = {
           req,
           userId,
           (addr, port, id) =>
-            `${wsScheme()}://${addr}:${port}/containerevents/${id}`,
+            `${wsScheme()}://${addr}:${port}/serverevents/${id}`,
           'readonly',
         );
       },

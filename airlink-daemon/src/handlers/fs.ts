@@ -68,16 +68,16 @@ export function readFileContent(uuid: string, filePath: string): string {
   return readFileSync(full, 'utf8');
 }
 
-export function writeFileContent(uuid: string, filePath: string, content: string): void {
+export function writeFileContent(uuid: string, filePath: string, content: string | Buffer): void {
   const full = getSandboxedPath(uuid, filePath);
   const dir = resolve(full, '..');
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-  writeFileSync(full, content, 'utf8');
+  writeFileSync(full, content);
 }
 
-export function appendFileContent(uuid: string, filePath: string, content: string): void {
+export function appendFileContent(uuid: string, filePath: string, content: string | Buffer): void {
   const full = getSandboxedPath(uuid, filePath);
-  appendFileSync(full, content, 'utf8');
+  appendFileSync(full, content);
 }
 
 export function createEmptyFile(uuid: string, filePath: string): void {

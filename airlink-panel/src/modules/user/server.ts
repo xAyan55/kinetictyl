@@ -150,7 +150,7 @@ function getServerDaemonAddress(server: Pick<ServerPageServer, 'node'>, path: st
 
 function getServerDaemonAuth(server: Pick<ServerPageServer, 'node'>): { username: string; password: string } {
   return {
-    username: 'CynexGP',
+    username: 'Kinetictyl',
     password: server.node.key,
   };
 }
@@ -244,7 +244,7 @@ async function stopServerContainer(
 ): Promise<void> {
   await axios({
     method: 'POST',
-    url: getServerDaemonAddress(server, '/container/stop'),
+    url: getServerDaemonAddress(server, '/servers/stop'),
     auth: getServerDaemonAuth(server),
     headers: { 'Content-Type': 'application/json' },
     data: {
@@ -264,7 +264,7 @@ async function startServerContainer(
 ): Promise<void> {
   await axios({
     method: 'POST',
-    url: getServerDaemonAddress(server, '/container/start'),
+    url: getServerDaemonAddress(server, '/servers/start'),
     auth: getServerDaemonAuth(server),
     headers: { 'Content-Type': 'application/json' },
     data: {
@@ -401,8 +401,8 @@ const dashboardModule: Module = {
               nodeKey: node.key,
             }),
             axios.get(
-              `${daemonSchemeSync()}://${node.address}:${node.port}/container/status/${server.UUID}`,
-              { auth: { username: 'CynexGP', password: node.key }, timeout: 4000 }
+              `${daemonSchemeSync()}://${node.address}:${node.port}/servers/status/${server.UUID}`,
+              { auth: { username: 'Kinetictyl', password: node.key }, timeout: 4000 }
             ).then(r => r.data.state as string).catch(() => null),
           ]);
 
@@ -446,15 +446,34 @@ const dashboardModule: Module = {
             });
           }
 
-          if (server.Suspended && powerAction === 'start') {
+          if (server.Suspended && (powerAction === 'start' || powerAction === 'restart')) {
             logger.warn(
-              `Attempt to start suspended server ${serverId} by user ${userId}`,
+              `Attempt to start/restart suspended server ${serverId} by user ${userId}`,
             );
             res.status(403).json({
               error:
                 'This server is suspended. Please contact an administrator for assistance.',
             });
             return;
+          }
+
+          if (powerAction === 'kill') {
+            try {
+              await axios({
+                method: 'POST',
+                url: getServerDaemonAddress(server, '/servers/kill'),
+                auth: getServerDaemonAuth(server),
+                headers: { 'Content-Type': 'application/json' },
+                data: { id: String(serverId) },
+              });
+              logger.info('Server process killed: ' + serverId);
+              res.status(200).json({ success: true, message: 'Server terminated successfully' });
+              return;
+            } catch (killErr) {
+              logger.error('Failed to kill server:', killErr);
+              res.status(500).json({ error: 'Failed to kill server process' });
+              return;
+            }
           }
 
           if (powerAction === 'stop') {
@@ -493,9 +512,9 @@ const dashboardModule: Module = {
 
               const requestData = {
                 method: 'POST',
-                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/stop`,
+                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/stop`,
                 auth: {
-                  username: 'CynexGP',
+                  username: 'Kinetictyl',
                   password: server.node.key,
                 },
                 headers: {
@@ -508,7 +527,7 @@ const dashboardModule: Module = {
               };
 
               await axios(requestData);
-              logger.info('Container stopped successfully: ' + serverId);
+              logger.info('Server process stopped successfully: ' + serverId);
               return;
             } catch (stopError) {
               if (
@@ -516,7 +535,7 @@ const dashboardModule: Module = {
                 stopError.response?.status === 404
               ) {
                 logger.info(
-                  'Container already stopped or not found: ' + serverId,
+                  'Server process already stopped or not found: ' + serverId,
                 );
 
                 const cacheKey = `server_stopping_${serverId}`;
@@ -527,7 +546,7 @@ const dashboardModule: Module = {
                   delete global.serverStoppingStates[cacheKey];
                 }
               } else {
-                logger.warn('Failed to stop container', {
+                logger.warn('Failed to stop server process', {
                   serverId: String(serverId),
                   action: 'stop',
                   error: stopError,
@@ -537,33 +556,27 @@ const dashboardModule: Module = {
             }
           }
 
-          if (powerAction !== 'start' && powerAction !== 'stop' && powerAction !== 'restart') {
+          if (powerAction !== 'start' && powerAction !== 'stop' && powerAction !== 'restart' && powerAction !== 'kill') {
             logger.error('Invalid power action:', powerAction);
             res.status(400).json({ error: `Invalid power action: ${powerAction}` });
             return;
           }
 
           if (powerAction === 'restart') {
-            // The dedicated restart route is registered after this wildcard so
-            // Express never reaches it. Handle restart inline here.
             try {
               await stopServerContainer(server, String(serverId), 'stop');
             } catch {
-              // Container may already be stopped — continue to start
+              // Server process may already be stopped — continue to start
             }
 
             try {
               await new Promise(resolve => setTimeout(resolve, 2000));
               await startServerContainer(server, String(serverId));
             } catch (error) {
-              if (error instanceof Error && error.message === 'Docker image not found.') {
-                res.status(400).json({ error: 'Docker image not found.' });
-                return;
-              }
               throw error;
             }
 
-            logger.info('Container restarted successfully: ' + serverId);
+            logger.info('Server process restarted successfully: ' + serverId);
             res.status(200).json({ success: true, message: 'Server restarted successfully' });
             return;
           }
@@ -571,15 +584,11 @@ const dashboardModule: Module = {
           try {
             await startServerContainer(server, String(serverId));
           } catch (error) {
-            if (error instanceof Error && error.message === 'Docker image not found.') {
-              res.status(400).json({ error: 'Docker image not found.' });
-              return;
-            }
             throw error;
           }
-          logger.info('Container started successfully: ' + serverId);
+          logger.info('Server process started successfully: ' + serverId);
 
-          res.status(200).json({ message: 'Container started successfully.' });
+          res.status(200).json({ message: 'Server process started successfully.' });
           return;
         } catch (error) {
           logger.error('Failed to process power action', error, {
@@ -630,12 +639,11 @@ const dashboardModule: Module = {
             return;
           }
 
-          const isLxc = false;
           const filesRequest = {
             method: 'GET',
-            url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/list?id=${server.UUID}&path=${path}${isLxc ? '&instanceType=LXC' : ''}`,
+            url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/fs/list?id=${server.UUID}&path=${path}`,
             auth: {
-              username: 'CynexGP',
+              username: 'Kinetictyl',
               password: server.node.key,
             },
             headers: {
@@ -647,24 +655,39 @@ const dashboardModule: Module = {
           let files: any[] = [];
           if (Array.isArray(filesData)) {
             files = filesData;
+          } else if (filesData && Array.isArray(filesData.files)) {
+            files = filesData.files;
+          } else if (filesData && Array.isArray(filesData.contents)) {
+            files = filesData.contents;
           } else if (typeof filesData === 'string') {
             try {
               const parsed = JSON.parse(filesData);
-              if (Array.isArray(parsed)) files = parsed;
+              if (Array.isArray(parsed)) {
+                files = parsed;
+              } else if (parsed && Array.isArray(parsed.files)) {
+                files = parsed.files;
+              } else if (parsed && Array.isArray(parsed.contents)) {
+                files = parsed.contents;
+              }
             } catch {}
           }
 
-          files = files.filter((file: any) => file && file.name !== 'airlink' && file.name !== 'cynexgp');
-
-          files = files.sort((a: any, b: any) => {
-            if (a.type === 'directory' && b.type === 'file') {
-              return -1;
-            } else if (a.type === 'file' && b.type === 'directory') {
-              return 1;
-            } else {
-              return 0;
-            }
-          });
+          if (Array.isArray(files)) {
+            files = files.filter((file: any) => file && file.name !== 'airlink' && file.name !== 'cynexgp');
+            files = files.sort((a: any, b: any) => {
+              const aIsDir = Boolean(a.isDir || a.type === 'directory');
+              const bIsDir = Boolean(b.isDir || b.type === 'directory');
+              if (aIsDir && !bIsDir) {
+                return -1;
+              } else if (!aIsDir && bIsDir) {
+                return 1;
+              } else {
+                return 0;
+              }
+            });
+          } else {
+            files = [];
+          }
 
           const features = getImageFeatures(server.image);
           const serverStatus = await getServerStatus(getServerStatusInput(server));
@@ -2395,9 +2418,9 @@ const dashboardModule: Module = {
 
           const deleteRequestData = {
             method: 'DELETE',
-            url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container`,
+            url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers`,
             auth: {
-              username: 'CynexGP',
+              username: 'Kinetictyl',
               password: server.node.key,
             },
             headers: {
@@ -2409,7 +2432,7 @@ const dashboardModule: Module = {
           };
 
           await axios(deleteRequestData);
-          logger.info('Container deleted for reinstallation: ' + serverId);
+          logger.info('Server workspace reset for reinstallation: ' + serverId);
 
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -2425,163 +2448,49 @@ const dashboardModule: Module = {
                 return;
               }
 
-              let ServerEnv: ServerVariable[] = [];
-              logger.info(
-                `Raw Variables from database for server ${serverId}: ${serverToReinstall.Variables}`,
-              );
-              if (serverToReinstall.Variables) {
-                try {
-                  ServerEnv = JSON.parse(
-                    serverToReinstall.Variables,
-                  ) as ServerVariable[];
-                  logger.info(`Parsed ServerEnv: ${JSON.stringify(ServerEnv)}`);
+              const ports = JSON.parse(serverToReinstall.Ports || '[]');
+              const primaryPort = (Array.isArray(ports) && ports[0]) ? parseInt(ports[0], 10) : 25565;
 
-                  const ports = JSON.parse(serverToReinstall.Ports);
-                  const primaryPort = ports.find((p: any) => p.primary);
-                  if (primaryPort) {
-                    ServerEnv.push({
-                      env: 'SERVER_PORT',
-                      name: 'Primary Port',
-                      value: primaryPort.Port.split(':')[0],
-                      type: 'text',
-                      default: primaryPort.Port.split(':')[0],
-                    });
-                  }
-                } catch (error) {
-                  logger.error(
-                    `Error parsing Variables for server ID ${serverToReinstall.id}:`,
-                    error,
-                  );
-                }
-              }
+              logger.info(`Reinstalling server ${serverToReinstall.UUID} natively`);
 
-              const env = ServerEnv.reduce(
-                (acc: { [key: string]: any }, curr: ServerVariable) => {
-                  logger.info(
-                    `Processing variable: ${curr.env} = ${curr.value} (type: ${curr.type})`,
-                  );
-                  if (
-                    curr.env &&
-                    curr.value !== undefined &&
-                    curr.value !== null
-                  ) {
-                    // Process the value based on its type
-                    let processedValue: string | number | boolean;
-                    switch (curr.type) {
-                    case 'boolean':
-                      processedValue =
-                          curr.value === 1 ||
-                          curr.value === '1' ||
-                          curr.value === true
-                            ? 'true'
-                            : 'false';
-                      break;
-                    case 'number':
-                      processedValue = Number(curr.value);
-                      break;
-                    case 'text':
-                    default:
-                      processedValue = String(curr.value);
-                      break;
-                    }
-                    acc[curr.env] = processedValue;
-                    logger.info(
-                      `Added to env: ${curr.env} = ${processedValue}`,
-                    );
-                  } else {
-                    logger.info(
-                      `Skipped variable ${curr.env}: value is ${curr.value}`,
-                    );
-                  }
-                  return acc;
+              const installRequestData = {
+                method: 'POST',
+                url: `${daemonSchemeSync()}://${serverToReinstall.node.address}:${serverToReinstall.node.port}/servers/install`,
+                auth: {
+                  username: 'Kinetictyl',
+                  password: serverToReinstall.node.key,
                 },
-                {},
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                data: {
+                  id: serverToReinstall.UUID,
+                  softwareType: serverToReinstall.softwareType || 'paper',
+                  softwareVersion: serverToReinstall.softwareVersion || 'latest',
+                  javaVersion: serverToReinstall.javaVersion || '17',
+                  port: primaryPort,
+                  memory: serverToReinstall.Memory,
+                },
+              };
+
+              const installResponse = await axios(installRequestData);
+              logger.info(
+                `Reinstallation completed for server ${serverId}. Response status: ${installResponse.status}`,
               );
 
-              if (serverToReinstall.image?.scripts) {
-                let scripts;
-                try {
-                  scripts = JSON.parse(serverToReinstall.image.scripts);
-
-                  logger.info(
-                    `Reinstalling server ${serverToReinstall.UUID} with environment variables: ${JSON.stringify(env)}`,
-                  );
-
-                  let reinstallDockerImage: string | undefined = undefined;
-
-                  const installRequestData = {
-                    method: 'POST',
-                    url: `${daemonSchemeSync()}://${serverToReinstall.node.address}:${serverToReinstall.node.port}/container/install`,
-                    auth: {
-                      username: 'CynexGP',
-                      password: serverToReinstall.node.key,
-                    },
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    data: {
-                      id: serverToReinstall.UUID,
-                      image: reinstallDockerImage,
-                      env: env,
-                      scripts: scripts.install.map(
-                        (script: {
-                          url: string;
-                          fileName: string;
-                          onStart: boolean;
-                          ALVKT: boolean;
-                        }) => ({
-                          url: script.url,
-                          onStartup: script.onStart,
-                          ALVKT: script.ALVKT,
-                          fileName: script.fileName,
-                        }),
-                      ),
-                    },
-                  };
-
-                  const installResponse = await axios(installRequestData);
-                  logger.info(
-                    `Installation scripts sent for server ${serverId}. Response status: ${installResponse.status}`,
-                  );
-
-                  await prisma.server.update({
-                    where: { UUID: getParamAsString(serverId) },
-                    data: { Queued: false },
-                  });
-                } catch (error: any) {
-                  logger.error(
-                    `Error during reinstallation of server ${serverId}:`,
-                    error,
-                  );
-                  if (error.response) {
-                    logger.error(`Response status: ${error.response.status}`);
-                    logger.error('Response data:', error.response.data);
-                  }
-                  await prisma.server.update({
-                    where: { UUID: getParamAsString(serverId) },
-                    data: { Queued: false },
-                  });
-                }
-              } else {
-                await prisma.server.update({
-                  where: { UUID: getParamAsString(serverId) },
-                  data: { Queued: false },
-                });
-              }
-            } catch (error) {
+              await prisma.server.update({
+                where: { UUID: getParamAsString(serverId) },
+                data: { Queued: false, Installing: false },
+              });
+            } catch (error: any) {
               logger.error(
-                `Error in reinstallation queue for server ${serverId}:`,
+                `Error during reinstallation of server ${serverId}:`,
                 error,
               );
-
-              await prisma.server
-                .update({
-                  where: { UUID: getParamAsString(serverId) },
-                  data: { Queued: false },
-                })
-                .catch((e) =>
-                  logger.error('Error updating server queue status:', e),
-                );
+              await prisma.server.update({
+                where: { UUID: getParamAsString(serverId) },
+                data: { Queued: false, Installing: false },
+              });
             }
           });
 
@@ -2680,14 +2589,14 @@ const dashboardModule: Module = {
           const isCloudBackupEnabled = settings?.airlinkCloudBackupEnabled && settings?.airlinkCloudApiKey;
 
           const response = await axios.post(
-            `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup`,
+            `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup`,
             {
               id: serverId,
               name: name.trim(),
             },
             {
               auth: {
-                username: 'CynexGP',
+                username: 'Kinetictyl',
                 password: server.node.key,
               },
               timeout: 300000,
@@ -2705,9 +2614,9 @@ const dashboardModule: Module = {
                 // Get the backup file from the daemon
                 const downloadResponse = await axios({
                   method: 'GET',
-                  url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup/download`,
+                  url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup/download`,
                   params: { backupPath: filePath },
-                  auth: { username: 'CynexGP', password: server.node.key },
+                  auth: { username: 'Kinetictyl', password: server.node.key },
                   responseType: 'stream',
                 });
 
@@ -2723,10 +2632,10 @@ const dashboardModule: Module = {
                   
                   // Delete the local backup from the daemon
                   await axios.delete(
-                    `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup`,
+                    `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup`,
                     {
                       data: { backupPath: filePath },
-                      auth: { username: 'CynexGP', password: server.node.key },
+                      auth: { username: 'Kinetictyl', password: server.node.key },
                     }
                   ).catch(e => logger.warn(`Failed to delete temporary local backup: ${e}`));
                   
@@ -2828,13 +2737,13 @@ const dashboardModule: Module = {
               // Upload to the daemon's temporary backup location
               const uploadResponse = await axios({
                 method: 'POST',
-                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup/upload`,
+                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup/upload`,
                 params: {
                   id: serverId,
                   backupUuid: backup.UUID
                 },
                 auth: {
-                  username: 'CynexGP',
+                  username: 'Kinetictyl',
                   password: server.node.key
                 },
                 data: cloudDownloadResponse.data,
@@ -2858,14 +2767,14 @@ const dashboardModule: Module = {
           }
 
           const response = await axios.post(
-            `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/restore`,
+            `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/restore`,
             {
               id: serverId,
               backupPath: backupPath,
             },
             {
               auth: {
-                username: 'CynexGP',
+                username: 'Kinetictyl',
                 password: server.node.key,
               },
               timeout: 300000,
@@ -2875,10 +2784,10 @@ const dashboardModule: Module = {
           // If it was a cloud backup, delete the temporary file from the daemon after restore
           if (backup.airlinkCloudId && backupPath !== 'airlink-cloud') {
             axios.delete(
-              `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup`,
+              `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup`,
               {
                 data: { backupPath: backupPath },
-                auth: { username: 'CynexGP', password: server.node.key },
+                auth: { username: 'Kinetictyl', password: server.node.key },
               }
             ).catch(e => logger.warn(`Failed to delete temporary restore file: ${e}`));
           }
@@ -2961,7 +2870,7 @@ const dashboardModule: Module = {
             return;
           }
 
-          const downloadUrl = `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup/download`;
+          const downloadUrl = `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup/download`;
           const response = await axios({
             method: 'GET',
             url: downloadUrl,
@@ -2969,7 +2878,7 @@ const dashboardModule: Module = {
               backupPath: backup.filePath,
             },
             auth: {
-              username: 'CynexGP',
+              username: 'Kinetictyl',
               password: server.node.key,
             },
             responseType: 'stream',
@@ -3039,13 +2948,13 @@ const dashboardModule: Module = {
           } else {
             try {
               await axios.delete(
-                `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/backup`,
+                `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/backup`,
                 {
                   data: {
                     backupPath: backup.filePath,
                   },
                   auth: {
-                    username: 'CynexGP',
+                    username: 'Kinetictyl',
                     password: server.node.key,
                   },
                 },

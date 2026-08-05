@@ -1,4 +1,4 @@
-// simple pub/sub for container lifecycle events
+// simple pub/sub for server process lifecycle events
 // EventEmitter would also work but a plain Map is cleaner to reason about
 
 type EventType =
@@ -13,8 +13,9 @@ type EventType =
   | 'installed'
   | 'error';
 
-export type ContainerEvent = { type: EventType; message: string };
-type Handler = (event: ContainerEvent) => void;
+export type ServerEvent = { type: EventType; message: string };
+export type ContainerEvent = ServerEvent;
+type Handler = (event: ServerEvent) => void;
 
 const subs = new Map<string, Set<Handler>>();
 

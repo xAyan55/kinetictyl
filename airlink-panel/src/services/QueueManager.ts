@@ -24,7 +24,7 @@ export class QueueManager {
 
         // Trigger Agent installation via MCJars / process manager
         await axios.post(
-          `${daemonUrl}/container/installer`,
+          `${daemonUrl}/servers/install`,
           {
             id: server.UUID,
             softwareType: server.softwareType || 'paper',
@@ -34,7 +34,7 @@ export class QueueManager {
             memory: server.Memory,
           },
           {
-            auth: { username: 'CynexGP', password: server.node.key },
+            auth: { username: 'Kinetictyl', password: server.node.key },
             headers: { 'Content-Type': 'application/json' },
             timeout: 600000,
           },

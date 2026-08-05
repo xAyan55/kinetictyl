@@ -29,9 +29,9 @@ describe('HMAC verification', () => {
     const ts = Math.floor(Date.now() / 1000);
     const nonce = 'test-nonce-12345';
     const body = '{"id":"test"}';
-    const sig = sign(TEST_KEY, 'POST', '/container/start', body, ts, nonce);
+    const sig = sign(TEST_KEY, 'POST', '/servers/start', body, ts, nonce);
 
-    const req = createRequest('POST', '/container/start', body);
+    const req = createRequest('POST', '/servers/start', body);
     req.headers.set('x-cynexgp-timestamp', String(ts));
     req.headers.set('x-cynexgp-signature', sig);
     req.headers.set('x-cynexgp-nonce', nonce);
@@ -73,9 +73,9 @@ describe('HMAC verification', () => {
   test('rejects replayed nonce', async () => {
     const ts = Math.floor(Date.now() / 1000);
     const nonce = 'replay-me-once';
-    const sig = sign(TEST_KEY, 'POST', '/container/start', '', ts, nonce);
+    const sig = sign(TEST_KEY, 'POST', '/servers/start', '', ts, nonce);
 
-    const req1 = createRequest('POST', '/container/start');
+    const req1 = createRequest('POST', '/servers/start');
     req1.headers.set('x-cynexgp-timestamp', String(ts));
     req1.headers.set('x-cynexgp-signature', sig);
     req1.headers.set('x-cynexgp-nonce', nonce);
@@ -85,7 +85,7 @@ describe('HMAC verification', () => {
     expect(result1).toBeNull();
 
     // Second request with same nonce should fail
-    const req2 = createRequest('POST', '/container/start');
+    const req2 = createRequest('POST', '/servers/start');
     req2.headers.set('x-cynexgp-timestamp', String(ts));
     req2.headers.set('x-cynexgp-signature', sig);
     req2.headers.set('x-cynexgp-nonce', nonce);
@@ -97,9 +97,9 @@ describe('HMAC verification', () => {
 
   test('rejects missing nonce', async () => {
     const ts = Math.floor(Date.now() / 1000);
-    const sig = sign(TEST_KEY, 'POST', '/container/start', '', ts, '');
+    const sig = sign(TEST_KEY, 'POST', '/servers/start', '', ts, '');
 
-    const req = createRequest('POST', '/container/start');
+    const req = createRequest('POST', '/servers/start');
     req.headers.set('x-cynexgp-timestamp', String(ts));
     req.headers.set('x-cynexgp-signature', sig);
     // No nonce header

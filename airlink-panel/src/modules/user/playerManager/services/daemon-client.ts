@@ -14,10 +14,10 @@ export async function sendConsoleCommand(
   command: string,
 ): Promise<void> {
   await axios.post(
-    `${daemonSchemeSync()}://${node.address}:${node.port}/container/command`,
+    `${daemonSchemeSync()}://${node.address}:${node.port}/servers/command`,
     { id: serverId, command },
     {
-      auth: { username: 'CynexGP', password: node.key },
+      auth: { username: 'Kinetictyl', password: node.key },
       timeout: PLAYER_MANAGER_CONFIG.ACTION_TIMEOUT,
     },
   );
@@ -37,7 +37,7 @@ export async function fetchOnlinePlayers(
     method: 'GET',
     url: `${daemonSchemeSync()}://${node.address}:${node.port}/minecraft/players`,
     params: { id: serverId, host: node.address, port: primaryPort },
-    auth: { username: 'CynexGP', password: node.key },
+    auth: { username: 'Kinetictyl', password: node.key },
     timeout: PLAYER_MANAGER_CONFIG.DAEMON_PLAYERS_TIMEOUT,
   });
 

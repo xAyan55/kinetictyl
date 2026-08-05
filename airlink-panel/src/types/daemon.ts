@@ -2,17 +2,19 @@
 // These types define the contract between panel and daemon. All axios calls
 // to daemon endpoints must use these types instead of `any`.
 
-export interface DaemonContainerStats {
+export interface DaemonServerStats {
   cpuPercent: number;
   memoryUsage: number;
   memoryLimit: number;
   storageUsage: number;
 }
+export type DaemonContainerStats = DaemonServerStats;
 
-export interface DaemonContainerState {
+export interface DaemonServerState {
   running: boolean;
   state: string;
 }
+export type DaemonContainerState = DaemonServerState;
 
 export interface DaemonInstallStatus {
   state: 'installing' | 'installed' | 'failed';

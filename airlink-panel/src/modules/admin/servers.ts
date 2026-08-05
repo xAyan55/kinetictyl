@@ -240,9 +240,9 @@ const adminModule: Module = {
 
               const stopRequestData = {
                 method: 'POST',
-                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/stop`,
+                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/stop`,
                 auth: {
-                  username: 'CynexGP',
+                  username: 'Kinetictyl',
                   password: server.node.key,
                 },
                 headers: {

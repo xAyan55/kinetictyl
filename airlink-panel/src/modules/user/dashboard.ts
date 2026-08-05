@@ -156,9 +156,9 @@ const dashboardModule: Module = {
 
               const statusResponse = await axios({
                 method: 'GET',
-                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/status`,
+                url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/status`,
                 auth: {
-                  username: 'CynexGP',
+                  username: 'Kinetictyl',
                   password: server.node.key,
                 },
                 params: { id: server.UUID },
@@ -174,9 +174,9 @@ const dashboardModule: Module = {
                 try {
                   const statsResponse = await axios({
                     method: 'GET',
-                    url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/stats`,
+                    url: `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/stats`,
                     auth: {
-                      username: 'CynexGP',
+                      username: 'Kinetictyl',
                       password: server.node.key,
                     },
                     params: { id: server.UUID },

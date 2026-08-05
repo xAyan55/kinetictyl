@@ -50,8 +50,8 @@ export async function checkForServerInstallation(
     }
 
     const response = await axios.get(
-      `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/container/status/${server.UUID}`,
-      { auth: { username: 'CynexGP', password: server.node.key }, timeout: 4000 },
+      `${daemonSchemeSync()}://${server.node.address}:${server.node.port}/servers/status/${server.UUID}`,
+      { auth: { username: 'Kinetictyl', password: server.node.key }, timeout: 4000 },
     );
 
     const state = response.data.state as string;
