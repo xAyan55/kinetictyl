@@ -1,417 +1,300 @@
 <%- include('../components/header', { title: 'Create Server' }) %>
 
-<style>
-  ::-webkit-scrollbar { display: none; }
+<main class="min-h-screen bg-mono-bg text-white pb-16">
+  <div class="flex">
+    <!-- Sidebar -->
+    <div class="w-60 shrink-0">
+      <%- include('../components/template') %>
+    </div>
 
-  .custom-select { position: relative; user-select: none; }
-  .cs-trigger {
-    display: flex; align-items: center; justify-content: space-between;
-    width: 100%; padding: 12px 16px; border-radius: 12px; cursor: pointer;
-    font-size: 14px; border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(255, 255, 255, 0.02); color: #e5e5e5;
-    transition: all 0.2s ease;
-  }
-  .cs-trigger:hover { background: rgba(255, 255, 255, 0.06); border-color: rgba(34, 197, 94, 0.2); }
-  .cs-trigger.open { border-color: rgba(34, 197, 94, 0.3); box-shadow: 0 0 12px rgba(34, 197, 94, 0.1); }
-  .cs-trigger svg { width: 14px; height: 14px; opacity: 0.45; transition: transform 0.2s; flex-shrink: 0; }
-  .cs-trigger.open svg { transform: rotate(180deg); }
-  .cs-placeholder { opacity: 0.45; }
-  .cs-dropdown {
-    position: absolute; top: calc(100% + 5px); left: 0; right: 0; z-index: 9999;
-    background: #0c0c14; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); overflow: hidden;
-    max-height: 200px; overflow-y: auto;
-  }
-  .cs-option { padding: 10px 16px; font-size: 13px; cursor: pointer; color: #d4d4d4; transition: background 0.1s; }
-  .cs-option:hover { background: rgba(255, 255, 255, 0.05); color: white; }
-  .cs-option.selected { background: rgba(34, 197, 94, 0.1); color: #22c55e; font-weight: 600; }
-  .cs-option.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+    <!-- Main Content Container -->
+    <div id="page-content" class="flex-1 px-8 pt-20 pb-16 max-w-5xl mx-auto space-y-6">
 
-  .form-input {
-    width: 100%; padding: 12px 16px; border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02);
-    font-size: 14px; color: white; outline: none;
-    transition: all 0.2s ease;
-    box-sizing: border-box; font-family: inherit;
-  }
-  .form-input:focus { border-color: rgba(34, 197, 94, 0.3); box-shadow: 0 0 12px rgba(34, 197, 94, 0.1); }
-  .form-input::placeholder { color: #52525b; }
-  .form-label { display: block; font-size: 12px; font-weight: 700; uppercase: true; tracking: 0.05em; color: #a1a1aa; margin-bottom: 8px; }
+      <!-- Header -->
+      <div class="flex justify-between items-center border-b border-white/5 pb-4">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white">Configure Minecraft Server</h1>
+          <p class="text-xs text-neutral-400 mt-1"><%= quota.servers %> server slot<%= quota.servers === 1 ? '' : 's' %> available</p>
+        </div>
+        <a href="/dashboard" class="text-xs font-semibold text-neutral-400 hover:text-white transition">Cancel Setup</a>
+      </div>
 
-  .stepper { display: flex; align-items: center; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.02); }
-  .stepper-btn {
-    padding: 10px 16px; background: none; border: none; cursor: pointer;
-    font-size: 16px; color: #a1a1aa; transition: background 0.2s;
-    flex-shrink: 0; line-height: 1;
-  }
-  .stepper-btn:hover { background: rgba(255, 255, 255, 0.06); color: white; }
-  .stepper-input {
-    flex: 1; text-align: center; border: none; background: none; outline: none;
-    font-size: 14px; font-weight: 600; color: white; padding: 10px 4px;
-    font-family: inherit; min-width: 0;
-  }
-
-  .select-unit {
-    border-radius: 0 12px 12px 0; font-size: 12px; font-weight: 600; padding: 0 12px;
-    background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.05);
-    border-left: none; color: white; cursor: pointer; outline: none;
-  }
-
-  .confirm-overlay {
-    position: fixed; inset: 0; z-index: 150;
-    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center; padding: 16px;
-    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-  }
-  .confirm-overlay.open { opacity: 1; pointer-events: auto; }
-  .confirm-box {
-    background: #0c0c14; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px;
-    width: 100%; max-width: 440px; padding: 24px;
-    transform: scale(0.96); opacity: 0;
-    transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), opacity 0.25s;
-  }
-  .confirm-overlay.open .confirm-box { transform: scale(1); opacity: 1; }
-</style>
-
-<main class="h-screen m-auto bg-mono-bg text-white">
-  <div class="flex h-screen">
-    <div class="w-60 h-full"><%- include('../components/template') %></div>
-
-    <div id="page-content" class="flex-1 overflow-y-auto pt-16">
-      <div class="px-12 pt-8 pb-12 max-w-4xl space-y-8">
-
-        <!-- Wizard header -->
-        <div class="flex justify-between items-center border-b border-white/5 pb-5">
-          <div>
-            <h1 class="text-xl font-bold tracking-tight text-white">Configure Minecraft Server</h1>
-            <p class="text-sm text-neutral-400 mt-1"><%= quota.servers %> server slot<%= quota.servers === 1 ? '' : 's' %> available</p>
+      <form id="userCreateServerForm" class="space-y-6">
+        
+        <!-- CARD 1: GENERAL & LOCATION -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('file-text', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">General & Location</h2>
           </div>
-          <a href="/dashboard" class="text-xs font-semibold text-neutral-400 hover:text-white transition">Cancel Setup</a>
-        </div>
 
-        <!-- Wizard Step Indicators -->
-        <div id="wizard-steps-container">
-          <%- include('../components/ui/WizardStep', { active: 1 }) %>
-        </div>
-
-        <!-- WIZARD STEP 1: SOFTWARE & VERSION -->
-        <div class="wizard-pane space-y-6" data-step="1">
-          <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-6' }) %>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <h2 class="text-base font-bold text-white">Choose Minecraft Software & Version</h2>
-              <p class="text-xs text-neutral-400 mt-0.5">Select your preferred server software and Java runtime version.</p>
+              <label for="serverName" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Server Name <span class="text-red-400">*</span>
+              </label>
+              <input id="serverName" name="name" required maxlength="64"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition"
+                placeholder="My Minecraft World">
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-              <div class="space-y-2">
-                <label class="form-label">Server Software</label>
-                <select id="softwareType" class="hidden">
-                  <option value="paper" selected>Paper (Recommended)</option>
-                  <option value="purpur">Purpur</option>
-                  <option value="vanilla">Vanilla</option>
-                  <option value="fabric">Fabric</option>
-                  <option value="forge">Forge</option>
-                  <option value="neoforge">NeoForge</option>
-                  <option value="spigot">Spigot</option>
-                </select>
-                <div class="custom-select" data-for="softwareType"></div>
-              </div>
-
-              <div class="space-y-2">
-                <label class="form-label">Minecraft Version</label>
-                <select id="softwareVersion" class="hidden">
-                  <option value="1.21.4" selected>1.21.4</option>
-                  <option value="1.21.3">1.21.3</option>
-                  <option value="1.21.1">1.21.1</option>
-                  <option value="1.20.4">1.20.4</option>
-                  <option value="1.20.1">1.20.1</option>
-                  <option value="1.19.4">1.19.4</option>
-                  <option value="1.18.2">1.18.2</option>
-                  <option value="1.16.5">1.16.5</option>
-                </select>
-                <div class="custom-select" data-for="softwareVersion"></div>
-              </div>
-
-              <div class="space-y-2">
-                <label class="form-label">Java Version</label>
-                <select id="javaVersion" class="hidden">
-                  <option value="21" selected>Java 21 (For 1.20.5+)</option>
-                  <option value="17">Java 17 (For 1.17 - 1.20.4)</option>
-                  <option value="11">Java 11 (Legacy 1.12 - 1.16)</option>
-                  <option value="8">Java 8 (Legacy 1.8.8)</option>
-                </select>
-                <div class="custom-select" data-for="javaVersion"></div>
-              </div>
-            </div>
-
-            <div class="pt-4 border-t border-white/5 flex justify-end">
-              <button onclick="nextStep(2)" class="px-5 py-2.5 rounded-xl bg-brand-green text-black hover:bg-brand-green-hover text-xs font-bold transition cursor-pointer">
-                Continue to Location
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- WIZARD STEP 2: LOCATION -->
-        <div class="wizard-pane space-y-6 hidden" data-step="2">
-          <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-6' }) %>
             <div>
-              <h2 class="text-base font-bold text-white">Choose Deploy Region</h2>
-              <p class="text-xs text-neutral-400 mt-0.5">Select the node location closest to your players.</p>
+              <label for="serverDescription" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Description <span class="text-neutral-500 font-normal">(optional)</span>
+              </label>
+              <input id="serverDescription" name="description" maxlength="128"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition"
+                placeholder="Play with friends!">
             </div>
 
-            <div class="space-y-2 max-w-sm">
-              <label class="form-label">Server Node Address</label>
-              <select id="nodeId" class="hidden">
-                <option value="" disabled selected>Select geographic node</option>
+            <div class="md:col-span-2">
+              <label for="nodeId" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Deploy Node Region <span class="text-red-400">*</span>
+              </label>
+              <select id="nodeId" name="nodeId" required
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
                 <% nodes.forEach(node => { %>
-                  <option value="<%= node.id %>"><%= node.name %> — <%= node.address %></option>
+                  <option value="<%= node.id %>" class="bg-neutral-900 text-white"><%= node.name %> — <%= node.address %></option>
                 <% }); %>
               </select>
-              <div class="custom-select" data-for="nodeId"></div>
-            </div>
-
-            <div class="pt-4 border-t border-white/5 flex justify-between">
-              <button onclick="prevStep(1)" class="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-neutral-300 hover:bg-white/10 text-xs font-bold transition cursor-pointer">Back</button>
-              <button onclick="nextStep(3)" class="px-5 py-2.5 rounded-xl bg-brand-green text-black hover:bg-brand-green-hover text-xs font-bold transition cursor-pointer">Continue to Resources</button>
             </div>
           </div>
         </div>
 
-        <!-- WIZARD STEP 3: RESOURCES -->
-        <div class="wizard-pane space-y-6 hidden" data-step="3">
-          <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-6' }) %>
+        <!-- CARD 2: SOFTWARE & RUNTIME -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('box', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Software & Version</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div>
-              <h2 class="text-base font-bold text-white">Adjust Hardware Resources</h2>
-              <p class="text-xs text-neutral-400 mt-0.5">Allocate RAM, CPU cores, and Disk Storage for your Minecraft server.</p>
+              <label for="softwareType" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Server Software
+              </label>
+              <select id="softwareType" name="softwareType"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="paper" selected class="bg-neutral-900 text-white">Paper (Recommended)</option>
+                <option value="purpur" class="bg-neutral-900 text-white">Purpur</option>
+                <option value="vanilla" class="bg-neutral-900 text-white">Vanilla</option>
+                <option value="fabric" class="bg-neutral-900 text-white">Fabric</option>
+                <option value="forge" class="bg-neutral-900 text-white">Forge</option>
+                <option value="neoforge" class="bg-neutral-900 text-white">NeoForge</option>
+                <option value="spigot" class="bg-neutral-900 text-white">Spigot</option>
+              </select>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-              <!-- Memory (RAM) -->
-              <div class="space-y-2">
-                <label class="form-label flex items-center gap-1.5 text-neutral-300">
-                  <%- icon('server', { width: 14, height: 14 }) %>
-                  RAM (Memory)
-                </label>
-                <input type="hidden" id="Memory" value="1024">
-                <div class="flex items-stretch">
-                  <button type="button" class="stepper-btn border border-r-0 border-white/10 rounded-l-xl bg-white/5" data-action="dec" data-target="MemoryDisplay" data-step="128" data-min="128">−</button>
-                  <input id="MemoryDisplay" type="number" value="1024" min="128" class="stepper-input border-y border-white/10">
-                  <button type="button" class="stepper-btn border-y border-white/10 bg-white/5" data-action="inc" data-target="MemoryDisplay" data-step="128">+</button>
-                  <select id="MemoryUnit" class="select-unit">
-                    <option value="1" selected>MB</option>
-                    <option value="1024">GB</option>
-                  </select>
-                </div>
-                <p id="max-ram-label" class="text-[10px] text-neutral-500 font-semibold">Available Quota: <%= quota.memory %> MB</p>
-              </div>
-
-              <!-- CPU -->
-              <div class="space-y-2">
-                <label class="form-label flex items-center gap-1.5 text-neutral-300">
-                  <%- icon('cpu', { width: 14, height: 14 }) %>
-                  CPU Cores (%)
-                </label>
-                <div class="stepper">
-                  <button type="button" class="stepper-btn" data-action="dec" data-target="Cpu" data-step="50" data-min="50">−</button>
-                  <input id="Cpu" type="number" value="100" min="50" max="<%= quota.cpu %>" class="stepper-input">
-                  <button type="button" class="stepper-btn" data-action="inc" data-target="Cpu" data-step="50" data-max="100">+</button>
-                </div>
-                <p id="max-cpu-label" class="text-[10px] text-neutral-500 font-semibold">Available Quota: <%= quota.cpu %>%</p>
-              </div>
-
-              <!-- Storage -->
-              <div class="space-y-2">
-                <label class="form-label flex items-center gap-1.5 text-neutral-300">
-                  <%- icon('hard-drive', { width: 14, height: 14 }) %>
-                  Disk Storage
-                </label>
-                <input type="hidden" id="Storage" value="5120">
-                <div class="flex items-stretch">
-                  <button type="button" class="stepper-btn border border-r-0 border-white/10 rounded-l-xl bg-white/5" data-action="dec" data-target="StorageDisplay" data-step="1" data-min="1">−</button>
-                  <input id="StorageDisplay" type="number" value="5" min="1" class="stepper-input border-y border-white/10">
-                  <button type="button" class="stepper-btn border-y border-white/10 bg-white/5" data-action="inc" data-target="StorageDisplay" data-step="1">+</button>
-                  <select id="StorageUnit" class="select-unit">
-                    <option value="1">MB</option>
-                    <option value="1024" selected>GB</option>
-                  </select>
-                </div>
-                <p id="max-disk-label" class="text-[10px] text-neutral-500 font-semibold">Available Quota: <%= Math.round(quota.disk / 1024) %> GB</p>
-              </div>
+            <div>
+              <label for="softwareVersion" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Minecraft Version
+              </label>
+              <select id="softwareVersion" name="softwareVersion"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="1.21.4" selected class="bg-neutral-900 text-white">1.21.4</option>
+                <option value="1.21.3" class="bg-neutral-900 text-white">1.21.3</option>
+                <option value="1.21.1" class="bg-neutral-900 text-white">1.21.1</option>
+                <option value="1.20.4" class="bg-neutral-900 text-white">1.20.4</option>
+                <option value="1.20.1" class="bg-neutral-900 text-white">1.20.1</option>
+                <option value="1.19.4" class="bg-neutral-900 text-white">1.19.4</option>
+                <option value="1.18.2" class="bg-neutral-900 text-white">1.18.2</option>
+                <option value="1.16.5" class="bg-neutral-900 text-white">1.16.5</option>
+              </select>
             </div>
 
-            <div class="pt-4 border-t border-white/5 flex justify-between">
-              <button onclick="prevStep(2)" class="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-neutral-300 hover:bg-white/10 text-xs font-bold transition cursor-pointer">Back</button>
-              <button onclick="nextStep(4)" class="px-5 py-2.5 rounded-xl bg-brand-green text-black hover:bg-brand-green-hover text-xs font-bold transition cursor-pointer">Continue to Summary</button>
+            <div>
+              <label for="javaVersion" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Java Runtime
+              </label>
+              <select id="javaVersion" name="javaVersion"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="21" selected class="bg-neutral-900 text-white">Java 21 (For 1.20.5+)</option>
+                <option value="17" class="bg-neutral-900 text-white">Java 17 (For 1.17 - 1.20.4)</option>
+                <option value="11" class="bg-neutral-900 text-white">Java 11 (Legacy 1.12 - 1.16)</option>
+                <option value="8" class="bg-neutral-900 text-white">Java 8 (Legacy 1.8.8)</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <!-- WIZARD STEP 4: SUMMARY & LAUNCH -->
-        <div class="wizard-pane space-y-6 hidden" data-step="4">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-            
-            <!-- Details fields -->
-            <div class="md:col-span-7 space-y-6">
-              <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-4' }) %>
-                <div>
-                  <h2 class="text-sm font-bold text-white">General Server Settings</h2>
-                  <p class="text-xs text-neutral-400 mt-0.5">Label your server so you can identify it in the panel dashboard.</p>
-                </div>
-                
-                <div class="space-y-4">
-                  <div class="space-y-1">
-                    <label class="form-label" for="serverName">Server Name</label>
-                    <input id="serverName" type="text" placeholder="My Minecraft World" maxlength="64" class="form-input">
-                  </div>
-                  <div class="space-y-1">
-                    <label class="form-label" for="serverDescription">Description <span class="text-neutral-500">(optional)</span></label>
-                    <input id="serverDescription" type="text" placeholder="Play with friends!" maxlength="128" class="form-input">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Summary panel -->
-            <div class="md:col-span-5">
-              <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-brand-green/20 shadow-[0_0_20px_rgba(255,255,255,0.02)] space-y-6' }) %>
-                <div>
-                  <h3 class="text-xs font-bold uppercase tracking-widest text-brand-green">Launch Summary</h3>
-                  <h2 class="text-xl font-bold text-white mt-1">Ready for Deploy</h2>
-                </div>
-
-                <div class="space-y-3.5 text-xs text-neutral-300">
-                  <div class="flex justify-between">
-                    <span class="text-neutral-500">Software</span>
-                    <span class="text-white font-bold" id="summarySoftware">Paper 1.21.4</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-500">Node Location</span>
-                    <span class="text-white font-bold" id="summaryNode">Not Chosen</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-500">Memory Limit</span>
-                    <span class="text-white font-bold" id="summaryRAM">1024 MB</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-500">CPU Allocation</span>
-                    <span class="text-white font-bold" id="summaryCPU">100%</span>
-                  </div>
-                  <div class="flex justify-between">
-                    <span class="text-neutral-500">Deploy Status</span>
-                    <span class="text-brand-green font-bold">Queued for Agent Install</span>
-                  </div>
-                </div>
-
-                <button type="button" id="createBtn"
-                  class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-bold text-black hover:bg-brand-green-hover hover:scale-[1.02] hover:shadow-[0_0_20px_var(--color-mono-focus)] active:scale-95 transition-all duration-200 cursor-pointer">
-                  <span id="createBtnText">Launch Server</span>
-                  <span id="createBtnSpinner" class="hidden w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>
-                </button>
-              </div>
-            </div>
+        <!-- CARD 3: HARDWARE RESOURCES -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('cpu', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Hardware Resources</h2>
           </div>
 
-          <div id="errorMsg" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 px-5 py-4">
-            <p class="text-sm font-semibold text-red-400" id="errorText"></p>
-          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                RAM (Memory)
+              </label>
+              <input type="hidden" id="Memory" name="Memory" value="1024">
+              <div class="flex items-stretch">
+                <input id="MemoryDisplay" type="number" min="128" max="<%= quota.memory %>" value="1024"
+                  class="w-full rounded-l-xl border border-r-0 border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none">
+                <select id="MemoryUnit"
+                  class="rounded-r-xl border border-white/10 bg-white/10 px-3 py-2.5 text-xs font-bold text-white cursor-pointer">
+                  <option value="1" selected class="bg-neutral-900">MB</option>
+                  <option value="1024" class="bg-neutral-900">GB</option>
+                </select>
+              </div>
+              <p class="text-[11px] text-neutral-500 mt-1">Quota Available: <%= quota.memory %> MB</p>
+            </div>
 
-          <div class="flex">
-            <button onclick="prevStep(3)" class="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-neutral-300 hover:bg-white/10 text-xs font-bold transition cursor-pointer">Back</button>
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                CPU Allocation (%)
+              </label>
+              <input id="Cpu" name="Cpu" type="number" min="50" max="<%= quota.cpu %>" value="100"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:outline-none">
+              <p class="text-[11px] text-neutral-500 mt-1">Quota Available: <%= quota.cpu %>%</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Disk Storage
+              </label>
+              <input type="hidden" id="Storage" name="Storage" value="5120">
+              <div class="flex items-stretch">
+                <input id="StorageDisplay" type="number" min="1" max="<%= Math.round(quota.disk / 1024) %>" value="5"
+                  class="w-full rounded-l-xl border border-r-0 border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none">
+                <select id="StorageUnit"
+                  class="rounded-r-xl border border-white/10 bg-white/10 px-3 py-2.5 text-xs font-bold text-white cursor-pointer">
+                  <option value="1" class="bg-neutral-900">MB</option>
+                  <option value="1024" selected class="bg-neutral-900">GB</option>
+                </select>
+              </div>
+              <p class="text-[11px] text-neutral-500 mt-1">Quota Available: <%= Math.round(quota.disk / 1024) %> GB</p>
+            </div>
           </div>
         </div>
 
-      </div>
+        <div id="errorMsg" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 px-5 py-4">
+          <p class="text-sm font-semibold text-red-400" id="errorText"></p>
+        </div>
+
+        <!-- ACTION BUTTON -->
+        <div class="pt-2 flex justify-end">
+          <button type="submit" id="createBtn"
+            class="rounded-xl bg-brand-green px-8 py-3 text-sm font-bold text-black hover:bg-brand-green-hover transition shadow-lg cursor-pointer flex items-center gap-2">
+            <span id="createBtnText">Launch Minecraft Server</span>
+            <span id="createBtnSpinner" class="hidden w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></span>
+          </button>
+        </div>
+
+      </form>
     </div>
   </div>
 </main>
 
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <h3 class="text-sm font-bold text-white mb-2" id="confirmTitle">Confirm</h3>
-    <p class="text-xs text-neutral-400 leading-relaxed mb-6" id="confirmBody"></p>
-    <div class="flex gap-2.5 justify-end">
-      <button id="confirmCancel" class="px-4 py-2 rounded-xl text-xs font-bold bg-transparent text-neutral-400 border border-white/10 hover:bg-white/5 cursor-pointer">Cancel</button>
-      <button id="confirmOk" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-green text-black hover:bg-brand-green-hover cursor-pointer">Confirm</button>
-    </div>
-  </div>
-</div>
+<script nonce="<%- nonce %>">
+  document.addEventListener('DOMContentLoaded', () => {
+    const softwareTypeSelect = document.getElementById('softwareType');
+    const softwareVersionSelect = document.getElementById('softwareVersion');
+    const javaVersionSelect = document.getElementById('javaVersion');
+    const form = document.getElementById('userCreateServerForm');
+
+    async function loadSoftwareVersions(type) {
+      try {
+        const res = await fetch('/api/mcjars/versions/' + type);
+        const data = await res.json();
+        if (data && Array.isArray(data.versions) && data.versions.length > 0) {
+          softwareVersionSelect.innerHTML = '';
+          data.versions.forEach(ver => {
+            const opt = document.createElement('option');
+            opt.value = ver; opt.textContent = ver;
+            opt.className = 'bg-neutral-900 text-white';
+            softwareVersionSelect.appendChild(opt);
+          });
+          softwareVersionSelect.selectedIndex = 0;
+          updateJavaVersion(data.versions[0]);
+        }
+      } catch (err) {}
+    }
+
+    function updateJavaVersion(mcVer) {
+      if (!mcVer) return;
+      const parts = mcVer.split('.').map(Number);
+      const minor = parts[1] || 0;
+      const patch = parts[2] || 0;
+      if (minor >= 20 && patch >= 5) javaVersionSelect.value = '21';
+      else if (minor >= 17) javaVersionSelect.value = '17';
+      else if (minor >= 12) javaVersionSelect.value = '11';
+      else javaVersionSelect.value = '8';
+    }
+
+    softwareTypeSelect.addEventListener('change', () => loadSoftwareVersions(softwareTypeSelect.value));
+    softwareVersionSelect.addEventListener('change', () => updateJavaVersion(softwareVersionSelect.value));
+
+    function syncUnit(displayId, unitId, hiddenId) {
+      const display = document.getElementById(displayId);
+      const unit = document.getElementById(unitId);
+      const hidden = document.getElementById(hiddenId);
+      function update() {
+        hidden.value = Math.round(parseFloat(display.value || 0) * parseInt(unit.value));
+      }
+      display.addEventListener('input', update);
+      unit.addEventListener('change', update);
+      update();
+    }
+    syncUnit('MemoryDisplay', 'MemoryUnit', 'Memory');
+    syncUnit('StorageDisplay', 'StorageUnit', 'Storage');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('errorMsg');
+      const errText = document.getElementById('errorText');
+      errBox.classList.add('hidden');
+
+      const name = document.getElementById('serverName').value.trim();
+      const description = document.getElementById('serverDescription').value.trim();
+      const nodeId = document.getElementById('nodeId').value;
+      const softwareType = softwareTypeSelect.value;
+      const softwareVersion = softwareVersionSelect.value;
+      const javaVersion = javaVersionSelect.value;
+      const Memory = parseInt(document.getElementById('Memory').value);
+      const Cpu = parseInt(document.getElementById('Cpu').value);
+      const Storage = parseInt(document.getElementById('Storage').value);
+
+      if (!name) { errText.textContent = 'Server name is required.'; errBox.classList.remove('hidden'); return; }
+      if (!nodeId) { errText.textContent = 'Select a node.'; errBox.classList.remove('hidden'); return; }
+
+      const btn = document.getElementById('createBtn');
+      document.getElementById('createBtnText').textContent = 'Launching...';
+      document.getElementById('createBtnSpinner').classList.remove('hidden');
+      btn.disabled = true;
+
+      try {
+        const r = await fetch('/user/create-server', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, description, nodeId, softwareType, softwareVersion, javaVersion, Memory, Cpu, Storage }),
+        });
+        const d = await r.json();
+        if (d.success) {
+          window.location.href = '/server/' + d.serverUUID;
+        } else {
+          errText.textContent = d.error || 'Failed to create server.';
+          errBox.classList.remove('hidden');
+          document.getElementById('createBtnText').textContent = 'Launch Minecraft Server';
+          document.getElementById('createBtnSpinner').classList.add('hidden');
+          btn.disabled = false;
+        }
+      } catch {
+        errText.textContent = 'Network error. Please try again.';
+        errBox.classList.remove('hidden');
+        document.getElementById('createBtnText').textContent = 'Launch Minecraft Server';
+        document.getElementById('createBtnSpinner').classList.add('hidden');
+        btn.disabled = false;
+      }
+    });
+  });
+</script>
 
 <%- include('../components/toast') %>
 <%- include('../components/loadingPopup') %>
-
-<script nonce="<%- nonce %>">
-  let activeWizardStep = 1;
-
-  function nextStep(step) {
-    if (step === 2) {
-      const soft = document.getElementById('softwareType').value;
-      const ver = document.getElementById('softwareVersion').value;
-      if (!soft || !ver) {
-        if (typeof showToast === 'function') showToast('Please select software and version first.', 'error');
-        return;
-      }
-    }
-    
-    if (step === 3) {
-      const node = document.getElementById('nodeId').value;
-      if (!node) {
-        if (typeof showToast === 'function') showToast('Please choose a node location for deployment.', 'error');
-        return;
-      }
-    }
-
-    if (step === 4) {
-      const nodeSelect = document.getElementById('nodeId');
-      const nodeName = nodeSelect.options[nodeSelect.selectedIndex]?.text || 'Not chosen';
-      const softName = document.getElementById('softwareType').value.toUpperCase() + ' ' + document.getElementById('softwareVersion').value;
-      const ramVal = document.getElementById('Memory').value + ' MB';
-      const cpuVal = document.getElementById('Cpu').value + '%';
-
-      document.getElementById('summaryNode').textContent = nodeName;
-      document.getElementById('summarySoftware').textContent = softName;
-      document.getElementById('summaryRAM').textContent = ramVal;
-      document.getElementById('summaryCPU').textContent = cpuVal;
-    }
-
-    document.querySelectorAll('.wizard-pane').forEach(p => p.classList.add('hidden'));
-    document.querySelector('.wizard-pane[data-step="' + step + '"]').classList.remove('hidden');
-    updateWizardStepsUI(step);
-    activeWizardStep = step;
-  }
-
-  function prevStep(step) {
-    document.querySelectorAll('.wizard-pane').forEach(p => p.classList.add('hidden'));
-    document.querySelector('.wizard-pane[data-step="' + step + '"]').classList.remove('hidden');
-    updateWizardStepsUI(step);
-    activeWizardStep = step;
-  }
-
-  function updateWizardStepsUI(step) {
-    [1, 2, 3, 4].forEach(num => {
-      const el = document.querySelector('[data-step-indicator="' + num + '"]');
-      const text = document.querySelector('[data-step-text="' + num + '"]');
-      const line = document.querySelector('[data-step-line="' + num + '"]');
-      if (!el) return;
-
-      if (step === num) {
-        el.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-brand-green text-black shadow-[0_0_15px_var(--color-mono-focus)] transition-all duration-300";
-        if(text) text.className = "text-xs font-semibold uppercase tracking-wider text-white transition-all duration-300";
-      } else if (step > num) {
-        el.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-brand-green/20 text-brand-green border border-brand-green/30 transition-all duration-300";
-        if(text) text.className = "text-xs font-semibold uppercase tracking-wider text-neutral-500 transition-all duration-300";
-      } else {
-        el.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-white/5 text-neutral-500 border border-white/5 transition-all duration-300";
-        if(text) text.className = "text-xs font-semibold uppercase tracking-wider text-neutral-500 transition-all duration-300";
-      }
-
-      if (line) {
-        line.className = step > num ? "flex-1 h-[1px] mx-4 bg-brand-green/20 transition-all duration-300" : "flex-1 h-[1px] mx-4 bg-white/5 transition-all duration-300";
-      }
-    });
-  }
-</script>
-
-<script nonce="<%- nonce %>" src="/javascript/create-server.js"></script>
-
-<%- include('../components/footer') %>

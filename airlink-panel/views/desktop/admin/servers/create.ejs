@@ -1,310 +1,299 @@
 <%- include('../../components/header', { title: 'Create Server' }) %>
 
-<main class="h-screen m-auto">
-  <div class="flex h-screen">
+<main class="min-h-screen bg-mono-bg text-white pb-16">
+  <div class="flex">
     <!-- Sidebar -->
-    <div class="w-60 h-full">
+    <div class="w-60 shrink-0">
       <%- include('../../components/template') %>
     </div>
-    <!-- Content -->
-    <div id="page-content" class="flex-1 p-6 overflow-y-auto pt-16">
-      <div class="sm:flex sm:items-center px-8 pt-4">
-        <div class="sm:flex-auto">
-          <h1 class="text-base font-medium leading-6 text-neutral-800 dark:text-white"><%= req.translations.adminCreateServerTitle || 'Create Server' %></h1>
-          <p class="mt-1 tracking-tight text-sm text-neutral-500">Deploy a new Minecraft server with automatic software provisioning.</p>
+
+    <!-- Main Content Container -->
+    <div id="page-content" class="flex-1 px-8 pt-20 pb-16 max-w-6xl mx-auto space-y-6">
+      
+      <!-- Page Title -->
+      <div class="flex items-center justify-between border-b border-white/5 pb-4">
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white"><%= req.translations.adminCreateServerTitle || 'Create Server' %></h1>
+          <p class="text-xs text-neutral-400 mt-1">Provision a new dedicated Minecraft server instance.</p>
         </div>
+        <a href="/admin/servers" class="text-xs font-semibold text-neutral-400 hover:text-white transition">
+          Back to Servers
+        </a>
       </div>
 
-      <div id="nodeForm" class="mt-6 px-8 w-full">
-        <div class="bg-neutral-50 dark:bg-neutral-800/20 rounded-xl p-5 border border-neutral-200 dark:border-white/5">
-          <form id="createServerForm" method="POST" action="/admin/servers/create">
+      <form id="createServerForm" method="POST" action="/admin/servers/create" class="space-y-6">
+        
+        <!-- CARD 1: GENERAL CONFIGURATION -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('file-text', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">General Configuration</h2>
+          </div>
 
-            <!-- General Category -->
-            <h2 class="text-neutral-700 dark:text-neutral-300 text-lg font-semibold mb-4">General Configuration</h2>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label for="serverName" class="text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2"><%= req.translations.name || 'Server Name' %>:</label>
-                <div class="flex items-center space-x-2">
-                  <input id="serverName" name="name" class="rounded-xl focus:ring focus:ring-neutral-800/10 focus:border-neutral-800/20 text-neutral-800 dark:text-white text-sm mt-2 mb-4 w-full hover:bg-white/5 px-4 py-2 bg-neutral-400/10 dark:bg-neutral-600/20 placeholder:text-neutral-950/50 dark:placeholder:text-white/20 border border-neutral-800/10 dark:border-white/5" placeholder="<%= user.username %>'s server">
-                  <div class="flex-shrink-0 p-2 mb-1 -ml-5 cursor-pointer" onclick="generateRandomName()">
-                    <%- icon('refresh-cw', { size: 16, class: 'text-neutral-500 dark:text-neutral-300' }) %>
-                  </div>
-                </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label for="serverName" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Server Name <span class="text-red-400">*</span>
+              </label>
+              <div class="relative flex items-center">
+                <input id="serverName" name="name" required maxlength="64"
+                  class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition"
+                  placeholder="<%= user.username %>'s Minecraft Server">
+                <button type="button" onclick="generateRandomName()" title="Generate Random Name"
+                  class="absolute right-3 p-1 text-neutral-400 hover:text-white transition">
+                  <%- icon('refresh-cw', { size: 14 }) %>
+                </button>
               </div>
+            </div>
 
-              <div>
-                <label for="serverDescription" class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('file-text', { size: 14, class: 'shrink-0' }) %>
-                  <%= req.translations.description || 'Description' %>:
-                </label>
-                <input id="serverDescription" name="description" class="rounded-xl focus:ring focus:ring-neutral-800/10 focus:border-neutral-800/20 text-neutral-800 dark:text-white text-sm mt-2 mb-4 w-full hover:bg-white/5 px-4 py-2 bg-neutral-400/10 dark:bg-neutral-600/20 placeholder:text-neutral-950/50 dark:placeholder:text-white/20 border border-neutral-800/10 dark:border-white/5" placeholder="<%= user.username %>'s server description">
-              </div>
+            <div>
+              <label for="serverDescription" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Description <span class="text-neutral-500 font-normal">(optional)</span>
+              </label>
+              <input id="serverDescription" name="description" maxlength="128"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-neutral-500 focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition"
+                placeholder="Survival server for friends">
+            </div>
 
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('user', { size: 14, class: 'shrink-0' }) %>
-                  <%= req.translations.user || 'Owner' %>:
-                </label>
-                <select id="serverUser" name="ownerId" class="hidden">
-                  <% users.forEach(u => { %>
-                    <option value="<%= u.id %>" <%= u.id === user.id ? 'selected' : '' %>><%= u.username %></option>
+            <div>
+              <label for="serverUser" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Server Owner <span class="text-red-400">*</span>
+              </label>
+              <select id="serverUser" name="ownerId" required
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <% users.forEach(u => { %>
+                  <option value="<%= u.id %>" <%= u.id === user.id ? 'selected' : '' %> class="bg-neutral-900 text-white"><%= u.username %> (<%= u.email %>)</option>
+                <% }); %>
+              </select>
+            </div>
+
+            <div>
+              <label for="serverNode" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Node Location <span class="text-red-400">*</span>
+              </label>
+              <select id="serverNode" name="nodeId" required
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <% if (nodes.length > 0) { %>
+                  <% nodes.forEach(n => { %>
+                    <option value="<%= n.id %>" class="bg-neutral-900 text-white"><%= n.name %> — <%= n.address %></option>
                   <% }); %>
-                </select>
-                <div class="custom-select mt-2 mb-4" data-for="serverUser"></div>
-              </div>
-
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('server', { size: 14, class: 'shrink-0' }) %>
-                  <%= req.translations.Node || 'Node Location' %>:
-                </label>
-                <select id="serverNode" name="nodeId" class="hidden">
-                  <% if (nodes.length > 0) { %>
-                    <% nodes.forEach(n => { %>
-                      <option value="<%= n.id %>"><%= n.name %></option>
-                    <% }); %>
-                  <% } else { %>
-                    <option value="" disabled selected>No nodes available</option>
-                  <% } %>
-                </select>
-                <div class="custom-select mt-2 mb-4" data-for="serverNode"></div>
-              </div>
+                <% } else { %>
+                  <option value="" disabled selected class="bg-neutral-900 text-white">No active nodes available</option>
+                <% } %>
+              </select>
             </div>
-
-            <!-- Software & Version Category -->
-            <h2 class="text-neutral-700 dark:text-neutral-300 text-lg font-semibold mb-4">Minecraft Software & Runtime</h2>
-            <div class="grid grid-cols-3 gap-4 mb-6">
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('box', { size: 14, class: 'shrink-0' }) %>
-                  Server Software:
-                </label>
-                <select id="softwareType" name="softwareType" class="hidden">
-                  <option value="paper" selected>Paper (Recommended)</option>
-                  <option value="purpur">Purpur</option>
-                  <option value="vanilla">Vanilla</option>
-                  <option value="fabric">Fabric</option>
-                  <option value="forge">Forge</option>
-                  <option value="neoforge">NeoForge</option>
-                  <option value="spigot">Spigot</option>
-                </select>
-                <div class="custom-select mt-2 mb-4" data-for="softwareType"></div>
-              </div>
-
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('tag', { size: 14, class: 'shrink-0' }) %>
-                  Minecraft Version:
-                </label>
-                <select id="softwareVersion" name="softwareVersion" class="hidden">
-                  <option value="1.21.4" selected>1.21.4</option>
-                  <option value="1.21.3">1.21.3</option>
-                  <option value="1.21.1">1.21.1</option>
-                  <option value="1.20.4">1.20.4</option>
-                  <option value="1.20.1">1.20.1</option>
-                  <option value="1.19.4">1.19.4</option>
-                  <option value="1.18.2">1.18.2</option>
-                  <option value="1.16.5">1.16.5</option>
-                  <option value="1.12.2">1.12.2</option>
-                  <option value="1.8.8">1.8.8</option>
-                </select>
-                <div class="custom-select mt-2 mb-4" data-for="softwareVersion"></div>
-              </div>
-
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('terminal', { size: 14, class: 'shrink-0' }) %>
-                  Java Runtime Version:
-                </label>
-                <select id="javaVersion" name="javaVersion" class="hidden">
-                  <option value="21" selected>Java 21 (Recommended for 1.20.5+)</option>
-                  <option value="17">Java 17 (Recommended for 1.17 - 1.20.4)</option>
-                  <option value="11">Java 11 (Legacy 1.12 - 1.16)</option>
-                  <option value="8">Java 8 (Legacy 1.8.8)</option>
-                </select>
-                <div class="custom-select mt-2 mb-4" data-for="javaVersion"></div>
-              </div>
-            </div>
-
-            <!-- Startup Flags & Command Preview -->
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <label for="startupFlags" class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('command', { size: 14, class: 'shrink-0' }) %>
-                  Startup Flags:
-                </label>
-                <input id="startupFlags" name="flags" value="-Xms128M -Xmx{{SERVER_MEMORY}}M"
-                  class="rounded-xl focus:ring focus:ring-neutral-800/10 focus:border-neutral-800/20 text-neutral-800 dark:text-white text-sm mt-2 mb-4 w-full hover:bg-white/5 px-4 py-2 bg-neutral-400/10 dark:bg-neutral-600/20 border border-neutral-800/10 dark:border-white/5">
-              </div>
-
-              <div>
-                <label for="startupCommandPreview" class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('play', { size: 14, class: 'shrink-0' }) %>
-                  Startup Command Preview:
-                </label>
-                <input id="startupCommandPreview" readonly value="java -Xms128M -Xmx1024M -jar server.jar nogui"
-                  class="rounded-xl text-neutral-500 dark:text-neutral-400 text-sm mt-2 mb-4 w-full px-4 py-2 bg-neutral-200/50 dark:bg-neutral-800/50 border border-neutral-800/10 dark:border-white/5 cursor-not-allowed font-mono">
-              </div>
-            </div>
-
-            <!-- Server Settings Toggles -->
-            <h2 class="text-neutral-700 dark:text-neutral-300 text-lg font-semibold mb-4">Minecraft Server Settings</h2>
-            <div class="grid grid-cols-4 gap-4 mb-6">
-              <div class="bg-neutral-100 dark:bg-neutral-700/20 rounded-xl p-4 border border-neutral-300 dark:border-white/5">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-sm font-medium text-neutral-800 dark:text-white">Auto Restart</h3>
-                    <p class="text-xs text-neutral-500">Restart on crash</p>
-                  </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="autoRestart" id="autoRestart" checked class="sr-only peer" value="true">
-                    <div class="w-11 h-6 bg-neutral-300 dark:bg-neutral-700 peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-
-              <div class="bg-neutral-100 dark:bg-neutral-700/20 rounded-xl p-4 border border-neutral-300 dark:border-white/5">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-sm font-medium text-neutral-800 dark:text-white">Accept EULA</h3>
-                    <p class="text-xs text-neutral-500">Mojang EULA agreement</p>
-                  </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="eula" id="eula" checked class="sr-only peer" value="true">
-                    <div class="w-11 h-6 bg-neutral-300 dark:bg-neutral-700 peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-
-              <div class="bg-neutral-100 dark:bg-neutral-700/20 rounded-xl p-4 border border-neutral-300 dark:border-white/5">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-sm font-medium text-neutral-800 dark:text-white">Online Mode</h3>
-                    <p class="text-xs text-neutral-500">Mojang authentication</p>
-                  </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="onlineMode" id="onlineMode" checked class="sr-only peer" value="true">
-                    <div class="w-11 h-6 bg-neutral-300 dark:bg-neutral-700 peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-
-              <div class="bg-neutral-100 dark:bg-neutral-700/20 rounded-xl p-4 border border-neutral-300 dark:border-white/5">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h3 class="text-sm font-medium text-neutral-800 dark:text-white">Whitelist</h3>
-                    <p class="text-xs text-neutral-500">Player access control</p>
-                  </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" name="whitelist" id="whitelist" class="sr-only peer" value="true">
-                    <div class="w-11 h-6 bg-neutral-300 dark:bg-neutral-700 peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Resources Category -->
-            <h2 class="text-neutral-700 dark:text-neutral-300 text-lg font-semibold mb-4">Hardware Resources</h2>
-            <div class="grid grid-cols-3 gap-4 mb-6">
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('cpu', { size: 14, class: 'shrink-0' }) %>
-                  CPU Cores:
-                </label>
-                <input type="hidden" id="serverCPU" name="Cpu" value="100">
-                <div class="flex items-stretch mt-2 mb-1 gap-0">
-                  <input id="serverCPUDisplay" type="number" min="0.5" step="0.5" value="1"
-                    class="rounded-l-xl flex-1 focus:ring focus:ring-neutral-800/10 focus:border-neutral-800/20 text-neutral-800 dark:text-white text-sm hover:bg-white/5 px-4 py-2 bg-neutral-400/10 dark:bg-neutral-600/20 border border-r-0 border-neutral-800/10 dark:border-white/5">
-                  <select id="serverCPUUnit" class="rounded-r-xl text-sm px-2 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-white border border-neutral-800/10 dark:border-white/5 cursor-pointer">
-                    <option value="cores" selected>Cores</option>
-                    <option value="percent">%</option>
-                  </select>
-                </div>
-                <p class="text-xs text-neutral-400 mb-3">1 core = 100%</p>
-              </div>
-
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('memory-stick', { size: 14, class: 'shrink-0' }) %>
-                  Memory (RAM):
-                </label>
-                <input type="hidden" id="serverMemory" name="Memory" value="1024">
-                <div class="flex items-stretch mt-2 mb-1 gap-0">
-                  <input id="serverMemoryDisplay" type="number" min="1" value="1024"
-                    class="rounded-l-xl flex-1 focus:ring focus:ring-neutral-800/10 focus:border-neutral-800/20 text-neutral-800 dark:text-white text-sm hover:bg-white/5 px-4 py-2 bg-neutral-400/10 dark:bg-neutral-600/20 border border-r-0 border-neutral-800/10 dark:border-white/5">
-                  <select id="serverMemoryUnit" class="rounded-r-xl text-sm px-2 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-white border border-neutral-800/10 dark:border-white/5 cursor-pointer">
-                    <option value="1" selected>MB</option>
-                    <option value="1024">GB</option>
-                  </select>
-                </div>
-                <p class="text-xs text-neutral-400 mb-3">Min 128 MB</p>
-              </div>
-
-              <div>
-                <label class="flex items-center gap-1.5 text-neutral-700 dark:text-neutral-400 text-sm tracking-tight mb-2">
-                  <%- icon('database', { size: 14, class: 'shrink-0' }) %>
-                  Storage (Disk):
-                </label>
-                <input type="hidden" id="serverStorage" name="Storage" value="20480">
-                <div class="flex items-stretch mt-2 mb-1 gap-0">
-                  <input id="serverStorageDisplay" type="number" min="1" value="20"
-                    class="rounded-l-xl flex-1 focus:ring focus:ring-neutral-800/10 focus:border-neutral-800/20 text-neutral-800 dark:text-white text-sm hover:bg-white/5 px-4 py-2 bg-neutral-400/10 dark:bg-neutral-600/20 border border-r-0 border-neutral-800/10 dark:border-white/5">
-                  <select id="serverStorageUnit" class="rounded-r-xl text-sm px-2 py-2 bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-white border border-neutral-800/10 dark:border-white/5 cursor-pointer">
-                    <option value="1">MB</option>
-                    <option value="1024" selected>GB</option>
-                  </select>
-                </div>
-                <p class="text-xs text-neutral-400 mb-3">Min 128 MB</p>
-              </div>
-            </div>
-
-            <!-- Ports Section -->
-            <h2 class="text-neutral-700 dark:text-neutral-300 text-lg font-semibold mb-4">Port Allocation</h2>
-            <div class="mb-6">
-              <input type="hidden" id="serverPorts" name="Ports" value='[{"Port":"25565:25565","primary":true}]'>
-              <button type="button" id="assignPortsBtn" class="w-full inline-flex items-center justify-between rounded-xl bg-neutral-100 dark:bg-neutral-700/30 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-white px-4 py-2.5 text-sm font-medium border border-neutral-200 dark:border-white/5 transition">
-                <span class="flex items-center gap-2">
-                  <%- icon('radio-tower', { size: 14, class: 'shrink-0' }) %>
-                  Assign Ports
-                </span>
-                <span id="assignPortsCount" class="text-xs text-neutral-500 dark:text-neutral-400">Primary: 25565</span>
-              </button>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="col-span-2">
-              <button type="submit" class="w-full md:w-auto rounded-xl bg-neutral-950 dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 px-6 py-2.5 text-sm font-semibold shadow-md transition focus:outline focus:outline-2 focus:outline-offset-2">
-                <%= req.translations.create || 'Create Minecraft Server' %>
-              </button>
-            </div>
-
-          </form>
+          </div>
         </div>
-      </div>
+
+        <!-- CARD 2: HARDWARE RESOURCES -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('cpu', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Hardware Resources</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                CPU Allocation
+              </label>
+              <input type="hidden" id="serverCPU" name="Cpu" value="100">
+              <div class="flex items-stretch">
+                <input id="serverCPUDisplay" type="number" min="0.5" step="0.5" value="1"
+                  class="w-full rounded-l-xl border border-r-0 border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none">
+                <select id="serverCPUUnit"
+                  class="rounded-r-xl border border-white/10 bg-white/10 px-3 py-2.5 text-xs font-bold text-white cursor-pointer">
+                  <option value="cores" selected class="bg-neutral-900">Cores</option>
+                  <option value="percent" class="bg-neutral-900">%</option>
+                </select>
+              </div>
+              <p class="text-[11px] text-neutral-500 mt-1">1 Core = 100% CPU capacity</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Memory (RAM)
+              </label>
+              <input type="hidden" id="serverMemory" name="Memory" value="1024">
+              <div class="flex items-stretch">
+                <input id="serverMemoryDisplay" type="number" min="128" value="1024"
+                  class="w-full rounded-l-xl border border-r-0 border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none">
+                <select id="serverMemoryUnit"
+                  class="rounded-r-xl border border-white/10 bg-white/10 px-3 py-2.5 text-xs font-bold text-white cursor-pointer">
+                  <option value="1" selected class="bg-neutral-900">MB</option>
+                  <option value="1024" class="bg-neutral-900">GB</option>
+                </select>
+              </div>
+              <p class="text-[11px] text-neutral-500 mt-1">Recommended min: 1024 MB</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Storage (Disk)
+              </label>
+              <input type="hidden" id="serverStorage" name="Storage" value="20480">
+              <div class="flex items-stretch">
+                <input id="serverStorageDisplay" type="number" min="1" value="20"
+                  class="w-full rounded-l-xl border border-r-0 border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white focus:outline-none">
+                <select id="serverStorageUnit"
+                  class="rounded-r-xl border border-white/10 bg-white/10 px-3 py-2.5 text-xs font-bold text-white cursor-pointer">
+                  <option value="1" class="bg-neutral-900">MB</option>
+                  <option value="1024" selected class="bg-neutral-900">GB</option>
+                </select>
+              </div>
+              <p class="text-[11px] text-neutral-500 mt-1">Recommended min: 5 GB</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Connection Port
+              </label>
+              <input type="hidden" id="serverPorts" name="Ports" value='[{"Port":"25565:25565","primary":true}]'>
+              <button type="button" id="assignPortsBtn"
+                class="w-full inline-flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition">
+                <span>Assign Ports</span>
+                <span id="assignPortsCount" class="text-xs font-mono text-brand-green font-bold">25565</span>
+              </button>
+              <p class="text-[11px] text-neutral-500 mt-1">Auto-assigned primary node port</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 3: MINECRAFT SOFTWARE & RUNTIME -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('box', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Minecraft Software & Runtime</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <label for="softwareType" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Server Software
+              </label>
+              <select id="softwareType" name="softwareType"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="paper" selected class="bg-neutral-900 text-white">Paper (Recommended)</option>
+                <option value="purpur" class="bg-neutral-900 text-white">Purpur</option>
+                <option value="vanilla" class="bg-neutral-900 text-white">Vanilla</option>
+                <option value="fabric" class="bg-neutral-900 text-white">Fabric</option>
+                <option value="forge" class="bg-neutral-900 text-white">Forge</option>
+                <option value="neoforge" class="bg-neutral-900 text-white">NeoForge</option>
+                <option value="spigot" class="bg-neutral-900 text-white">Spigot</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="softwareVersion" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Minecraft Version
+              </label>
+              <select id="softwareVersion" name="softwareVersion"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="1.21.4" selected class="bg-neutral-900 text-white">1.21.4</option>
+                <option value="1.21.3" class="bg-neutral-900 text-white">1.21.3</option>
+                <option value="1.21.1" class="bg-neutral-900 text-white">1.21.1</option>
+                <option value="1.20.4" class="bg-neutral-900 text-white">1.20.4</option>
+                <option value="1.20.1" class="bg-neutral-900 text-white">1.20.1</option>
+                <option value="1.19.4" class="bg-neutral-900 text-white">1.19.4</option>
+                <option value="1.18.2" class="bg-neutral-900 text-white">1.18.2</option>
+                <option value="1.16.5" class="bg-neutral-900 text-white">1.16.5</option>
+                <option value="1.12.2" class="bg-neutral-900 text-white">1.12.2</option>
+                <option value="1.8.8" class="bg-neutral-900 text-white">1.8.8</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="javaVersion" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Java Runtime
+              </label>
+              <select id="javaVersion" name="javaVersion"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition cursor-pointer"
+                style="appearance:none; background-image:url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%23a3a3a3\' stroke-width=\'2\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'/%3E%3C/svg%3E'); background-repeat:no-repeat; background-position:right 1rem center; background-size:1rem; padding-right:2.5rem;">
+                <option value="21" selected class="bg-neutral-900 text-white">Java 21 (For 1.20.5+)</option>
+                <option value="17" class="bg-neutral-900 text-white">Java 17 (For 1.17 - 1.20.4)</option>
+                <option value="11" class="bg-neutral-900 text-white">Java 11 (Legacy 1.12 - 1.16)</option>
+                <option value="8" class="bg-neutral-900 text-white">Java 8 (Legacy 1.8.8)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+            <div>
+              <label for="startupFlags" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Startup Flags
+              </label>
+              <input id="startupFlags" name="flags" value="-Xms128M -Xmx{{SERVER_MEMORY}}M"
+                class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-brand-green focus:outline-none focus:ring-1 focus:ring-brand-green transition font-mono text-xs">
+            </div>
+
+            <div>
+              <label for="startupCommandPreview" class="block text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
+                Startup Command Preview
+              </label>
+              <input id="startupCommandPreview" readonly value="java -Xms128M -Xmx1024M -jar server.jar nogui"
+                class="w-full rounded-xl border border-white/5 bg-black/40 px-4 py-2.5 text-xs text-neutral-400 font-mono cursor-not-allowed">
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 4: SERVER BEHAVIOR & SETTINGS -->
+        <div class="rounded-xl border border-white/5 bg-neutral-900/60 p-6 space-y-5">
+          <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+            <%- icon('settings', { size: 16, class: 'text-brand-green' }) %>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-white">Server Behavior & Settings</h2>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-white">Auto Restart</p>
+                <p class="text-[11px] text-neutral-400">Restart on crash</p>
+              </div>
+              <input type="checkbox" name="autoRestart" id="autoRestart" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+            </div>
+
+            <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-white">Accept EULA</p>
+                <p class="text-[11px] text-neutral-400">Mojang agreement</p>
+              </div>
+              <input type="checkbox" name="eula" id="eula" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+            </div>
+
+            <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-white">Online Mode</p>
+                <p class="text-[11px] text-neutral-400">Mojang auth</p>
+              </div>
+              <input type="checkbox" name="onlineMode" id="onlineMode" checked value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+            </div>
+
+            <div class="rounded-xl border border-white/5 bg-white/5 p-4 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-white">Whitelist</p>
+                <p class="text-[11px] text-neutral-400">Access control</p>
+              </div>
+              <input type="checkbox" name="whitelist" id="whitelist" value="true" class="w-4 h-4 rounded border-white/10 bg-neutral-800 text-brand-green focus:ring-brand-green">
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTON -->
+        <div class="pt-2 flex justify-end">
+          <button type="submit"
+            class="rounded-xl bg-brand-green px-8 py-3 text-sm font-bold text-black hover:bg-brand-green-hover transition shadow-lg cursor-pointer">
+            Create Minecraft Server
+          </button>
+        </div>
+
+      </form>
     </div>
   </div>
 </main>
-
-<div id="portsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4">
-  <div class="w-full max-w-4xl rounded-2xl border border-neutral-200 dark:border-neutral-700/60 bg-white dark:bg-neutral-900 shadow-xl">
-    <div class="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-700/60 px-5 py-4">
-      <h2 class="text-sm font-semibold text-neutral-800 dark:text-white">Assign Server Ports</h2>
-      <button type="button" id="closePortsModal" class="p-1 rounded-lg text-neutral-400 hover:text-neutral-800 dark:hover:text-white transition">
-        <%- icon('x', { size: 16, class: 'shrink-0' }) %>
-      </button>
-    </div>
-    <div class="p-5">
-      <div id="portsRows" class="space-y-3"></div>
-      <button type="button" id="addPortRow" class="mt-4 rounded-xl border border-neutral-200 dark:border-white/10 px-3 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5 transition">Add Port</button>
-    </div>
-    <div class="flex justify-end gap-2 border-t border-neutral-200 dark:border-neutral-700/60 px-5 py-4">
-      <button type="button" id="savePortsModal" class="rounded-xl bg-neutral-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-neutral-900 transition hover:bg-neutral-700 dark:hover:bg-neutral-100">Save Ports</button>
-    </div>
-  </div>
-</div>
-
-<%- include('../../components/toast') %>
-<%- include('../../components/loadingPopup') %>
 
 <script nonce="<%- nonce %>">
   document.addEventListener('DOMContentLoaded', () => {
@@ -316,7 +305,6 @@
     const serverMemoryInput = document.getElementById('serverMemory');
     const form = document.getElementById('createServerForm');
 
-    // Dynamically fetch versions when software type changes
     async function loadSoftwareVersions(type) {
       try {
         const res = await fetch('/api/mcjars/versions/' + type);
@@ -327,6 +315,7 @@
             const opt = document.createElement('option');
             opt.value = ver;
             opt.textContent = ver;
+            opt.className = 'bg-neutral-900 text-white';
             softwareVersionSelect.appendChild(opt);
           });
           softwareVersionSelect.selectedIndex = 0;
@@ -352,7 +341,6 @@
       } else {
         javaVersionSelect.value = '8';
       }
-      javaVersionSelect.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     function updateCommandPreview() {
@@ -371,19 +359,30 @@
     });
 
     startupFlagsInput.addEventListener('input', updateCommandPreview);
-    serverMemoryInput.addEventListener('input', updateCommandPreview);
 
-    // Initial load
-    updateCommandPreview();
+    function syncUnit(displayId, unitId, hiddenId) {
+      const display = document.getElementById(displayId);
+      const unit = document.getElementById(unitId);
+      const hidden = document.getElementById(hiddenId);
+      function update() {
+        hidden.value = Math.round(parseFloat(display.value || 0) * parseInt(unit.value));
+        updateCommandPreview();
+      }
+      display.addEventListener('input', update);
+      unit.addEventListener('change', update);
+      update();
+    }
+    syncUnit('serverCPUDisplay', 'serverCPUUnit', 'serverCPU');
+    syncUnit('serverMemoryDisplay', 'serverMemoryUnit', 'serverMemory');
+    syncUnit('serverStorageDisplay', 'serverStorageUnit', 'serverStorage');
 
-    // Form submit
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const formData = new FormData(form);
       const data = Object.fromEntries(formData);
 
       const loader = showLoadingPopup('Creating Server', 'Provisioning Minecraft server via Kinetictyl Agent...');
-      loader.updateProgress(30, 'Setting up software and runtime...');
+      loader.updateProgress(40, 'Setting up server environment...');
 
       fetch('/admin/servers/create', {
         method: 'POST',
@@ -399,30 +398,14 @@
           setTimeout(() => {
             loader.close();
             showToast('Minecraft server created and queued for deployment!', 'success');
-            setTimeout(() => { window.location.href = '/admin/servers'; }, 800);
-          }, 500);
+            setTimeout(() => { window.location.href = '/admin/servers'; }, 600);
+          }, 400);
         })
         .catch(err => {
           loader.close();
           showToast('Failed to create server: ' + err.message, 'error');
         });
     });
-
-    // MB/GB sync helpers
-    function syncUnit(displayId, unitId, hiddenId) {
-      const display = document.getElementById(displayId);
-      const unit = document.getElementById(unitId);
-      const hidden = document.getElementById(hiddenId);
-      function update() {
-        hidden.value = Math.round(parseFloat(display.value || 0) * parseInt(unit.value));
-        updateCommandPreview();
-      }
-      display.addEventListener('input', update);
-      unit.addEventListener('change', update);
-      update();
-    }
-    syncUnit('serverMemoryDisplay', 'serverMemoryUnit', 'serverMemory');
-    syncUnit('serverStorageDisplay', 'serverStorageUnit', 'serverStorage');
   });
 
   const listA = ["Charged", "Fiery", "Mystical", "Dark", "Angry", "Enchanted", "Blazing", "Cursed", "Frozen", "Swift", "Ancient"];
@@ -435,4 +418,5 @@
   }
 </script>
 
-<script nonce="<%- nonce %>" src="/javascript/server-create.js"></script>
+<%- include('../../components/toast') %>
+<%- include('../../components/loadingPopup') %>
