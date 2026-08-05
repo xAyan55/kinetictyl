@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { rename } from 'node:fs/promises';
 import { cpus, freemem, totalmem } from 'node:os';
 import { join } from 'node:path';
-import logger from '../logger';
+import logger from '../logger.js';
 
 const storagePath = join(process.cwd(), 'storage/systemStats.json');
 const tempStoragePath = join(process.cwd(), 'storage/systemStats.tmp.json');

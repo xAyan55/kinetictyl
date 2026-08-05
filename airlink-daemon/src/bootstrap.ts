@@ -1,18 +1,48 @@
 // this module runs its logic immediately when imported.
-// it must be the first import in app.ts so it runs before config.ts reads Bun.env.
-//
-// when bun starts, it loads .env automatically — but only if the file exists.
-// if .env is missing (first run), bun skips it. this module creates it from
-// the embedded template and manually injects the values into process.env
-// so config.ts sees them as if bun had loaded the file normally.
+// it must be the first import in app.ts so it runs before config.ts reads env.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// bun --compile bundles these into the binary as static assets
-import envTemplate from '../example.env' with { type: 'text' };
-import defaultConfig from '../storage/config.json';
-import defaultFileSpecifier from '../storage/fileSpecifier.json';
+function getFileContent(filePath: string, fallback: string): string {
+  try {
+    if (existsSync(filePath)) {
+      return readFileSync(filePath, 'utf-8');
+    }
+  } catch {
+    // fallback
+  }
+  return fallback;
+}
+
+const defaultEnvContent = `remote=http://localhost:3000
+key=default_key_change_me_12345
+port=3001
+DEBUG=false
+version=1.0.0
+environment=production
+STATS_INTERVAL=10000
+`;
+
+const defaultConfigContent = `{
+  "meta": {
+    "version": "1.0.1",
+    "codename": "Glazzer Fridge"
+  }
+}`;
+
+const defaultFileSpecifierContent = `{
+  "Web Development": ["html", "css", "js", "ts", "jsx", "vue", "scss", "php"],
+  "Documents": ["pdf", "docx", "txt", "xlsx", "pptx", "md", "odt"],
+  "Images": ["jpg", "png", "gif", "bmp", "svg", "tiff", "webp"],
+  "Videos": ["mp4", "mkv", "avi", "mov", "wmv", "flv", "webm"],
+  "Audio": ["mp3", "wav", "aac", "flac", "ogg", "m4a"],
+  "Archives": ["zip", "rar", "7z", "tar", "gz", "bz2"],
+  "Code": ["c", "cpp", "java", "py", "rb", "go", "rs", "cs", "sh", "bat"],
+  "System Files": ["dll", "exe", "sys", "so", "bin", "deb", "rpm"],
+  "Configuration Files": ["json", "yaml", "xml", "ini", "env", "conf", "properties"],
+  "Database Files": ["db", "sqlite", "sql", "csv"]
+}`;
 
 function parseEnv(content: string): Record<string, string> {
   const result: Record<string, string> = {};
@@ -34,6 +64,8 @@ function parseEnv(content: string): Record<string, string> {
 const envPath = join(process.cwd(), '.env');
 
 if (!existsSync(envPath)) {
+  const exampleEnvPath = join(process.cwd(), 'example.env');
+  const envTemplate = getFileContent(exampleEnvPath, defaultEnvContent);
   writeFileSync(envPath, envTemplate, 'utf-8');
   const defaults = parseEnv(envTemplate);
   for (const [key, val] of Object.entries(defaults)) {
@@ -49,9 +81,9 @@ for (const dir of ['logs', 'storage', 'storage/alc', 'storage/alc/files', 'volum
 }
 
 if (!existsSync('storage/config.json')) {
-  writeFileSync('storage/config.json', JSON.stringify(defaultConfig, null, 2), 'utf-8');
+  writeFileSync('storage/config.json', defaultConfigContent, 'utf-8');
 }
 
 if (!existsSync('storage/fileSpecifier.json')) {
-  writeFileSync('storage/fileSpecifier.json', JSON.stringify(defaultFileSpecifier, null, 2), 'utf-8');
+  writeFileSync('storage/fileSpecifier.json', defaultFileSpecifierContent, 'utf-8');
 }

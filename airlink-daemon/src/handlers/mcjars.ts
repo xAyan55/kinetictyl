@@ -1,7 +1,7 @@
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import { pipeline } from 'stream/promises';
-import logger from '../logger';
+import logger from '../logger.js';
 
 export interface SoftwareCategory {
   id: string;

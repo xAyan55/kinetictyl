@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { type RadarPattern, type RadarScript, scanVolume } from '../handlers/radar/scan';
-import { type ZipOptions, zipScanVolume } from '../handlers/radar/zip';
-import logger from '../logger';
-import { validateContainerId } from '../validation';
+import { type RadarPattern, type RadarScript, scanVolume } from '../handlers/radar/scan.js';
+import { type ZipOptions, zipScanVolume } from '../handlers/radar/zip.js';
+import logger from '../logger.js';
+import { validateContainerId } from '../validation.js';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

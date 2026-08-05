@@ -1,5 +1,5 @@
-import { fetchMinecraftPlayers, isTransientError } from '../handlers/minecraft';
-import logger from '../logger';
+import { fetchMinecraftPlayers, isTransientError } from '../handlers/minecraft.js';
+import logger from '../logger.js';
 
 const EMPTY_RESPONSE = {
   players: [],

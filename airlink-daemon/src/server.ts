@@ -1,14 +1,14 @@
 import express, { Request as ExpressReq, Response as ExpressRes } from 'express';
 import http from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
-import config from './config';
-import { detectSystemJava } from './handlers/javaManager';
-import { sendCommand } from './handlers/processManager';
-import logger, { drawHeader } from './logger';
-import { handleHttpRequest } from './router';
-import { attachToContainer } from './ws/attach';
-import { subscribe } from './ws/events';
-import { startStatusPolling, stopStatusPolling } from './ws/status';
+import config from './config.js';
+import { detectSystemJava } from './handlers/javaManager.js';
+import { sendCommand } from './handlers/processManager.js';
+import logger, { drawHeader } from './logger.js';
+import { handleHttpRequest } from './router.js';
+import { attachToContainer } from './ws/attach.js';
+import { subscribe } from './ws/events.js';
+import { startStatusPolling, stopStatusPolling } from './ws/status.js';
 
 const app = express();
 app.use(express.json({ limit: '100mb' }));

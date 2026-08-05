@@ -1,7 +1,7 @@
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
 import { join } from 'path';
-import logger from '../logger';
+import logger from '../logger.js';
 
 export interface JavaInfo {
   version: string; // e.g. "8", "11", "17", "21"

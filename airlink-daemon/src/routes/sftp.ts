@@ -1,6 +1,6 @@
-import { generateCredential, getActiveSessionCount, revokeCredentialForServer } from '../handlers/sftp';
-import logger from '../logger';
-import { validateContainerId } from '../validation';
+import { generateCredential, getActiveSessionCount, revokeCredentialForServer } from '../handlers/sftp.js';
+import logger from '../logger.js';
+import { validateContainerId } from '../validation.js';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

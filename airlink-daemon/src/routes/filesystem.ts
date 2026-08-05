@@ -12,9 +12,9 @@ import {
   removeItem,
   renameItem,
   writeFileContent,
-} from '../handlers/fs';
-import logger from '../logger';
-import { validateContainerId } from '../validation';
+} from '../handlers/fs.js';
+import logger from '../logger.js';
+import { validateContainerId } from '../validation.js';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

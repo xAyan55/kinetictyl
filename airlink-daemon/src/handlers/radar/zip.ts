@@ -2,7 +2,7 @@ import { readFileSync, rmSync, statSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, resolve } from 'path';
 import { create as tarCreate } from 'tar';
-import { getServerDir } from '../processManager';
+import { getServerDir } from '../processManager.js';
 
 export interface ZipOptions {
   include?: string[];

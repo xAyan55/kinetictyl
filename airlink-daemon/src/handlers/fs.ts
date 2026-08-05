@@ -12,8 +12,8 @@ import {
 } from 'fs';
 import { basename, isAbsolute, join, relative, resolve } from 'path';
 import { create as tarCreate, extract as tarExtract } from 'tar';
-import logger from '../logger';
-import { getServerDir } from './processManager';
+import logger from '../logger.js';
+import { getServerDir } from './processManager.js';
 
 export interface FileEntry {
   name: string;

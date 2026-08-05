@@ -1,6 +1,6 @@
 import crypto, { timingSafeEqual } from 'crypto';
-import config from '../config';
-import logger from '../logger';
+import config from '../config.js';
+import logger from '../logger.js';
 
 const WINDOW_SECS = 30;
 const seenNonces = new Set<string>();

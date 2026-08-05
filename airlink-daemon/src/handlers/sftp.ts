@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import config from '../config';
-import logger from '../logger';
-import { getServerDir } from './processManager';
+import config from '../config.js';
+import logger from '../logger.js';
+import { getServerDir } from './processManager.js';
 
 export interface SftpCredential {
   username: string;

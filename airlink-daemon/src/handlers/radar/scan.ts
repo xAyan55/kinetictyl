@@ -1,6 +1,6 @@
 import { access, readdir, readFile, stat } from 'fs/promises';
 import { join, resolve } from 'path';
-import { getServerDir } from '../processManager';
+import { getServerDir } from '../processManager.js';
 
 export interface RadarPattern {
   type: 'filename' | 'extension' | 'content';

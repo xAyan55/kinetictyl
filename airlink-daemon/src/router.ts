@@ -1,6 +1,6 @@
-import config from './config';
-import logger from './logger';
-import { handleRoot, handleStats } from './routes/core';
+import config from './config.js';
+import logger from './logger.js';
+import { handleRoot, handleStats } from './routes/core.js';
 import {
   handleFsAppend,
   handleFsCreateEmpty,
@@ -16,7 +16,7 @@ import {
   handleFsUnzip,
   handleFsUpload,
   handleFsZip,
-} from './routes/filesystem';
+} from './routes/filesystem.js';
 import {
   handleContainerBackup,
   handleContainerBackupDelete,
@@ -33,12 +33,12 @@ import {
   handleContainerStats,
   handleContainerStatus,
   handleContainerStop,
-} from './routes/instances';
-import { handleMinecraftPlayers } from './routes/minecraft';
-import { handleRadarScan, handleRadarZip } from './routes/radar';
-import { handleSftpCreate, handleSftpRevoke, handleSftpStatus } from './routes/sftp';
-import { checkBasicAuth, getAllowedIpCheck, verifyHmac, withSecurityHeaders } from './security/hmac';
-import { checkRateLimit } from './security/rateLimit';
+} from './routes/instances.js';
+import { handleMinecraftPlayers } from './routes/minecraft.js';
+import { handleRadarScan, handleRadarZip } from './routes/radar.js';
+import { handleSftpCreate, handleSftpRevoke, handleSftpStatus } from './routes/sftp.js';
+import { checkBasicAuth, getAllowedIpCheck, verifyHmac, withSecurityHeaders } from './security/hmac.js';
+import { checkRateLimit } from './security/rateLimit.js';
 
 type Handler = (req: Request, params: Record<string, string>) => Promise<Response> | Response;
 

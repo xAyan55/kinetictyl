@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import { getServerMetrics, getServerStatus } from '../handlers/processManager';
+import { getServerMetrics, getServerStatus } from '../handlers/processManager.js';
 
 const POLL_MS = 2000;
 

@@ -1,6 +1,6 @@
 import type { WebSocket } from 'ws';
-import { getLogBuffer, processEvents } from '../handlers/processManager';
-import logger from '../logger';
+import { getLogBuffer, processEvents } from '../handlers/processManager.js';
+import logger from '../logger.js';
 
 export async function attachToContainer(uuid: string, ws: WebSocket & { _logCleanup?: () => void }): Promise<void> {
   try {

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
-import config from '../config';
-import { getTotalStats } from '../handlers/stats';
+import config from '../config.js';
+import { getTotalStats } from '../handlers/stats.js';
 
 let daemonVersion = '1.0.0';
 try {

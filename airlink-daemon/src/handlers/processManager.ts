@@ -3,8 +3,8 @@ import { EventEmitter } from 'events';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import pidusage from 'pidusage';
-import logger from '../logger';
-import { getJavaBinary } from './javaManager';
+import logger from '../logger.js';
+import { getJavaBinary } from './javaManager.js';
 
 export type ServerState = 'OFFLINE' | 'STARTING' | 'RUNNING' | 'STOPPING' | 'CRASHED';
 

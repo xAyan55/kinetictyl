@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, unlinkSync } from 'fs';
 import { basename, join, resolve } from 'path';
 import { create as tarCreate, extract as tarExtract } from 'tar';
-import { downloadServerJar, fetchMcJarsVersions } from '../handlers/mcjars';
+import { downloadServerJar, fetchMcJarsVersions } from '../handlers/mcjars.js';
 import {
   getServerDir,
   getServerMetrics,
@@ -12,9 +12,9 @@ import {
   sendCommand,
   startServer,
   stopServer,
-} from '../handlers/processManager';
-import logger from '../logger';
-import { validateContainerId } from '../validation';
+} from '../handlers/processManager.js';
+import logger from '../logger.js';
+import { validateContainerId } from '../validation.js';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
