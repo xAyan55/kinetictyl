@@ -1,4 +1,4 @@
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
+import { createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs';
 import { dirname } from 'path';
 import { pipeline } from 'stream/promises';
 import logger from '../logger.js';
@@ -59,6 +59,21 @@ const DEFAULT_HEADERS = {
   'Accept': '*/*',
 };
 
+async function saveResponseToFile(res: Response, destinationPath: string): Promise<boolean> {
+  try {
+    if (!res.ok) return false;
+    const arrayBuffer = await res.arrayBuffer();
+    if (!arrayBuffer || arrayBuffer.byteLength < 1000) return false;
+    const buffer = Buffer.from(arrayBuffer);
+    // Real JAR / ZIP files start with PK magic bytes (0x50, 0x4B)
+    if (buffer[0] !== 0x50 || buffer[1] !== 0x4B) return false;
+    writeFileSync(destinationPath, buffer);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function downloadServerJar(type: string, version: string, destinationPath: string, onLog?: (msg: string) => void): Promise<boolean> {
   const cleanType = type.toLowerCase();
   const dir = dirname(destinationPath);
@@ -86,10 +101,7 @@ export async function downloadServerJar(type: string, version: string, destinati
           const downloadUrl = `https://api.papermc.io/v2/projects/${project}/versions/${version}/builds/${latestBuild}/downloads/${project}-${version}-${latestBuild}.jar`;
           log(`Fetching ${project} build #${latestBuild}...`);
           const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-          if (res.ok && res.body) {
-            const fileStream = createWriteStream(destinationPath);
-            // @ts-ignore
-            await pipeline(res.body, fileStream);
+          if (await saveResponseToFile(res, destinationPath)) {
             log(`Successfully downloaded ${project} ${version} build #${latestBuild}.`);
             return true;
           }
@@ -106,10 +118,7 @@ export async function downloadServerJar(type: string, version: string, destinati
       log(`Checking Purpur API for version ${version}...`);
       const downloadUrl = `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
       const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-      if (res.ok && res.body) {
-        const fileStream = createWriteStream(destinationPath);
-        // @ts-ignore
-        await pipeline(res.body, fileStream);
+      if (await saveResponseToFile(res, destinationPath)) {
         log(`Successfully downloaded Purpur ${version}.`);
         return true;
       }
@@ -133,10 +142,7 @@ export async function downloadServerJar(type: string, version: string, destinati
             const downloadUrl = pData.downloads?.server?.url;
             if (downloadUrl) {
               const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-              if (res.ok && res.body) {
-                const fileStream = createWriteStream(destinationPath);
-                // @ts-ignore
-                await pipeline(res.body, fileStream);
+              if (await saveResponseToFile(res, destinationPath)) {
                 log(`Successfully downloaded Vanilla ${version} via Mojang.`);
                 return true;
               }
@@ -155,10 +161,7 @@ export async function downloadServerJar(type: string, version: string, destinati
       log(`Checking Fabric Meta API for version ${version}...`);
       const downloadUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/0.16.10/1.0.1/server/jar`;
       const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-      if (res.ok && res.body) {
-        const fileStream = createWriteStream(destinationPath);
-        // @ts-ignore
-        await pipeline(res.body, fileStream);
+      if (await saveResponseToFile(res, destinationPath)) {
         log(`Successfully downloaded Fabric ${version} via Fabric Meta API.`);
         return true;
       }
@@ -181,15 +184,9 @@ export async function downloadServerJar(type: string, version: string, destinati
     try {
       log(`Trying mirror: ${url}`);
       const res = await fetch(url, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-      if (res.ok && res.body) {
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('html') && !contentType.includes('json')) {
-          const fileStream = createWriteStream(destinationPath);
-          // @ts-ignore
-          await pipeline(res.body, fileStream);
-          log(`Successfully downloaded ${cleanType} ${version} via mirror.`);
-          return true;
-        }
+      if (await saveResponseToFile(res, destinationPath)) {
+        log(`Successfully downloaded ${cleanType} ${version} via mirror.`);
+        return true;
       }
     } catch {}
   }

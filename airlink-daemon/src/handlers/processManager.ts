@@ -326,9 +326,9 @@ export function getServerStatus(uuid: string): {
     return { running: false, state: managed ? managed.state : 'OFFLINE' };
   }
 
-  const pid = managed.process.pid;
+  const pid = managed.process ? managed.process.pid : undefined;
   const uptime = managed.startedAt ? Math.floor((Date.now() - managed.startedAt.getTime()) / 1000) : 0;
-  return { running: true, state: managed.state, pid, uptime };
+  return { running: managed.state === 'RUNNING', state: managed.state, pid, uptime };
 }
 
 export async function getServerMetrics(uuid: string): Promise<{
