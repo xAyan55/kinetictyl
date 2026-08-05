@@ -44,59 +44,68 @@ export async function fetchMcJarsVersions(type: string): Promise<string[]> {
   return ['1.21.4', '1.21.3', '1.21.1', '1.21', '1.20.6', '1.20.4', '1.20.2', '1.20.1', '1.19.4', '1.18.2', '1.16.5', '1.12.2', '1.8.8'];
 }
 
-export async function downloadServerJar(type: string, version: string, destinationPath: string): Promise<boolean> {
+export async function downloadServerJar(type: string, version: string, destinationPath: string, onLog?: (msg: string) => void): Promise<boolean> {
   const cleanType = type.toLowerCase();
   const dir = dirname(destinationPath);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
   }
 
-  logger.info(`Downloading server jar for ${cleanType} ${version} to ${destinationPath}`);
+  const log = (msg: string) => {
+    logger.info(msg);
+    if (onLog) onLog(msg);
+  };
+
+  log(`Downloading server jar for ${cleanType} ${version} to ${destinationPath}`);
 
   // 1. Dedicated PaperMC API provider (fetches exact latest build)
   if (cleanType === 'paper') {
     try {
+      log(`Checking PaperMC API for version ${version}...`);
       const vRes = await fetch(`https://api.papermc.io/v2/projects/paper/versions/${version}`);
       if (vRes.ok) {
         const vData = (await vRes.json()) as any;
         if (Array.isArray(vData.builds) && vData.builds.length > 0) {
           const latestBuild = vData.builds[vData.builds.length - 1];
           const downloadUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}/builds/${latestBuild}/downloads/paper-${version}-${latestBuild}.jar`;
+          log(`Fetching Paper build #${latestBuild}...`);
           const res = await fetch(downloadUrl, { redirect: 'follow' });
           if (res.ok && res.body) {
             const fileStream = createWriteStream(destinationPath);
             // @ts-ignore
             await pipeline(res.body, fileStream);
-            logger.ok(`Downloaded Paper ${version} build ${latestBuild} via PaperMC API`);
+            log(`Successfully downloaded Paper ${version} build #${latestBuild}.`);
             return true;
           }
         }
       }
     } catch (err) {
-      logger.warn(`PaperMC direct download failed: ${err}`);
+      log(`PaperMC direct download notice: ${err}`);
     }
   }
 
   // 2. Dedicated Purpur API provider
   if (cleanType === 'purpur') {
     try {
+      log(`Checking Purpur API for version ${version}...`);
       const downloadUrl = `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
       const res = await fetch(downloadUrl, { redirect: 'follow' });
       if (res.ok && res.body) {
         const fileStream = createWriteStream(destinationPath);
         // @ts-ignore
         await pipeline(res.body, fileStream);
-        logger.ok(`Downloaded Purpur ${version} via Purpur API`);
+        log(`Successfully downloaded Purpur ${version}.`);
         return true;
       }
     } catch (err) {
-      logger.warn(`Purpur direct download failed: ${err}`);
+      log(`Purpur direct download notice: ${err}`);
     }
   }
 
   // 3. Dedicated Mojang Vanilla Provider
   if (cleanType === 'vanilla') {
     try {
+      log(`Checking Mojang Manifest for Vanilla version ${version}...`);
       const mRes = await fetch('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json');
       if (mRes.ok) {
         const mData = (await mRes.json()) as any;
@@ -112,7 +121,7 @@ export async function downloadServerJar(type: string, version: string, destinati
                 const fileStream = createWriteStream(destinationPath);
                 // @ts-ignore
                 await pipeline(res.body, fileStream);
-                logger.ok(`Downloaded Vanilla ${version} via Mojang API`);
+                log(`Successfully downloaded Vanilla ${version} via Mojang.`);
                 return true;
               }
             }
@@ -120,24 +129,25 @@ export async function downloadServerJar(type: string, version: string, destinati
         }
       }
     } catch (err) {
-      logger.warn(`Mojang Vanilla download failed: ${err}`);
+      log(`Mojang Vanilla download notice: ${err}`);
     }
   }
 
   // 4. Dedicated Fabric Provider
   if (cleanType === 'fabric') {
     try {
+      log(`Checking Fabric Meta API for version ${version}...`);
       const downloadUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/0.16.10/1.0.1/server/jar`;
       const res = await fetch(downloadUrl, { redirect: 'follow' });
       if (res.ok && res.body) {
         const fileStream = createWriteStream(destinationPath);
         // @ts-ignore
         await pipeline(res.body, fileStream);
-        logger.ok(`Downloaded Fabric ${version} server jar via Fabric Meta API`);
+        log(`Successfully downloaded Fabric ${version} via Fabric Meta API.`);
         return true;
       }
     } catch (err) {
-      logger.warn(`Fabric download failed: ${err}`);
+      log(`Fabric download notice: ${err}`);
     }
   }
 
@@ -151,6 +161,7 @@ export async function downloadServerJar(type: string, version: string, destinati
 
   for (const url of mirrorUrls) {
     try {
+      log(`Trying fallback mirror: ${url}`);
       const res = await fetch(url, { redirect: 'follow' });
       if (res.ok && res.body) {
         const contentType = res.headers.get('content-type') || '';
@@ -158,7 +169,7 @@ export async function downloadServerJar(type: string, version: string, destinati
           const fileStream = createWriteStream(destinationPath);
           // @ts-ignore
           await pipeline(res.body, fileStream);
-          logger.ok(`Downloaded ${cleanType} ${version} via mirror: ${url}`);
+          log(`Successfully downloaded ${cleanType} ${version} via mirror.`);
           return true;
         }
       }

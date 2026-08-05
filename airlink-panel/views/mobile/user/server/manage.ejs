@@ -396,13 +396,7 @@ function scheduleReconnect() {
 connectWebSocket();
 
     function isDaemonInfraError(text) {
-        return text.includes('Failed to attach to container') ||
-               text.includes('no such container') ||
-               text.includes('No such container') ||
-               text.includes('container not available') ||
-               text.includes('Attach failed') ||
-               text.includes('HTTP code 404') ||
-               text.includes('HTTP code 500');
+        return false;
     }
 
     const ANSI_RE   = /\x1b(?:\[[0-9;]*[A-Za-z]|\][^\x07\x1b]*(?:\x07|\x1b\\)|[@-Z\\-_]|[\u0080-\u009F])/g;

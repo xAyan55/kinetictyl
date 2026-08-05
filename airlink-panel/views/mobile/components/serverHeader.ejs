@@ -6,7 +6,15 @@
 
     <% if (typeof serverStatus !== 'undefined') { %>
       <div class="ml-3" data-server-status-container>
-        <% if (serverStatus.online) { %>
+        <% if (typeof server !== 'undefined' && (server.Installing || server.Queued || serverStatus.installing)) { %>
+          <div class="flex items-center px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-blue-400 shadow-sm">
+            <span class="relative flex h-2 w-2 mr-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+            </span>
+            <span id="server-status-text" class="text-xs font-semibold text-blue-400">Installing</span>
+          </div>
+        <% } else if (serverStatus.online) { %>
           <div class="flex items-center px-2 py-1 rounded-md bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm">
             <span class="relative flex h-2 w-2 mr-2">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

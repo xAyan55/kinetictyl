@@ -12,6 +12,8 @@ interface ServerStatus {
   online: boolean;
   starting: boolean;
   stopping: boolean;
+  installing: boolean;
+  state: string;
   uptime: number | null;
   startedAt: string | null;
   error?: string;
@@ -29,10 +31,13 @@ export async function getServerStatus(serverInfo: ServerInfo): Promise<ServerSta
     });
 
     const data = response.data;
+    const rawState = (data?.state || 'offline').toLowerCase();
     const status: ServerStatus = {
       online: false,
-      starting: false,
-      stopping: false,
+      starting: rawState === 'starting',
+      stopping: rawState === 'stopping',
+      installing: rawState === 'installing',
+      state: rawState,
       uptime: null,
       startedAt: null,
     };
@@ -51,6 +56,8 @@ export async function getServerStatus(serverInfo: ServerInfo): Promise<ServerSta
       online: false,
       starting: false,
       stopping: false,
+      installing: false,
+      state: 'offline',
       uptime: null,
       startedAt: null,
       daemonOffline: true,

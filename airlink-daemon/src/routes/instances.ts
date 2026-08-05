@@ -3,6 +3,7 @@ import { basename, join, resolve } from 'path';
 import { create as tarCreate, extract as tarExtract } from 'tar';
 import { downloadServerJar, fetchMcJarsVersions } from '../handlers/mcjars.js';
 import {
+  appendInstallationLog,
   getServerDir,
   getServerMetrics,
   getServerStatus,
@@ -10,6 +11,8 @@ import {
   prepareServerFiles,
   restartServer,
   sendCommand,
+  setServerInstalled,
+  setServerInstalling,
   startServer,
   stopServer,
 } from '../handlers/processManager.js';
@@ -46,14 +49,23 @@ export async function handleContainerInstaller(req: Request): Promise<Response> 
   const targetJarPath = join(serverDir, 'server.jar');
 
   try {
+    setServerInstalling(id);
+    appendInstallationLog(id, `Beginning native server installation for server ${id}...`);
+
     let ver = softwareVersion;
     if (!ver || ver === 'latest') {
       const versions = await fetchMcJarsVersions(softwareType);
       ver = versions[0] || '1.21.4';
     }
 
+    appendInstallationLog(id, `Target Software: ${softwareType.toUpperCase()} | Version: ${ver} | Java Version: ${javaVersion} | Allocated RAM: ${memory}MB | Primary Port: ${port}`);
     logger.info(`Installing server ${id} (${softwareType} ${ver})`);
-    await downloadServerJar(softwareType, ver, targetJarPath);
+
+    await downloadServerJar(softwareType, ver, targetJarPath, (msg) => {
+      appendInstallationLog(id, msg);
+    });
+
+    appendInstallationLog(id, `Configuring workspace files (eula.txt & server.properties)...`);
     prepareServerFiles({
       uuid: id,
       memory,
@@ -62,8 +74,15 @@ export async function handleContainerInstaller(req: Request): Promise<Response> 
       softwareType,
       softwareVersion,
     });
+
+    appendInstallationLog(id, `Installation completed successfully! Server status set to READY.`);
+    setServerInstalled(id);
+
     return json({ message: `Server ${id} installed successfully` });
   } catch (error) {
+    const errStr = error instanceof Error ? error.message : String(error);
+    appendInstallationLog(id, `[ERROR] Server installation failed: ${errStr}`);
+    setServerInstalled(id);
     logger.error(`Error installing server ${id}:`, error);
     return json({ error: `Failed to install server ${id}` }, 500);
   }

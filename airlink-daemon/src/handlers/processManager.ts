@@ -6,7 +6,7 @@ import pidusage from 'pidusage';
 import logger from '../logger.js';
 import { getJavaBinary } from './javaManager.js';
 
-export type ServerState = 'OFFLINE' | 'STARTING' | 'RUNNING' | 'STOPPING' | 'CRASHED';
+export type ServerState = 'OFFLINE' | 'INSTALLING' | 'STARTING' | 'RUNNING' | 'STOPPING' | 'CRASHED';
 
 export interface StartServerConfig {
   uuid: string;
@@ -38,6 +38,46 @@ const processes = new Map<string, ManagedProcess>();
 export const processEvents = new EventEmitter();
 
 const MAX_LOG_BUFFER_SIZE = 250;
+
+export function setServerInstalling(uuid: string): void {
+  let managed = processes.get(uuid);
+  if (!managed) {
+    managed = {
+      process: null as any,
+      config: { uuid, memory: 1024, port: 25565 },
+      state: 'INSTALLING',
+      logBuffer: [],
+      autoRestartCount: 0,
+      stopRequested: false,
+      startedAt: new Date(),
+    };
+    processes.set(uuid, managed);
+  } else {
+    managed.state = 'INSTALLING';
+    managed.logBuffer = [];
+  }
+  processEvents.emit('stateChange', { uuid, state: 'INSTALLING' });
+}
+
+export function appendInstallationLog(uuid: string, line: string): void {
+  const managed = processes.get(uuid);
+  const formattedLine = `[Kinetictyl Installer] ${line}`;
+  if (managed) {
+    managed.logBuffer.push(formattedLine);
+    if (managed.logBuffer.length > MAX_LOG_BUFFER_SIZE) {
+      managed.logBuffer.shift();
+    }
+  }
+  processEvents.emit('log', { uuid, line: formattedLine });
+}
+
+export function setServerInstalled(uuid: string): void {
+  const managed = processes.get(uuid);
+  if (managed) {
+    managed.state = 'OFFLINE';
+  }
+  processEvents.emit('stateChange', { uuid, state: 'OFFLINE' });
+}
 
 export function getServerDir(uuid: string): string {
   const baseDir = resolve(process.cwd(), 'servers', uuid);

@@ -28,10 +28,9 @@ export async function checkForServerInstallation(
       return { installed: false, error: 'Server not found.' };
     }
 
-    // Fast path: if the DB says it's not installing and not queued, trust it.
-    // Avoids an HTTP call to the daemon on every page render for already-running servers.
-    if (!server.Installing && !server.Queued) {
-      return { installed: true, state: 'installed' };
+    // If the DB says it's installing or queued, return state: 'installing'
+    if (server.Installing || server.Queued) {
+      return { installed: false, state: 'installing' };
     }
 
     const now = Date.now();
@@ -55,14 +54,18 @@ export async function checkForServerInstallation(
     );
 
     const state = response.data.state as string;
-    const isInstalled = state === 'installed';
+    const isInstalled = state === 'installed' || state === 'offline';
+
+    if (state === 'installing') {
+      return { installed: false, state: 'installing' };
+    }
 
     cache.set(serverId, { data: state, timestamp: now });
 
     // Keep the DB in sync so next page load hits the fast path above.
     await prisma.server.update({
       where: { UUID: serverId },
-      data: { Installing: !isInstalled },
+      data: { Installing: false, Queued: false },
     });
 
     return { installed: isInstalled, state, failed: state === 'failed' };
