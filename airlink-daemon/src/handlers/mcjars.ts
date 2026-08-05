@@ -55,19 +55,52 @@ export async function fetchMcJarsVersions(type: string): Promise<string[]> {
 }
 
 const DEFAULT_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'User-Agent': 'Kinetictyl-Panel/1.0 (https://github.com/xAyan55/kinetictyl)',
   'Accept': '*/*',
 };
 
-async function saveResponseToFile(res: Response, destinationPath: string): Promise<boolean> {
+async function saveResponseWithProgress(
+  res: Response,
+  destinationPath: string,
+  onProgress?: (msg: string) => void
+): Promise<boolean> {
   try {
-    if (!res.ok) return false;
-    const arrayBuffer = await res.arrayBuffer();
-    if (!arrayBuffer || arrayBuffer.byteLength < 1000) return false;
-    const buffer = Buffer.from(arrayBuffer);
-    // Real JAR / ZIP files start with PK magic bytes (0x50, 0x4B)
-    if (buffer[0] !== 0x50 || buffer[1] !== 0x4B) return false;
-    writeFileSync(destinationPath, buffer);
+    if (!res.ok || !res.body) return false;
+    const contentLength = Number(res.headers.get('content-length')) || 0;
+    // @ts-ignore
+    const reader = res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let receivedBytes = 0;
+    let lastLoggedPct = -25;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      receivedBytes += value.length;
+
+      if (contentLength > 0 && onProgress) {
+        const pct = Math.floor((receivedBytes / contentLength) * 100);
+        if (pct >= lastLoggedPct + 25 || pct === 100) {
+          lastLoggedPct = pct;
+          const recMB = (receivedBytes / (1024 * 1024)).toFixed(1);
+          const totMB = (contentLength / (1024 * 1024)).toFixed(1);
+          onProgress(`Download progress: ${pct}% (${recMB} MB / ${totMB} MB)`);
+        }
+      }
+    }
+
+    const combined = new Uint8Array(receivedBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      combined.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    // Verify ZIP PK magic header
+    if (combined[0] !== 0x50 || combined[1] !== 0x4B) return false;
+
+    writeFileSync(destinationPath, combined);
     return true;
   } catch {
     return false;
@@ -88,14 +121,45 @@ export async function downloadServerJar(type: string, version: string, destinati
 
   log(`Downloading server jar for ${cleanType} ${version} to ${destinationPath}`);
 
-  // 1. Dedicated Purpur Provider (High performance Paper drop-in replacement)
-  if (cleanType === 'purpur' || cleanType === 'paper' || cleanType === 'folia' || cleanType === 'pufferfish') {
+  // 1. Dedicated Official PaperMC v3 Provider
+  if (cleanType === 'paper' || cleanType === 'folia') {
     try {
-      log(`Fetching latest ${cleanType} / Purpur build for Minecraft ${version}...`);
+      const project = cleanType === 'folia' ? 'folia' : 'paper';
+      log(`Contacting PaperMC v3 API for ${project.toUpperCase()} ${version}...`);
+      const vRes = await fetch(`https://fill.papermc.io/v3/projects/${project}/versions/${version}`, { headers: DEFAULT_HEADERS });
+      if (vRes.ok) {
+        const vData = (await vRes.json()) as any;
+        if (Array.isArray(vData.builds) && vData.builds.length > 0) {
+          const latestBuild = vData.builds[0]; // Builds are sorted latest first in v3
+          log(`Found PaperMC build #${latestBuild}. Fetching build info...`);
+          const bRes = await fetch(`https://fill.papermc.io/v3/projects/${project}/versions/${version}/builds/${latestBuild}`, { headers: DEFAULT_HEADERS });
+          if (bRes.ok) {
+            const bData = (await bRes.json()) as any;
+            const downloadUrl = bData.downloads?.['server:default']?.url;
+            if (downloadUrl) {
+              log(`Downloading ${project.toUpperCase()} ${version} build #${latestBuild}...`);
+              const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
+              if (await saveResponseWithProgress(res, destinationPath, log)) {
+                log(`Successfully downloaded PaperMC ${version} build #${latestBuild}.`);
+                return true;
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      log(`PaperMC v3 API notice: ${err}`);
+    }
+  }
+
+  // 2. Dedicated Purpur Provider
+  if (cleanType === 'purpur') {
+    try {
+      log(`Fetching Purpur build for version ${version}...`);
       const downloadUrl = `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
       const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-      if (await saveResponseToFile(res, destinationPath)) {
-        log(`Successfully downloaded ${cleanType.toUpperCase()} (${version}) via Purpur provider.`);
+      if (await saveResponseWithProgress(res, destinationPath, log)) {
+        log(`Successfully downloaded Purpur ${version}.`);
         return true;
       }
     } catch (err) {
@@ -103,7 +167,7 @@ export async function downloadServerJar(type: string, version: string, destinati
     }
   }
 
-  // 2. Dedicated Mojang Official Vanilla Provider
+  // 3. Dedicated Mojang Official Vanilla Provider
   if (cleanType === 'vanilla' || cleanType === 'paper' || cleanType === 'spigot') {
     try {
       log(`Fetching official Mojang manifest for version ${version}...`);
@@ -117,9 +181,9 @@ export async function downloadServerJar(type: string, version: string, destinati
             const pData = (await pRes.json()) as any;
             const downloadUrl = pData.downloads?.server?.url;
             if (downloadUrl) {
-              log(`Downloading official server.jar for ${version}...`);
+              log(`Downloading official Mojang server.jar for ${version}...`);
               const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-              if (await saveResponseToFile(res, destinationPath)) {
+              if (await saveResponseWithProgress(res, destinationPath, log)) {
                 log(`Successfully downloaded Vanilla ${version} via Mojang provider.`);
                 return true;
               }
@@ -132,13 +196,13 @@ export async function downloadServerJar(type: string, version: string, destinati
     }
   }
 
-  // 3. Dedicated Fabric Provider
+  // 4. Dedicated Fabric Provider
   if (cleanType === 'fabric') {
     try {
       log(`Checking Fabric Meta API for version ${version}...`);
       const downloadUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/0.16.10/1.0.1/server/jar`;
       const res = await fetch(downloadUrl, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-      if (await saveResponseToFile(res, destinationPath)) {
+      if (await saveResponseWithProgress(res, destinationPath, log)) {
         log(`Successfully downloaded Fabric ${version} via Fabric Meta provider.`);
         return true;
       }
@@ -147,22 +211,20 @@ export async function downloadServerJar(type: string, version: string, destinati
     }
   }
 
-  // 4. MCJars & ServerJars Fallback mirrors
+  // 5. Fallback mirrors
   const mirrorUrls = [
     `https://api.purpurmc.org/v2/purpur/${version}/latest/download`,
     `https://mcjars.app/api/v3/builds/${cleanType}/${version}/latest/download`,
     `https://mcjars.app/api/v2/builds/${cleanType}/${version}/latest/download`,
     `https://api.mcjars.app/v2/download/${cleanType}/${version}/latest`,
     `https://api.mcjars.app/v2/download/${cleanType}/${version}`,
-    `https://serverjars.com/api/v1/download/servers/${cleanType}/${version}`,
-    `https://serverjars.com/api/v1/download/${cleanType}/${version}`,
   ];
 
   for (const url of mirrorUrls) {
     try {
-      log(`Trying mirror: ${url}`);
+      log(`Trying fallback mirror: ${url}`);
       const res = await fetch(url, { headers: DEFAULT_HEADERS, redirect: 'follow' });
-      if (await saveResponseToFile(res, destinationPath)) {
+      if (await saveResponseWithProgress(res, destinationPath, log)) {
         log(`Successfully downloaded ${cleanType} ${version} via mirror.`);
         return true;
       }
