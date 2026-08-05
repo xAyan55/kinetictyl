@@ -30,6 +30,30 @@ const adminModule: Module = {
   router: () => {
     const router = Router();
 
+    router.get('/api/mcjars/versions/:type', async (req: Request, res: Response) => {
+      const typeParam = Array.isArray(req.params.type) ? req.params.type[0] : req.params.type;
+      const type = (typeParam || 'paper').toLowerCase();
+      try {
+        const apiRes = await axios.get(`https://api.mcjars.app/v2/builds/${type}`, { timeout: 5000 });
+        if (apiRes.data && Array.isArray(apiRes.data.versions)) {
+          return res.json({ versions: apiRes.data.versions });
+        }
+        if (apiRes.data && typeof apiRes.data === 'object') {
+          return res.json({ versions: Object.keys(apiRes.data) });
+        }
+      } catch {}
+      const fallbacks: Record<string, string[]> = {
+        paper: ['1.21.4', '1.21.3', '1.21.1', '1.20.4', '1.20.2', '1.20.1', '1.19.4', '1.18.2', '1.16.5', '1.12.2', '1.8.8'],
+        purpur: ['1.21.4', '1.21.3', '1.21.1', '1.20.4', '1.20.2', '1.20.1', '1.19.4', '1.18.2', '1.16.5'],
+        vanilla: ['1.21.4', '1.21.3', '1.21.1', '1.20.4', '1.20.1', '1.19.4', '1.18.2', '1.16.5', '1.12.2', '1.8.8'],
+        spigot: ['1.21.4', '1.21.1', '1.20.4', '1.20.1', '1.19.4', '1.18.2', '1.16.5', '1.12.2', '1.8.8'],
+        fabric: ['1.21.4', '1.21.3', '1.21.1', '1.20.4', '1.20.1', '1.19.4', '1.18.2', '1.16.5'],
+        forge: ['1.20.4', '1.20.1', '1.19.4', '1.18.2', '1.16.5', '1.12.2'],
+        neoforge: ['1.21.4', '1.21.1', '1.20.4'],
+      };
+      return res.json({ versions: fallbacks[type] || fallbacks.paper });
+    });
+
     router.get(
       '/admin/servers',
       isAuthenticated(true),
@@ -289,76 +313,31 @@ const adminModule: Module = {
           name,
           description,
           nodeId,
-          imageId,
           Ports,
           ports,
           Memory,
           Cpu,
           Storage,
-          dockerImage,
-          variables,
           ownerId,
-          allowStartupEdit,
-          instanceType,
-          osTemplate,
-          swap,
-          bandwidth,
-          rootPassword,
+          softwareType,
+          softwareVersion,
+          javaVersion,
+          flags,
+          eula,
+          onlineMode,
+          whitelist,
+          autoRestart,
         } = req.body;
 
-        const userId = +ownerId;
-
-        // ── LXC / VPS creation path ──────────────────────────────────────
-        if (instanceType === 'LXC') {
-          if (!name || !nodeId || !Memory || !Cpu || !Storage || !userId) {
-            res.status(400).send('Missing required fields for VPS creation');
-            return;
-          }
-
-          try {
-            const { ServerProvisioner } = await import('../../services/ServerProvisioner');
-            const server = await ServerProvisioner.provisionServer(userId, {
-              name,
-              description,
-              nodeId: parseInt(nodeId),
-              imageId: imageId ? parseInt(imageId) : 1,
-              memory: parseInt(Memory),
-              cpu: parseInt(Cpu),
-              storage: parseInt(Storage),
-            });
-
-            if (allowStartupEdit === 'true') {
-              await prisma.$executeRaw`UPDATE "Server" SET "allowStartupEdit" = true WHERE "id" = ${server.id}`;
-            }
-
-            res.status(200).send('VPS instance created successfully');
-          } catch (error: unknown) {
-            logger.error('Error creating LXC VPS:', error);
-            res.status(500).send('Error creating VPS instance');
-          }
-          return;
-        }
-
-        // ── Minecraft / Docker creation path (unchanged) ─────────────────
-        if (
-          !name ||
-          !description ||
-          !nodeId ||
-          !imageId ||
-          (!Ports && !ports) ||
-          !Memory ||
-          !Cpu ||
-          !Storage ||
-          !userId
-        ) {
+        const userId = parseInt(ownerId, 10);
+        if (!name || !nodeId || !Memory || !Cpu || !Storage || isNaN(userId)) {
           res.status(400).send('Missing required fields');
           return;
         }
 
-        // Validate that the selected port is allocated to the node and not already in use
         try {
           const node = await prisma.node.findUnique({
-            where: { id: parseInt(nodeId) }
+            where: { id: parseInt(nodeId, 10) },
           });
 
           if (!node) {
@@ -366,296 +345,76 @@ const adminModule: Module = {
             return;
           }
 
-          let allocatedPorts = [];
+          let allocatedPorts: number[] = [];
           try {
             if (node.allocatedPorts) {
               allocatedPorts = JSON.parse(node.allocatedPorts);
             }
           } catch (error) {
             logger.error('Error parsing allocated ports:', error);
-            res.status(500).send('Error validating port allocation');
-            return;
+          }
+          if (allocatedPorts.length === 0) {
+            allocatedPorts = [25565, 25566, 25567, 25568, 25569];
           }
 
           const existingServers = await prisma.server.findMany({
-            where: {
-              nodeId: parseInt(nodeId)
-            }
+            where: { nodeId: parseInt(nodeId, 10) },
           });
-
-          const image = await prisma.images.findUnique({ where: { id: parseInt(imageId) } });
-          if (!image) {
-            res.status(400).send('Image not found');
-            return;
-          }
-          const submittedPorts = ports ? normalizeServerPorts(ports) : parseServerPorts(`[{"Port":"${Ports}","primary":true}]`);
-          const minPorts = parseImagePortRequirements(image.portRequirements).length;
-          const portError = validatePortAssignments(submittedPorts, allocatedPorts, getUsedExternalPorts(existingServers), minPorts);
+          const submittedPorts = ports ? normalizeServerPorts(ports) : parseServerPorts(`[{"Port":"${Ports || '25565'}","primary":true}]`);
+          const portError = validatePortAssignments(submittedPorts, allocatedPorts, getUsedExternalPorts(existingServers), 1);
           if (portError) {
             res.status(400).send(portError);
             return;
           }
-        } catch (error) {
-          logger.error('Error validating port allocation:', error);
-          res.status(500).send('Error validating port allocation');
-          return;
-        }
 
-        const Port = serializeServerPorts(ports ? normalizeServerPorts(ports) : parseServerPorts(`[{"Port":"${Ports}","primary":true}]`));
+          const Port = serializeServerPorts(submittedPorts);
+          const soft = (softwareType || 'paper').toLowerCase();
+          const ver = softwareVersion || '1.21.4';
+          const java = javaVersion || '21';
+          const startFlags = flags || '-Xms128M -Xmx{{SERVER_MEMORY}}M';
+          const startupCommand = `java ${startFlags} -jar server.jar nogui`;
 
-        try {
-          const dockerImages = await prisma.images
-            .findUnique({
-              where: {
-                id: parseInt(imageId),
-              },
-            })
-            .then((image: any) => {
-              if (!image) {
-                return null;
-              }
-              return image.dockerImages;
-            });
-
-          if (!dockerImages) {
-            res.status(400).send('Docker image not found');
-            return;
-          }
-
-          const imagesDocker = JSON.parse(dockerImages);
-
-          type ImageDocker = { [key: string]: string };
-
-          const imageDocker: ImageDocker | undefined = imagesDocker.find(
-            (image: ImageDocker) => Object.keys(image).includes(dockerImage),
-          );
-
-          if (!imageDocker) {
-            res.status(400).send('Docker image not found');
-            return;
-          }
-
-          const image = await prisma.images.findUnique({
-            where: {
-              id: parseInt(imageId),
-            },
-          });
-
+          // Find or create default image record
+          let image = await prisma.images.findFirst({ where: { name: { contains: soft } } });
           if (!image) {
-            res.status(400).send('Image not found');
-            return;
+            image = await prisma.images.findFirst();
+          }
+          if (!image) {
+            image = await prisma.images.create({
+              data: {
+                name: 'Minecraft Server',
+                description: 'Native Minecraft Server',
+                startup: startupCommand,
+              },
+            });
           }
 
-          const StartCommand = image.startup;
-
-          if (!StartCommand) {
-            res.status(400).send('Image startup command not found');
-            return;
-          }
-
-          // Merge submitted variable values into the egg variable definitions
-          let imageVariables: Record<string, unknown>[] = [];
-          try { imageVariables = JSON.parse(image.variables || '[]'); } catch { /* keep empty */ }
-
-          const submittedVars = Array.isArray(variables) ? variables : [];
-          const mergedVariables = imageVariables.map((imgVar: Record<string, unknown>) => {
-            const envKey = String(imgVar.env_variable ?? imgVar.env ?? '');
-            const submitted = submittedVars.find(
-              (sv: Record<string, unknown>) => String(sv.env_variable ?? sv.env ?? '') === envKey,
-            );
-            return { ...imgVar, value: submitted?.value ?? imgVar.default_value ?? '' };
-          });
-
-          // Create server
           const createdServer = await prisma.server.create({
             data: {
-              name,
-              description,
+              name: name.trim(),
+              description: description ? description.trim() : null,
               ownerId: userId,
-              nodeId: parseInt(nodeId),
-              imageId: parseInt(imageId),
+              nodeId: parseInt(nodeId, 10),
+              imageId: image.id,
               Ports: Port || '[{"Port": "25565:25565", "primary": true}]',
-              Memory: (parseInt(Memory) || 1024),
-              Cpu: parseInt(Cpu) || 100,
-              Storage: parseInt(Storage) || 20480,
-              Variables: JSON.stringify(mergedVariables),
-              StartCommand,
-              dockerImage: JSON.stringify(imageDocker),
+              Memory: parseInt(Memory, 10) || 1024,
+              Cpu: parseInt(Cpu, 10) || 100,
+              Storage: parseInt(Storage, 10) || 20480,
+              softwareType: soft,
+              softwareVersion: ver,
+              javaVersion: java,
+              StartCommand: startupCommand,
+              Installing: true,
+              Queued: true,
             },
           });
 
-          // Update allowStartupEdit field using raw SQL
-          await prisma.$executeRaw`UPDATE "Server" SET "allowStartupEdit" = ${allowStartupEdit === 'true'} WHERE "id" = ${createdServer.id}`;
+          // Trigger deployment via QueueManager
+          const primaryPort = submittedPorts[0]?.externalPort || 25565;
+          const { QueueManager } = await import('../../services/QueueManager');
+          QueueManager.triggerDeployment(createdServer.UUID, [primaryPort]);
 
-          queueer.addTask(async () => {
-            const servers = await prisma.server.findMany({
-              where: {
-                Queued: true,
-              },
-              include: {
-                image: true,
-                node: true,
-              },
-            });
-
-            for (const server of servers) {
-              if (!server.Variables) {
-                await prisma.server.update({
-                  where: { id: server.id },
-                  data: { Queued: false },
-                });
-                continue;
-              }
-
-              let ServerEnv;
-              try {
-                ServerEnv = JSON.parse(server.Variables);
-
-                // Normalize variable shape — Pterodactyl uses env_variable, legacy uses env
-                ServerEnv = ServerEnv.map((v: Record<string, unknown>) => ({
-                  env: String(v.env_variable ?? v.env ?? ''),
-                  value: v.value ?? v.default_value ?? '',
-                }));
-
-                let serverPort = String(parseServerPorts(Port)[0]?.externalPort ?? '');
-                try {
-                  const parsedPorts = JSON.parse(server.Ports);
-                  const primary = parsedPorts.find((p: any) => p.primary);
-                  if (primary?.Port) {
-                    serverPort = String(primary.Port).split(':')[0];
-                  }
-                } catch { /* keep fallback */ }
-                ServerEnv.push({
-                  env: 'SERVER_PORT',
-                  value: serverPort,
-                });
-                ServerEnv.push({
-                  env: 'SERVER_MEMORY',
-                  value: String(server.Memory),
-                });
-                ServerEnv.push({
-                  env: 'SERVER_CPU',
-                  value: String(server.Cpu),
-                });
-              } catch (error: unknown) {
-                logger.error(`Error parsing Variables for server ID ${server.id}:`, error);
-                await prisma.server.update({
-                  where: { id: server.id },
-                  data: { Queued: false },
-                });
-                continue;
-              }
-
-              if (!Array.isArray(ServerEnv)) {
-                logger.error(`ServerEnv is not an array for server ID ${server.id}. Skipping...`);
-                await prisma.server.update({
-                  where: { id: server.id },
-                  data: { Queued: false },
-                });
-                continue;
-              }
-
-              const env = ServerEnv.reduce(
-                (
-                  acc: { [key: string]: any },
-                  curr: { env: string; value: any },
-                ) => {
-                  acc[curr.env] = curr.value;
-                  return acc;
-                },
-                {},
-              );
-
-              const daemonUrl = `${daemonSchemeSync()}://${server.node.address}:${server.node.port}`;
-
-              if (server.image?.scripts) {
-                let scripts: Record<string, unknown>;
-                try {
-                  scripts = JSON.parse(server.image.scripts);
-                } catch (error: unknown) {
-                  logger.error(`Error parsing scripts for server ID ${server.id}:`, error);
-                  await prisma.server.update({ where: { id: server.id }, data: { Queued: false } });
-                  continue;
-                }
-
-                try {
-                  // Pterodactyl egg format: scripts.installation has script, container, entrypoint
-                  if (scripts.installation && typeof scripts.installation === 'object') {
-                    const installation = scripts.installation as {
-                      script: string;
-                      container: string;
-                      entrypoint: string;
-                    };
-
-                    await axios.post(
-                      `${daemonUrl}/container/installer`,
-                      {
-                        id: server.UUID,
-                        script: installation.script,
-                        container: installation.container,
-                        entrypoint: installation.entrypoint || 'bash',
-                        env,
-                      },
-                      {
-                        auth: { username: 'CynexGP', password: server.node.key },
-                        headers: { 'Content-Type': 'application/json' },
-                        timeout: 600000,
-                      },
-                    );
-
-                  // Legacy ALC format: scripts.install is an array of file downloads
-                  } else if (Array.isArray(scripts.install)) {
-                    // Resolve the docker image so the daemon pulls it during
-                    // install rather than on the first Start click.
-                    let dockerImageValue: string | undefined = undefined;
-
-                    await axios.post(
-                      `${daemonUrl}/container/install`,
-                      {
-                        id: server.UUID,
-                        image: dockerImageValue,
-                        env,
-                        scripts: (scripts.install as any[]).map((s: any) => ({
-                          url: s.url,
-                          onStartup: s.onStart,
-                          ALVKT: s.ALVKT,
-                          fileName: s.fileName,
-                        })),
-                      },
-                      {
-                        auth: { username: 'CynexGP', password: server.node.key },
-                        headers: { 'Content-Type': 'application/json' },
-                      },
-                    );
-
-                    if (scripts.native && typeof scripts.native === 'object') {
-                      const native = scripts.native as { CMD: string; container: string };
-                      await axios.post(
-                        `${daemonUrl}/container/installer`,
-                        { id: server.UUID, env, script: native.CMD, container: native.container, entrypoint: 'bash' },
-                        {
-                          auth: { username: 'CynexGP', password: server.node.key },
-                          headers: { 'Content-Type': 'application/json' },
-                          timeout: 600000,
-                        },
-                      );
-                    }
-                  } else {
-                    logger.info(`No install scripts for server ${server.id}, marking as installed`);
-                  }
-
-                  await prisma.server.update({ where: { id: server.id }, data: { Queued: false } });
-                } catch (error: unknown) {
-                  logger.error(`Error sending install request for server ID ${server.id}:`, error);
-                  await prisma.server.update({ where: { id: server.id }, data: { Queued: false } });
-                }
-              } else {
-                logger.warn(`No scripts found for server ID ${server.id}, marking as installed`);
-                await prisma.server.update({ where: { id: server.id }, data: { Queued: false } });
-              }
-            }
-          });
-
+          logger.info(`Admin created server ${createdServer.name} (${createdServer.UUID})`);
           res.status(200).send('Server created successfully');
         } catch (error: unknown) {
           logger.error('Error creating server:', error);

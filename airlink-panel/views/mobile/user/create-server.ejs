@@ -15,12 +15,10 @@
   .form-input:focus { border-color: var(--theme-border, #a3a3a3); box-shadow: 0 0 0 3px var(--theme-border-subtle, rgba(0,0,0,0.05)); }
   html.dark .form-input:focus { border-color: var(--theme-border-subtle, rgba(255,255,255,0.2)); box-shadow: 0 0 0 3px var(--theme-border-subtle, rgba(255,255,255,0.04)); }
   .form-input::placeholder { color: var(--theme-text-placeholder, #a3a3a3); }
-  .form-input:disabled { opacity: 0.4; }
 
   .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--theme-text-muted, #737373); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.04em; }
   html.dark .form-label { color: var(--theme-text-muted, #737373); }
 
-  /* stepper */
   .stepper { display: flex; align-items: stretch; border: 1px solid var(--theme-border, #e5e5e5); border-radius: 12px; overflow: hidden; background: var(--theme-bg-input, #f9fafb); }
   html.dark .stepper { border-color: var(--theme-border-subtle, rgba(255,255,255,0.08)); background: var(--theme-bg-secondary, rgba(255,255,255,0.06)); }
   .stepper-btn {
@@ -38,7 +36,6 @@
   }
   html.dark .stepper-input { color: var(--theme-text, #e5e5e5); }
 
-  /* confirm sheet */
   .sheet-overlay {
     position: fixed; inset: 0; z-index: 60;
     background: var(--theme-overlay, rgba(0,0,0,0.45));
@@ -62,7 +59,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-5">
       <div>
-        <h1 class="text-base font-semibold text-neutral-900 dark:text-white">Create a server</h1>
+        <h1 class="text-base font-semibold text-neutral-900 dark:text-white">Create Minecraft Server</h1>
         <p class="text-xs text-neutral-500 mt-0.5"><%= currentCount %> of <%= serverLimit %> servers used</p>
       </div>
       <a href="/" class="text-sm text-neutral-500 active:opacity-60 transition">Cancel</a>
@@ -73,28 +70,28 @@
       <!-- Details -->
       <div class="bg-white dark:bg-neutral-800/20 rounded-2xl border border-neutral-200 dark:border-white/5 overflow-hidden">
         <div class="px-4 py-3 border-b border-neutral-100 dark:border-white/5">
-          <p class="text-sm font-semibold text-neutral-800 dark:text-white">Details</p>
+          <p class="text-sm font-semibold text-neutral-800 dark:text-white">General Information</p>
         </div>
         <div class="p-4 space-y-4">
           <div>
-            <label class="form-label">Name</label>
-            <input id="serverName" type="text" placeholder="My server" maxlength="64" class="form-input" autocomplete="off" autocapitalize="words">
+            <label class="form-label">Server Name</label>
+            <input id="serverName" type="text" placeholder="My Minecraft Server" maxlength="64" class="form-input" autocomplete="off">
           </div>
           <div>
             <label class="form-label">Description <span style="text-transform:none;font-weight:400;font-size:11px">(optional)</span></label>
-            <input id="serverDescription" type="text" placeholder="What's this for?" maxlength="128" class="form-input" autocomplete="off">
+            <input id="serverDescription" type="text" placeholder="Play with friends" maxlength="128" class="form-input" autocomplete="off">
           </div>
         </div>
       </div>
 
-      <!-- Node & Image -->
+      <!-- Node & Software -->
       <div class="bg-white dark:bg-neutral-800/20 rounded-2xl border border-neutral-200 dark:border-white/5 overflow-hidden">
         <div class="px-4 py-3 border-b border-neutral-100 dark:border-white/5">
-          <p class="text-sm font-semibold text-neutral-800 dark:text-white">Node & environment</p>
+          <p class="text-sm font-semibold text-neutral-800 dark:text-white">Software & Node Location</p>
         </div>
         <div class="p-4 space-y-4">
           <div>
-            <label class="form-label">Node</label>
+            <label class="form-label">Node Location</label>
             <select id="nodeId" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
               <option value="">Select a node</option>
               <% nodes.forEach(node => { %>
@@ -102,59 +99,42 @@
               <% }); %>
             </select>
           </div>
+
           <div>
-            <label class="form-label">Instance Type</label>
-            <select id="instanceType" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;" onchange="toggleInstanceType(this.value)">
-              <option value="MINECRAFT" selected>Minecraft Server</option>
-              <option value="LXC">VPS LXC Container</option>
+            <label class="form-label">Server Software</label>
+            <select id="softwareType" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
+              <option value="paper" selected>Paper (Recommended)</option>
+              <option value="purpur">Purpur</option>
+              <option value="vanilla">Vanilla</option>
+              <option value="fabric">Fabric</option>
+              <option value="forge">Forge</option>
+              <option value="neoforge">NeoForge</option>
+              <option value="spigot">Spigot</option>
             </select>
           </div>
 
-          <!-- Minecraft Specific Fields -->
-          <div id="minecraftFields" class="space-y-4">
-            <div>
-              <label class="form-label">Image</label>
-              <select id="imageId" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
-                <option value="">Select an image</option>
-                <% images.forEach(image => { %>
-                <option value="<%= image.id %>" data-docker="<%= image.dockerImages %>" data-port-requirements='<%= image.portRequirements || "[]" %>'><%= image.name %></option>
-                <% }); %>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Docker variant</label>
-              <select id="dockerImage" disabled class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
-                <option value="">Select image first</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Ports</label>
-              <button type="button" id="assignPortsBtn" class="form-input text-left">
-                <span id="assignPortsLabel">Assign ports</span>
-              </button>
-            </div>
+          <div>
+            <label class="form-label">Minecraft Version</label>
+            <select id="softwareVersion" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
+              <option value="1.21.4" selected>1.21.4</option>
+              <option value="1.21.3">1.21.3</option>
+              <option value="1.21.1">1.21.1</option>
+              <option value="1.20.4">1.20.4</option>
+              <option value="1.20.1">1.20.1</option>
+              <option value="1.19.4">1.19.4</option>
+              <option value="1.18.2">1.18.2</option>
+              <option value="1.16.5">1.16.5</option>
+            </select>
           </div>
 
-          <!-- LXC Specific Fields -->
-          <div id="lxcFields" class="space-y-4 hidden">
-            <div>
-              <label class="form-label">OS Template</label>
-              <select id="osTemplate" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
-                <option value="ubuntu/24.04" selected>Ubuntu 24.04</option>
-                <option value="ubuntu/22.04">Ubuntu 22.04</option>
-                <option value="debian/12">Debian 12</option>
-                <option value="debian/11">Debian 11</option>
-                <option value="almalinux/9">AlmaLinux 9</option>
-                <option value="rockylinux/9">Rocky Linux 9</option>
-                <option value="fedora/40">Fedora 40</option>
-                <option value="archlinux/current">Arch Linux</option>
-                <option value="alpine/3.20">Alpine 3.20</option>
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Root Password</label>
-              <input id="rootPassword" type="password" placeholder="Leave empty for auto-generated" class="form-input">
-            </div>
+          <div>
+            <label class="form-label">Java Version</label>
+            <select id="javaVersion" class="form-input" style="appearance:none;-webkit-appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;background-size:14px;padding-right:36px;">
+              <option value="21" selected>Java 21</option>
+              <option value="17">Java 17</option>
+              <option value="11">Java 11</option>
+              <option value="8">Java 8</option>
+            </select>
           </div>
         </div>
       </div>
@@ -162,7 +142,7 @@
       <!-- Resources -->
       <div class="bg-white dark:bg-neutral-800/20 rounded-2xl border border-neutral-200 dark:border-white/5 overflow-hidden">
         <div class="px-4 py-3 border-b border-neutral-100 dark:border-white/5">
-          <p class="text-sm font-semibold text-neutral-800 dark:text-white">Resources</p>
+          <p class="text-sm font-semibold text-neutral-800 dark:text-white">Resource Allocation</p>
         </div>
         <div class="p-4 space-y-4">
           <div>
@@ -172,14 +152,14 @@
             </label>
             <div class="stepper">
               <button type="button" class="stepper-btn" data-action="dec" data-target="Memory" data-step="128" data-min="128">−</button>
-              <input id="Memory" type="number" value="512" min="128" max="<%= resourceLimits.maxMemory %>" class="stepper-input">
+              <input id="Memory" type="number" value="1024" min="128" max="<%= resourceLimits.maxMemory %>" class="stepper-input">
               <button type="button" class="stepper-btn" data-action="inc" data-target="Memory" data-step="128" data-max="<%= resourceLimits.maxMemory %>">+</button>
             </div>
           </div>
           <div>
             <label class="form-label flex items-center gap-1.5">
               <%- icon('settings', { size: 14, class: 'shrink-0' }) %>
-              CPU — 50% = half a core, max <%= resourceLimits.maxCpu %>%
+              CPU — max <%= resourceLimits.maxCpu %>%
             </label>
             <div class="stepper">
               <button type="button" class="stepper-btn" data-action="dec" data-target="Cpu" data-step="50" data-min="50">−</button>
@@ -230,75 +210,11 @@
   </div>
 </div>
 
-<!-- Ports sheet -->
-<div class="sheet-overlay" id="portsOverlay">
-  <div class="sheet-box">
-    <div class="w-10 h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full mx-auto mb-4"></div>
-    <p class="text-base font-semibold text-neutral-900 dark:text-white mb-3">Assign ports</p>
-    <div id="requiredPortsList" class="space-y-2"></div>
-    <button id="portsOk" class="mt-5 w-full py-3 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-semibold transition active:scale-[0.98]">OK</button>
-  </div>
-</div>
-
 <%- include('../components/toast') %>
 <%- include('../components/loadingPopup') %>
 
 <script nonce="<%- nonce %>">
 (function () {
-  /* Image → docker cascade */
-  document.getElementById('imageId').addEventListener('change', function () {
-    const opt    = this.options[this.selectedIndex];
-    const raw    = opt.dataset.docker;
-    const docker = document.getElementById('dockerImage');
-    docker.innerHTML = '<option value="">Select variant</option>';
-    docker.disabled  = true;
-    if (!raw) return;
-    try {
-      JSON.parse(raw).forEach(obj => {
-        Object.keys(obj).forEach(key => {
-          const o = document.createElement('option');
-          o.value = key; o.textContent = key;
-          docker.appendChild(o);
-        });
-      });
-      docker.disabled = false;
-    } catch {}
-    updateRequiredPorts();
-  });
-
-  function getRequiredPorts() {
-    const image = document.getElementById('imageId');
-    const opt = image.options[image.selectedIndex];
-    try { return JSON.parse(opt?.dataset.portRequirements || '[]'); } catch { return []; }
-  }
-
-  function updateRequiredPorts() {
-    const ports = getRequiredPorts();
-    document.getElementById('assignPortsLabel').textContent = ports.length ? `Assign ports (${ports.length})` : 'Assign ports';
-  }
-
-  function escapeHtml(value) {
-    return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
-
-  document.getElementById('assignPortsBtn').addEventListener('click', () => {
-    const ports = getRequiredPorts();
-    const list = document.getElementById('requiredPortsList');
-    list.innerHTML = '';
-    if (!ports.length) {
-      list.innerHTML = '<p class="text-sm text-neutral-500">This image does not require ports.</p>';
-    } else {
-      ports.forEach((port, index) => {
-        const row = document.createElement('div');
-        row.className = 'rounded-xl border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-neutral-800/40 p-3';
-        row.innerHTML = `<div class="flex items-center justify-between gap-3"><span class="text-sm font-medium text-neutral-700 dark:text-neutral-200">${escapeHtml(port.name || `Port ${index + 1}`)}</span><span class="text-xs font-mono text-neutral-500">internal ${escapeHtml(port.internalPort || '')}</span></div>`;
-        list.appendChild(row);
-      });
-    }
-    document.getElementById('portsOverlay').classList.add('open');
-  });
-  document.getElementById('portsOk').addEventListener('click', () => document.getElementById('portsOverlay').classList.remove('open'));
-
   /* Stepper buttons */
   document.querySelectorAll('.stepper-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -333,51 +249,26 @@
   confirmCancel.addEventListener('click', () => { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); });
   overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); } });
 
-  window.toggleInstanceType = function(val) {
-    const minecraftFields = document.getElementById('minecraftFields');
-    const lxcFields = document.getElementById('lxcFields');
-    if (val === 'MINECRAFT') {
-      minecraftFields.classList.remove('hidden');
-      lxcFields.classList.add('hidden');
-    } else {
-      minecraftFields.classList.add('hidden');
-      lxcFields.classList.remove('hidden');
-    }
-  };
-
   /* Create */
   document.getElementById('createBtn').addEventListener('click', async function () {
     const errBox  = document.getElementById('errorMsg');
     const errText = document.getElementById('errorText');
     errBox.classList.add('hidden');
 
-    const name        = document.getElementById('serverName').value.trim();
-    const description = document.getElementById('serverDescription').value.trim();
-    const nodeId      = document.getElementById('nodeId').value;
-    const instanceType = document.getElementById('instanceType').value;
-    const Memory      = parseInt(document.getElementById('Memory').value);
-    const Cpu         = parseInt(document.getElementById('Cpu').value);
-    const Storage     = parseInt(document.getElementById('Storage').value);
+    const name            = document.getElementById('serverName').value.trim();
+    const description     = document.getElementById('serverDescription').value.trim();
+    const nodeId          = document.getElementById('nodeId').value;
+    const softwareType    = document.getElementById('softwareType').value;
+    const softwareVersion = document.getElementById('softwareVersion').value;
+    const javaVersion     = document.getElementById('javaVersion').value;
+    const Memory          = parseInt(document.getElementById('Memory').value);
+    const Cpu             = parseInt(document.getElementById('Cpu').value);
+    const Storage         = parseInt(document.getElementById('Storage').value);
 
-    if (!name)        { errText.textContent = 'Server name is required.'; errBox.classList.remove('hidden'); return; }
-    if (!nodeId)      { errText.textContent = 'Select a node.';           errBox.classList.remove('hidden'); return; }
+    if (!name)   { errText.textContent = 'Server name is required.'; errBox.classList.remove('hidden'); return; }
+    if (!nodeId) { errText.textContent = 'Select a node location.';   errBox.classList.remove('hidden'); return; }
 
-    const payload = { name, description, nodeId, Memory, Cpu, Storage, instanceType };
-
-    if (instanceType === 'MINECRAFT') {
-      const imageId     = document.getElementById('imageId').value;
-      const dockerImage = document.getElementById('dockerImage').value;
-      if (!imageId)     { errText.textContent = 'Select an image.';         errBox.classList.remove('hidden'); return; }
-      if (!dockerImage) { errText.textContent = 'Select a docker variant.'; errBox.classList.remove('hidden'); return; }
-      payload.imageId = imageId;
-      payload.dockerImage = dockerImage;
-    } else {
-      const osTemplate   = document.getElementById('osTemplate').value;
-      const rootPassword = document.getElementById('rootPassword').value.trim();
-      if (!osTemplate)   { errText.textContent = 'Select an OS Template.';   errBox.classList.remove('hidden'); return; }
-      payload.osTemplate = osTemplate;
-      payload.rootPassword = rootPassword;
-    }
+    const payload = { name, description, nodeId, softwareType, softwareVersion, javaVersion, Memory, Cpu, Storage };
 
     const ok = await showConfirm('Create server?', `"${name}" will be created and queued for installation.`);
     if (!ok) return;
@@ -387,7 +278,7 @@
     document.getElementById('createBtn').disabled = true;
 
     try {
-      const r = await fetch('/create-server', {
+      const r = await fetch('/user/create-server', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

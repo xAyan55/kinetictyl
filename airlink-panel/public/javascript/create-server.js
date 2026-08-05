@@ -89,57 +89,30 @@
 
   document.querySelectorAll('.custom-select').forEach(buildCustomSelect);
 
-  document.getElementById('imageId').addEventListener('change', function () {
-    const opt = this.options[this.selectedIndex];
-    const raw = opt.dataset.docker;
-    const docker = document.getElementById('dockerImage');
-    docker.innerHTML = '';
-    const ph = document.createElement('option');
-    ph.value = ''; ph.textContent = 'Select variant'; ph.disabled = true; ph.selected = true;
-    docker.appendChild(ph);
-    if (raw) {
+  const softwareTypeSelect = document.getElementById('softwareType');
+  const softwareVersionSelect = document.getElementById('softwareVersion');
+
+  if (softwareTypeSelect && softwareVersionSelect) {
+    softwareTypeSelect.addEventListener('change', async function () {
+      const type = this.value || 'paper';
       try {
-        JSON.parse(raw).forEach(obj => {
-          Object.keys(obj).forEach(key => {
+        const res = await fetch('/api/mcjars/versions/' + type);
+        const data = await res.json();
+        if (data && Array.isArray(data.versions) && data.versions.length > 0) {
+          softwareVersionSelect.innerHTML = '';
+          data.versions.forEach(ver => {
             const o = document.createElement('option');
-            o.value = key; o.textContent = key;
-            docker.appendChild(o);
+            o.value = ver; o.textContent = ver;
+            softwareVersionSelect.appendChild(o);
           });
-        });
-      } catch {}
-    }
-    docker.dispatchEvent(new Event('change', { bubbles: true }));
-    updateRequiredPorts();
-  });
-
-  function getRequiredPorts() {
-    const image = document.getElementById('imageId');
-    const opt = image.options[image.selectedIndex];
-    try { return JSON.parse(opt?.dataset.portRequirements || '[]'); } catch { return []; }
+          softwareVersionSelect.selectedIndex = 0;
+          softwareVersionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      } catch (e) {
+        console.error('Failed to load MCJars versions:', e);
+      }
+    });
   }
-
-  function updateRequiredPorts() {
-    const ports = getRequiredPorts();
-    document.getElementById('assignPortsLabel').textContent = ports.length ? `Assign ports (${ports.length})` : 'Assign ports';
-  }
-
-  document.getElementById('assignPortsBtn').addEventListener('click', () => {
-    const ports = getRequiredPorts();
-    const list = document.getElementById('requiredPortsList');
-    list.innerHTML = '';
-    if (!ports.length) {
-      list.innerHTML = '<p class="text-xs text-neutral-500">This image does not require ports.</p>';
-    } else {
-      ports.forEach((port, index) => {
-        const row = document.createElement('div');
-        row.className = 'grid grid-cols-2 gap-2 rounded-lg border border-neutral-200 dark:border-white/10 p-3 text-xs text-neutral-600 dark:text-neutral-300';
-        row.innerHTML = `<span>${port.name || `Port ${index + 1}`}</span><span class="font-mono text-right">internal ${port.internalPort || ''}</span>`;
-        list.appendChild(row);
-      });
-    }
-    document.getElementById('portsOverlay').classList.add('open');
-  });
-  document.getElementById('portsOk').addEventListener('click', () => document.getElementById('portsOverlay').classList.remove('open'));
 
   document.querySelectorAll('.stepper-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -158,6 +131,7 @@
     const display = document.getElementById(displayId);
     const unit    = document.getElementById(unitId);
     const hidden  = document.getElementById(hiddenId);
+    if (!display || !unit || !hidden) return;
     function update() {
       hidden.value = Math.round(parseFloat(display.value || 0) * parseInt(unit.value));
     }
@@ -182,6 +156,7 @@
 
   function showConfirm(title, body) {
     return new Promise(resolve => {
+      if (!overlay) return resolve(true);
       confirmTitle.textContent = title;
       confirmBody.textContent  = body;
       overlay.classList.add('open');
@@ -189,97 +164,73 @@
     });
   }
 
-  confirmOk.addEventListener('click', () => { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(true); });
-  confirmCancel.addEventListener('click', () => { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); });
-  overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); } });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); } });
+  if (confirmOk) confirmOk.addEventListener('click', () => { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(true); });
+  if (confirmCancel) confirmCancel.addEventListener('click', () => { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); });
+  if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.classList.remove('open'); if (confirmResolve) confirmResolve(false); } });
 
-  document.getElementById('createBtn').addEventListener('click', async function () {
-    const btn     = this;
-    const errBox  = document.getElementById('errorMsg');
-    const errText = document.getElementById('errorText');
-    errBox.classList.add('hidden');
+  const createBtn = document.getElementById('createBtn');
+  if (createBtn) {
+    createBtn.addEventListener('click', async function () {
+      const btn     = this;
+      const errBox  = document.getElementById('errorMsg');
+      const errText = document.getElementById('errorText');
+      if (errBox) errBox.classList.add('hidden');
 
-    const name        = document.getElementById('serverName').value.trim();
-    const description = document.getElementById('serverDescription').value.trim();
-    const nodeId      = document.getElementById('nodeId').value;
-    const instanceType = document.getElementById('instanceType').value;
-    const Memory      = parseInt(document.getElementById('Memory').value);
-    const Cpu         = parseInt(document.getElementById('Cpu').value);
-    const Storage     = parseInt(document.getElementById('Storage').value);
+      const name            = document.getElementById('serverName')?.value.trim();
+      const description     = document.getElementById('serverDescription')?.value.trim();
+      const nodeId          = document.getElementById('nodeId')?.value;
+      const softwareType    = document.getElementById('softwareType')?.value || 'paper';
+      const softwareVersion = document.getElementById('softwareVersion')?.value || '1.21.4';
+      const javaVersion     = document.getElementById('javaVersion')?.value || '21';
+      const Memory          = parseInt(document.getElementById('Memory')?.value || '1024');
+      const Cpu             = parseInt(document.getElementById('Cpu')?.value || '100');
+      const Storage         = parseInt(document.getElementById('Storage')?.value || '5120');
 
-    if (!name) {
-      errText.textContent = 'Server name is required.';
-      errBox.classList.remove('hidden');
-      document.getElementById('serverName').focus();
-      return;
-    }
-    if (!nodeId) {
-      errText.textContent = 'Select a node.';
-      errBox.classList.remove('hidden');
-      return;
-    }
-
-    const payload = { name, description, nodeId, Memory, Cpu, Storage, instanceType };
-
-    if (instanceType === 'MINECRAFT') {
-      const imageId     = document.getElementById('imageId').value;
-      const dockerImage = document.getElementById('dockerImage').value;
-      if (!imageId) {
-        errText.textContent = 'Select an image.';
-        errBox.classList.remove('hidden');
+      if (!name) {
+        if (errText) errText.textContent = 'Server name is required.';
+        if (errBox) errBox.classList.remove('hidden');
+        document.getElementById('serverName')?.focus();
         return;
       }
-      if (!dockerImage) {
-        errText.textContent = 'Select a docker variant.';
-        errBox.classList.remove('hidden');
+      if (!nodeId) {
+        if (errText) errText.textContent = 'Select a node.';
+        if (errBox) errBox.classList.remove('hidden');
         return;
       }
-      payload.imageId = imageId;
-      payload.dockerImage = dockerImage;
-    } else {
-      const osTemplate   = document.getElementById('osTemplate').value;
-      const rootPassword = document.getElementById('rootPassword').value.trim();
-      if (!osTemplate) {
-        errText.textContent = 'Select an OS Template.';
-        errBox.classList.remove('hidden');
-        return;
-      }
-      payload.osTemplate = osTemplate;
-      payload.rootPassword = rootPassword;
-    }
 
-    const ok = await showConfirm(
-      'Create server?',
-      `"${name}" will be created and queued for installation. This may take a moment.`
-    );
-    if (!ok) return;
+      const payload = { name, description, nodeId, softwareType, softwareVersion, javaVersion, Memory, Cpu, Storage };
 
-    const origText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Creating...';
+      const ok = await showConfirm(
+        'Create server?',
+        `"${name}" will be created and queued for deployment via Kinetictyl Agent.`
+      );
+      if (!ok) return;
 
-    try {
-      const r = await fetch('/create-server', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const d = await r.json();
-      if (d.success) {
-        window.location.href = '/server/' + d.serverUUID;
-      } else {
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+
+      try {
+        const r = await fetch('/user/create-server', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const d = await r.json();
+        if (d.success) {
+          window.location.href = '/server/' + d.serverUUID;
+        } else {
+          btn.disabled = false;
+          btn.textContent = origText;
+          if (errText) errText.textContent = d.error || 'Something went wrong.';
+          if (errBox) errBox.classList.remove('hidden');
+        }
+      } catch {
         btn.disabled = false;
         btn.textContent = origText;
-        errText.textContent = d.error || 'Something went wrong.';
-        errBox.classList.remove('hidden');
+        if (errText) errText.textContent = 'Network error. Try again.';
+        if (errBox) errBox.classList.remove('hidden');
       }
-    } catch {
-      btn.disabled = false;
-      btn.textContent = origText;
-      errText.textContent = 'Network error. Try again.';
-      errBox.classList.remove('hidden');
-    }
-  });
-
+    });
+  }
 })();

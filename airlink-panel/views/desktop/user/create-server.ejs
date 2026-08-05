@@ -3,7 +3,6 @@
 <style>
   ::-webkit-scrollbar { display: none; }
 
-  /* ── Custom select design overloads for dark theme ───────── */
   .custom-select { position: relative; user-select: none; }
   .cs-trigger {
     display: flex; align-items: center; justify-content: space-between;
@@ -28,7 +27,6 @@
   .cs-option.selected { background: rgba(34, 197, 94, 0.1); color: #22c55e; font-weight: 600; }
   .cs-option.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
 
-  /* ── Input styling ────────────────────────────────────────── */
   .form-input {
     width: 100%; padding: 12px 16px; border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02);
@@ -40,7 +38,6 @@
   .form-input::placeholder { color: #52525b; }
   .form-label { display: block; font-size: 12px; font-weight: 700; uppercase: true; tracking: 0.05em; color: #a1a1aa; margin-bottom: 8px; }
 
-  /* ── Resource steppers ────────────────────────────────────── */
   .stepper { display: flex; align-items: center; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.02); }
   .stepper-btn {
     padding: 10px 16px; background: none; border: none; cursor: pointer;
@@ -54,15 +51,12 @@
     font-family: inherit; min-width: 0;
   }
 
-  /* ── Select Unit overloads ────────────────────────── */
   .select-unit {
     border-radius: 0 12px 12px 0; font-size: 12px; font-weight: 600; padding: 0 12px;
     background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.05);
     border-left: none; color: white; cursor: pointer; outline: none;
   }
-  .select-unit:focus { border-color: rgba(34, 197, 94, 0.2); }
 
-  /* ── Confirmation overlay ────────────────────────────────── */
   .confirm-overlay {
     position: fixed; inset: 0; z-index: 150;
     background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
@@ -72,7 +66,7 @@
   .confirm-overlay.open { opacity: 1; pointer-events: auto; }
   .confirm-box {
     background: #0c0c14; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px;
-    width: 100%; max-w: 440px; padding: 24px; shadow: 2xl;
+    width: 100%; max-width: 440px; padding: 24px;
     transform: scale(0.96); opacity: 0;
     transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), opacity 0.25s;
   }
@@ -89,8 +83,8 @@
         <!-- Wizard header -->
         <div class="flex justify-between items-center border-b border-white/5 pb-5">
           <div>
-            <h1 class="text-xl font-bold tracking-tight text-white">Configure Server Setup</h1>
-            <p class="text-sm text-neutral-400 mt-1"><%= currentCount %> of <%= serverLimit %> active server slots used</p>
+            <h1 class="text-xl font-bold tracking-tight text-white">Configure Minecraft Server</h1>
+            <p class="text-sm text-neutral-400 mt-1"><%= quota.servers %> server slot<%= quota.servers === 1 ? '' : 's' %> available</p>
           </div>
           <a href="/dashboard" class="text-xs font-semibold text-neutral-400 hover:text-white transition">Cancel Setup</a>
         </div>
@@ -104,68 +98,49 @@
         <div class="wizard-pane space-y-6" data-step="1">
           <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-6' }) %>
             <div>
-              <h2 class="text-base font-bold text-white">Choose Instance Type & Software</h2>
-              <p class="text-xs text-neutral-400 mt-0.5">Select the environment type and runtime template for your new deployment.</p>
+              <h2 class="text-base font-bold text-white">Choose Minecraft Software & Version</h2>
+              <p class="text-xs text-neutral-400 mt-0.5">Select your preferred server software and Java runtime version.</p>
             </div>
 
-            <!-- Instance Type Toggle Buttons -->
-            <input type="hidden" id="instanceType" name="instanceType" value="MINECRAFT">
-            <div class="flex gap-4">
-              <button type="button" id="btnMinecraft" onclick="setInstanceType('MINECRAFT')"
-                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-brand-green bg-brand-green/10 text-brand-green font-bold text-sm transition-all duration-200 cursor-pointer">
-                <%- icon('gamepad-2', { class: 'w-4 h-4 shrink-0' }) %>
-                Minecraft Server
-              </button>
-              <button type="button" id="btnLXC" onclick="setInstanceType('LXC')"
-                class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-neutral-400 font-bold text-sm transition-all duration-200 cursor-pointer hover:border-white/20 hover:text-white">
-                <%- icon('monitor', { class: 'w-4 h-4 shrink-0' }) %>
-                VPS LXC Container
-              </button>
-            </div>
-            
-            <!-- Minecraft Specific Software Fields -->
-            <div id="minecraftFields" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
               <div class="space-y-2">
-                <label class="form-label">Software Image</label>
-                <select id="imageId" class="hidden">
-                  <option value="" disabled selected>Select software type</option>
-                  <% images.forEach(image => { %>
-                    <option value="<%= image.id %>" data-docker="<%= image.dockerImages %>" data-port-requirements='<%= image.portRequirements || "[]" %>'><%= image.name %></option>
-                  <% }); %>
+                <label class="form-label">Server Software</label>
+                <select id="softwareType" class="hidden">
+                  <option value="paper" selected>Paper (Recommended)</option>
+                  <option value="purpur">Purpur</option>
+                  <option value="vanilla">Vanilla</option>
+                  <option value="fabric">Fabric</option>
+                  <option value="forge">Forge</option>
+                  <option value="neoforge">NeoForge</option>
+                  <option value="spigot">Spigot</option>
                 </select>
-                <div class="custom-select" data-for="imageId"></div>
+                <div class="custom-select" data-for="softwareType"></div>
               </div>
 
               <div class="space-y-2">
-                <label class="form-label">Version / Docker Image</label>
-                <select id="dockerImage" class="hidden">
-                  <option value="" disabled selected>Select software first</option>
+                <label class="form-label">Minecraft Version</label>
+                <select id="softwareVersion" class="hidden">
+                  <option value="1.21.4" selected>1.21.4</option>
+                  <option value="1.21.3">1.21.3</option>
+                  <option value="1.21.1">1.21.1</option>
+                  <option value="1.20.4">1.20.4</option>
+                  <option value="1.20.1">1.20.1</option>
+                  <option value="1.19.4">1.19.4</option>
+                  <option value="1.18.2">1.18.2</option>
+                  <option value="1.16.5">1.16.5</option>
                 </select>
-                <div class="custom-select" data-for="dockerImage"></div>
-              </div>
-            </div>
-
-            <!-- LXC Specific VPS Fields -->
-            <div id="lxcFields" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 hidden">
-              <div class="space-y-2">
-                <label class="form-label">OS Template</label>
-                <select id="osTemplate" class="hidden">
-                  <option value="ubuntu/24.04" selected>Ubuntu 24.04</option>
-                  <option value="ubuntu/22.04">Ubuntu 22.04</option>
-                  <option value="debian/12">Debian 12</option>
-                  <option value="debian/11">Debian 11</option>
-                  <option value="almalinux/9">AlmaLinux 9</option>
-                  <option value="rockylinux/9">Rocky Linux 9</option>
-                  <option value="fedora/40">Fedora 40</option>
-                  <option value="archlinux/current">Arch Linux</option>
-                  <option value="alpine/3.20">Alpine 3.20</option>
-                </select>
-                <div class="custom-select" data-for="osTemplate"></div>
+                <div class="custom-select" data-for="softwareVersion"></div>
               </div>
 
               <div class="space-y-2">
-                <label class="form-label">Root Password</label>
-                <input id="rootPassword" type="password" placeholder="Leave empty for auto-generated" class="form-input">
+                <label class="form-label">Java Version</label>
+                <select id="javaVersion" class="hidden">
+                  <option value="21" selected>Java 21 (For 1.20.5+)</option>
+                  <option value="17">Java 17 (For 1.17 - 1.20.4)</option>
+                  <option value="11">Java 11 (Legacy 1.12 - 1.16)</option>
+                  <option value="8">Java 8 (Legacy 1.8.8)</option>
+                </select>
+                <div class="custom-select" data-for="javaVersion"></div>
               </div>
             </div>
 
@@ -177,12 +152,12 @@
           </div>
         </div>
 
-        <!-- WIZARD STEP 2: LOCATION & RESOURCES -->
+        <!-- WIZARD STEP 2: LOCATION -->
         <div class="wizard-pane space-y-6 hidden" data-step="2">
           <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-6' }) %>
             <div>
               <h2 class="text-base font-bold text-white">Choose Deploy Region</h2>
-              <p class="text-xs text-neutral-400 mt-0.5">Select the closest geographic zone for minimal latency.</p>
+              <p class="text-xs text-neutral-400 mt-0.5">Select the node location closest to your players.</p>
             </div>
 
             <div class="space-y-2 max-w-sm">
@@ -207,8 +182,8 @@
         <div class="wizard-pane space-y-6 hidden" data-step="3">
           <%- include('../components/ui/Card', { hover: false, class: 'p-6 border border-white/5 space-y-6' }) %>
             <div>
-              <h2 class="text-base font-bold text-white">Adjust Resource Cappings</h2>
-              <p class="text-xs text-neutral-400 mt-0.5">Configure hardware memory bounds, CPU allocations, and storage size limits.</p>
+              <h2 class="text-base font-bold text-white">Adjust Hardware Resources</h2>
+              <p class="text-xs text-neutral-400 mt-0.5">Allocate RAM, CPU cores, and Disk Storage for your Minecraft server.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
@@ -228,7 +203,7 @@
                     <option value="1024">GB</option>
                   </select>
                 </div>
-                <p id="max-ram-label" class="text-[10px] text-neutral-500 font-semibold">Max Allocation: <%= resourceLimits.maxMemory %> MB</p>
+                <p id="max-ram-label" class="text-[10px] text-neutral-500 font-semibold">Available Quota: <%= quota.memory %> MB</p>
               </div>
 
               <!-- CPU -->
@@ -239,17 +214,17 @@
                 </label>
                 <div class="stepper">
                   <button type="button" class="stepper-btn" data-action="dec" data-target="Cpu" data-step="50" data-min="50">−</button>
-                  <input id="Cpu" type="number" value="100" min="50" max="<%= resourceLimits.maxCpu %>" class="stepper-input">
+                  <input id="Cpu" type="number" value="100" min="50" max="<%= quota.cpu %>" class="stepper-input">
                   <button type="button" class="stepper-btn" data-action="inc" data-target="Cpu" data-step="50" data-max="100">+</button>
                 </div>
-                <p id="max-cpu-label" class="text-[10px] text-neutral-500 font-semibold">Max Allocation: <%= resourceLimits.maxCpu %>%</p>
+                <p id="max-cpu-label" class="text-[10px] text-neutral-500 font-semibold">Available Quota: <%= quota.cpu %>%</p>
               </div>
 
               <!-- Storage -->
               <div class="space-y-2">
                 <label class="form-label flex items-center gap-1.5 text-neutral-300">
                   <%- icon('hard-drive', { width: 14, height: 14 }) %>
-                  Disk Space (Storage)
+                  Disk Storage
                 </label>
                 <input type="hidden" id="Storage" value="5120">
                 <div class="flex items-stretch">
@@ -261,16 +236,8 @@
                     <option value="1024" selected>GB</option>
                   </select>
                 </div>
-                <p id="max-disk-label" class="text-[10px] text-neutral-500 font-semibold">Max Allocation: <%= Math.round(resourceLimits.maxStorage / 1024) %> GB</p>
+                <p id="max-disk-label" class="text-[10px] text-neutral-500 font-semibold">Available Quota: <%= Math.round(quota.disk / 1024) %> GB</p>
               </div>
-            </div>
-
-            <!-- Custom Port requirements indicator -->
-            <div id="portRequirementsContainer" class="pt-2">
-              <label class="form-label">Port Requirements</label>
-              <button type="button" id="assignPortsBtn" class="cs-trigger bg-white/5 border border-white/10 hover:bg-white/10">
-                <span id="assignPortsLabel">Inspect required ports</span>
-              </button>
             </div>
 
             <div class="pt-4 border-t border-white/5 flex justify-between">
@@ -315,6 +282,10 @@
 
                 <div class="space-y-3.5 text-xs text-neutral-300">
                   <div class="flex justify-between">
+                    <span class="text-neutral-500">Software</span>
+                    <span class="text-white font-bold" id="summarySoftware">Paper 1.21.4</span>
+                  </div>
+                  <div class="flex justify-between">
                     <span class="text-neutral-500">Node Location</span>
                     <span class="text-white font-bold" id="summaryNode">Not Chosen</span>
                   </div>
@@ -327,12 +298,11 @@
                     <span class="text-white font-bold" id="summaryCPU">100%</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-neutral-500">Deploy Duration</span>
-                    <span class="text-brand-green font-bold" id="summaryDeployTime">queued for install</span>
+                    <span class="text-neutral-500">Deploy Status</span>
+                    <span class="text-brand-green font-bold">Queued for Agent Install</span>
                   </div>
                 </div>
 
-                <!-- Submit trigger -->
                 <button type="button" id="createBtn"
                   class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-brand-green px-4 py-2.5 text-sm font-bold text-black hover:bg-brand-green-hover hover:scale-[1.02] hover:shadow-[0_0_20px_var(--color-mono-focus)] active:scale-95 transition-all duration-200 cursor-pointer">
                   <span id="createBtnText">Launch Server</span>
@@ -342,12 +312,10 @@
             </div>
           </div>
 
-          <!-- Error Banner -->
           <div id="errorMsg" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 px-5 py-4">
             <p class="text-sm font-semibold text-red-400" id="errorText"></p>
           </div>
 
-          <!-- Back button -->
           <div class="flex">
             <button onclick="prevStep(3)" class="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-neutral-300 hover:bg-white/10 text-xs font-bold transition cursor-pointer">Back</button>
           </div>
@@ -358,23 +326,6 @@
   </div>
 </main>
 
-<!-- Ports Inspection Modal -->
-<div class="confirm-overlay" id="portsOverlay">
-  <div class="confirm-box">
-    <div class="flex justify-between items-center pb-3 border-b border-white/5 mb-4">
-      <h3 class="text-sm font-bold text-white">Required Connection Ports</h3>
-      <button class="text-neutral-400 hover:text-white" onclick="document.getElementById('portsOverlay').classList.remove('open')">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div id="requiredPortsList" class="space-y-2"></div>
-    <div class="flex justify-end mt-6">
-      <button id="portsOk" class="px-4 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white hover:bg-white/10 transition cursor-pointer">Dismiss</button>
-    </div>
-  </div>
-</div>
-
-<!-- Custom confirmation Modal -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
     <h3 class="text-sm font-bold text-white mb-2" id="confirmTitle">Confirm</h3>
@@ -392,104 +343,55 @@
 <script nonce="<%- nonce %>">
   let activeWizardStep = 1;
 
-  window.setInstanceType = function(type) {
-    document.getElementById('instanceType').value = type;
-    const btnMinecraft = document.getElementById('btnMinecraft');
-    const btnLXC = document.getElementById('btnLXC');
-    const minecraftFields = document.getElementById('minecraftFields');
-    const lxcFields = document.getElementById('lxcFields');
-    const portRequirementsContainer = document.getElementById('portRequirementsContainer');
-
-    if (type === 'MINECRAFT') {
-      btnMinecraft.className = "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-brand-green bg-brand-green/10 text-brand-green font-bold text-sm transition-all duration-200 cursor-pointer";
-      btnLXC.className = "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-neutral-400 font-bold text-sm transition-all duration-200 cursor-pointer hover:border-white/20 hover:text-white";
-      minecraftFields.classList.remove('hidden');
-      lxcFields.classList.add('hidden');
-      if (portRequirementsContainer) portRequirementsContainer.classList.remove('hidden');
-    } else {
-      btnMinecraft.className = "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-neutral-400 font-bold text-sm transition-all duration-200 cursor-pointer hover:border-white/20 hover:text-white";
-      btnLXC.className = "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-brand-green bg-brand-green/10 text-brand-green font-bold text-sm transition-all duration-200 cursor-pointer";
-      minecraftFields.classList.add('hidden');
-      lxcFields.classList.remove('hidden');
-      if (portRequirementsContainer) portRequirementsContainer.classList.add('hidden');
-    }
-  };
-
   function nextStep(step) {
-    // Basic validation before shifting step
     if (step === 2) {
-      const type = document.getElementById('instanceType').value;
-      if (type === 'MINECRAFT') {
-        const img = document.getElementById('imageId').value;
-        const variant = document.getElementById('dockerImage').value;
-        if (!img || !variant) {
-          if (typeof showToast === 'function') {
-            showToast('Please select software image and version first.', 'error');
-          }
-          return;
-        }
-      } else {
-        const os = document.getElementById('osTemplate').value;
-        if (!os) {
-          if (typeof showToast === 'function') {
-            showToast('Please select OS Template first.', 'error');
-          }
-          return;
-        }
+      const soft = document.getElementById('softwareType').value;
+      const ver = document.getElementById('softwareVersion').value;
+      if (!soft || !ver) {
+        if (typeof showToast === 'function') showToast('Please select software and version first.', 'error');
+        return;
       }
     }
     
     if (step === 3) {
       const node = document.getElementById('nodeId').value;
       if (!node) {
-        if (typeof showToast === 'function') {
-          showToast('Please choose a node location for deployment.', 'error');
-        }
+        if (typeof showToast === 'function') showToast('Please choose a node location for deployment.', 'error');
         return;
       }
     }
 
     if (step === 4) {
-      // Compile final launch summary
       const nodeSelect = document.getElementById('nodeId');
       const nodeName = nodeSelect.options[nodeSelect.selectedIndex]?.text || 'Not chosen';
+      const softName = document.getElementById('softwareType').value.toUpperCase() + ' ' + document.getElementById('softwareVersion').value;
       const ramVal = document.getElementById('Memory').value + ' MB';
       const cpuVal = document.getElementById('Cpu').value + '%';
 
       document.getElementById('summaryNode').textContent = nodeName;
+      document.getElementById('summarySoftware').textContent = softName;
       document.getElementById('summaryRAM').textContent = ramVal;
       document.getElementById('summaryCPU').textContent = cpuVal;
     }
 
-    // Hide all panes
     document.querySelectorAll('.wizard-pane').forEach(p => p.classList.add('hidden'));
-    
-    // Show target step
     document.querySelector('.wizard-pane[data-step="' + step + '"]').classList.remove('hidden');
-    
-    // Update WizardStep indicators
     updateWizardStepsUI(step);
-      
     activeWizardStep = step;
   }
 
   function prevStep(step) {
     document.querySelectorAll('.wizard-pane').forEach(p => p.classList.add('hidden'));
     document.querySelector('.wizard-pane[data-step="' + step + '"]').classList.remove('hidden');
-    
-    // Update WizardStep indicators
     updateWizardStepsUI(step);
-
     activeWizardStep = step;
   }
 
   function updateWizardStepsUI(step) {
-    const stepNumbers = [1, 2, 3, 4];
-    stepNumbers.forEach(num => {
+    [1, 2, 3, 4].forEach(num => {
       const el = document.querySelector('[data-step-indicator="' + num + '"]');
       const text = document.querySelector('[data-step-text="' + num + '"]');
       const line = document.querySelector('[data-step-line="' + num + '"]');
-      
       if (!el) return;
 
       if (step === num) {
@@ -504,11 +406,7 @@
       }
 
       if (line) {
-        if (step > num) {
-          line.className = "flex-1 h-[1px] mx-4 bg-brand-green/20 transition-all duration-300";
-        } else {
-          line.className = "flex-1 h-[1px] mx-4 bg-white/5 transition-all duration-300";
-        }
+        line.className = step > num ? "flex-1 h-[1px] mx-4 bg-brand-green/20 transition-all duration-300" : "flex-1 h-[1px] mx-4 bg-white/5 transition-all duration-300";
       }
     });
   }
