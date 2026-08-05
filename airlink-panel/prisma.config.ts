@@ -5,6 +5,7 @@ declare const process: any;
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
+  engineType: 'library',
   migrations: {
     path: 'prisma/migrations',
   },

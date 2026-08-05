@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.9.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^6.4.0",
     "adm-zip": "^0.5.17",
     "axios": "^1.18.0",
     "bcryptjs": "^3.0.3",
@@ -46,7 +46,7 @@
     "lucide": "^1.18.0",
     "monaco-editor": "^0.55.1",
     "multer": "^2.2.0",
-    "prisma": "^7.8.0",
+    "prisma": "^6.4.0",
     "validator": "^13.15.35",
     "ws": "^8.21.0",
     "zod": "^4.4.3"
